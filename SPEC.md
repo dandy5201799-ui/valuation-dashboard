@@ -423,7 +423,7 @@ Excel工作簿、Word研究卡、WPS同步脚本、旧版工作簿生成脚本�
 - `../update_stock_valuations.py`：抓取三只股票最近交易日行情，写入SQLite，重建`data/stocks.json`与HTML fallback。
 - `../update_market_temperature.py`：抓取市场估值温度数据，写入SQLite，重建`data/market_temperature*.json`。
 - `../build_mobile_dashboard.py`：从SQLite生成前端数据。
-- Codex每日定时任务（工作日18:10）：依次运行个股更新、市场温度更新、JSON/HTML校验；校验通过后检查Git工作区，若有变化则提交并推送到GitHub，触发GitHub Pages自动刷新；若无变化则跳过提交。禁止运行Excel/Word/WPS旧链路，禁止打印大段diff。
+- Codex每日定时任务（工作日16:15）：依次运行个股更新、市场温度更新、JSON/HTML校验；校验通过后检查Git工作区，若有变化则提交并推送到GitHub，触发GitHub Pages自动刷新；若无变化则跳过提交。选择16:15是为了覆盖A股15:00收盘与港股16:00收盘后的当日数据，避免胜宏科技H股在港股未收盘时被提前更新。禁止运行Excel/Word/WPS旧链路，禁止打印大段diff。
 
 日更自动提交规则：
 
