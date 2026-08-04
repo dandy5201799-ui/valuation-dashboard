@@ -1,6 +1,6 @@
 {
   "asOfDate": "2026-08-04",
-  "builtAt": "2026-08-04T17:49:56+08:00",
+  "builtAt": "2026-08-04T17:54:28+08:00",
   "generator": "build_mobile_dashboard.py",
   "dataSource": "SQLite",
   "listNote": "按现价相对合理区间中枢的偏离排序",
