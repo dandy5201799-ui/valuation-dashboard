@@ -1,0 +1,22 @@
+{
+  "name": "估值仪表盘",
+  "short_name": "估值",
+  "description": "投资估值区间与市场温度仪表盘",
+  "start_url": "./估值仪表盘.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EDEAE3",
+  "theme_color": "#EDEAE3",
+  "icons": [
+    {
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
