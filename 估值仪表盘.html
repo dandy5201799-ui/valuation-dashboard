@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>估值仪表盘</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+html,body{height:100%}
+body{margin:0;background:#EDEAE3;font-family:"Noto Sans SC",system-ui,-apple-system,"PingFang SC",sans-serif;color:#15181E;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+*{box-sizing:border-box}
+.pane::-webkit-scrollbar{display:none}
+.pane{scrollbar-width:none}
+@keyframes fin{from{opacity:.35}to{opacity:1}}
+#app{width:100%;max-width:430px;margin:0 auto;height:100vh;height:100dvh;background:#EDEAE3;display:flex;flex-direction:column;overflow:hidden;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+/* 「我的股票」列表：默认（移动端）单列，≥768px 变两列网格 */
+.stock-list{display:flex;flex-direction:column;gap:10px}
+
+/* ==========================================================================
+   响应式：移动优先，只设两个断点。字号一律保持固定 px 以保设计还原度，
+   只让 padding / gap / max-width 流动。inline style 优先级高于样式表，
+   因此断点内的覆盖必须带 !important。
+   ========================================================================== */
+
+/* ---- A. 小屏 ≤360px：收紧左右留白，避免三张市场卡片被挤到截断 ---- */
+@media (max-width:360px){
+  .hpad{padding-left:12px!important;padding-right:12px!important}
+  .mkt-grid{gap:6px!important}
+  .mkt-card{padding:10px 8px 8px!important}
+}
+
+/* ---- C. 大屏 ≥768px：不做桌面版重设计，只给内容更多呼吸空间 ---- */
+@media (min-width:768px){
+  #app{max-width:720px}
+  .mkt-grid{gap:14px!important}
+  .mkt-card{padding:18px 16px 14px!important}
+  /* 股票卡片两列网格；卡片本身不拉伸变形 */
+  .stock-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px!important;align-items:start}
+  /* 详情页保持单列，居中收窄，避免长句行宽过大 */
+  .dnarrow{max-width:640px;width:100%;margin-left:auto;margin-right:auto}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ==========================================================================
+   估值仪表盘 · 移动端
+   数据：fetch('./data/market_temperature.json') + fetch('./data/stocks.json')
+   读取失败（file:// 或文件缺失）→ 回落到下方 FALLBACK 快照，并在顶部显示
+   「数据未更新 · 使用缓存」标记。绝不静默把旧数据当最新。
+   ========================================================================== */
+
+/* ---- 设计稿配色常量（与 valuation-v2-market.dc.html 一致） ---- */
+const ZC = ['#245C4E','#5E8F7C','#B9B3A5','#C08A45','#9E5330'];
+/* 五档命名的单一事实来源：与工作簿「估值状态」及 SPEC 第4节一致。
+   个股与市场共用同一套档位名，不再有 低估 / 合理偏高 / 明显偏高 / 合理·偏上 等变体。 */
+const LVL = ['明显低估','合理偏低','合理','偏贵','明显高估'];
+const ZA  = ['低','偏低','合理','偏贵','高'];
+const TAG = {
+  '实': {t:'实 财报实际', tBg:'#EAE7DE', tFg:'#3F3A2C', tBd:'1px solid #D6D1C4', tShort:'实'},
+  '预': {t:'预 预测假设', tBg:'transparent', tFg:'#8A5D22', tBd:'1px dashed #C08A45', tShort:'预'},
+  '模': {t:'模 模型结果', tBg:'#E7EDEA', tFg:'#245C4E', tBd:'1px solid #C9DAD2', tShort:'模'}
+};
+const CONF = {'高':3,'中':2,'低':1};
+const CAL = [
+  {bd:'#C9DAD2', bg:'#F3F7F5', dot:'#245C4E', fg:'#245C4E'},
+  {bd:'#E4DECF', bg:'#FAF8F3', dot:'#C08A45', fg:'#8A5D22'},
+  {bd:'#E8D3C7', bg:'#FBF4F0', dot:'#9E5330', fg:'#8C3F1D'}
+];
+/* 五档 chip 配色，索引与 LVL 一一对应；个股与市场共用 */
+const MCH = [
+  {bg:'#DCEAE2', fg:'#1D4F42'},
+  {bg:'#E4EFE9', fg:'#245C4E'},
+  {bg:'#EEEBE3', fg:'#4A4638'},
+  {bg:'#F6EBDB', fg:'#8A5D22'},
+  {bg:'#F4E2D8', fg:'#8C3F1D'}
+];
+const chipOf = name => MCH[Math.max(0, LVL.indexOf(name))];
+
+/* ---- 内嵌快照（fetch 失败时使用；由生成脚本回写，勿手改） ---- */
+/* BEGIN:FALLBACK_MARKET */
+const FALLBACK_MARKET = {"asOfDate":"2026-08-03","fetchedAt":"2026-08-03T23:16:31+08:00","generator":"update_market_temperature.py","levelNames":["明显低估","合理偏低","合理","偏贵","明显高估"],"boundaryNote":"市场温度只回答「市场表面贵不贵」，不等于最终仓位。仓位仍按 外部温度 → 内部正常化解释 → 股债性价比 → 危机限制 → 连续映射 得出。","markets":[{"code":"A股","name":"A股","idx":"沪深300","asOf":"2026-08-03","lvl":3,"lvlName":"偏贵","rule":"SPEC规则4：PE>80% 但 PB 中性(≤60%)，不直接判明显高估，降为偏贵","divergent":true,"weakEarnings":true,"short":"PE 近十年 83.4% 分位，PB 仅 48.2%：贵在盈利端","tiny":"PE 偏高，PB 仍中性","verdict":"整体偏贵，但贵在盈利端而非资产端。PE 分位明显高于 PB 分位，通常意味着当前盈利处于低谷，而不是资产被过度定价。","key":[{"k":"PE(TTM)","v":"14.24×"},{"k":"PB","v":"1.45×"},{"k":"股息率","v":"2.57%"},{"k":"ROE","v":"10.20%"}],"pcts":[{"k":"PE 近十年分位","v":83.4},{"k":"PB 近十年分位","v":48.2}],"why":["PE 83.4% 分位、PB 仅 48.2% 分位，两者分歧接近 35 个百分点","PB 停在历史中位，说明净资产端没有被过度定价","盈利口径可能偏弱：需结合正常化模型解释，不宜只看 PE 分位下结论"],"fitOk":false,"fit":"有分歧","fitNote":"内部 PB—ROE 正常化模型给「合理」（当前/合理 0.989）。分歧原因恰好就是外部看到的现象——PE 分位高而 PB 分位中性，说明当前盈利被压低。正常化后 EPS 由 319.2 升至 359.8，合理点位 4,639。两边描述的是同一件事：外部说「贵在盈利端」，内部把这个盈利低谷修正掉了。","src":["蛋卷/雪球 指数估值接口（PE/PB/分位/股息率）","中证指数官网 · 沪深300 官方PE 14.23 （交叉验证，偏差0.09%）"],"note":null,"metrics":{"pe":14.2431,"pb":1.4525,"dividend_yield":2.57,"roe":10.2,"pe_percentile":83.4,"pb_percentile":48.2,"cape":null,"cape_percentile":null}},{"code":"港股","name":"港股","idx":"恒生指数","asOf":"2026-07-31","lvl":4,"lvlName":"明显高估","rule":"SPEC规则3：PE 与 PB 两个主指标均高于 80% 分位","divergent":false,"weakEarnings":false,"short":"PE 81.5%、PB 81.8% 分位：两个口径同时到高位","tiny":"PE / PB 双双高位","verdict":"两个口径同时高于 80% 分位，不存在「只是某一端贵」的解释空间。绝对倍数仍低于美股，但相对自身十年历史已明显不便宜。","key":[{"k":"PE(TTM)","v":"12.36×"},{"k":"PB","v":"1.23×"},{"k":"股息率","v":"3.05%"},{"k":"ROE","v":"9.97%"}],"pcts":[{"k":"PE 近十年分位","v":81.48},{"k":"PB 近十年分位","v":81.84}],"why":["PE 81.5%、PB 81.8% 分位，两项一致指向高位","不同于 A股 的单边偏高，恒指是盈利端与资产端同时抬升","股息率 3.05% 是三个市场最高，是唯一的缓冲项"],"fitOk":true,"fit":"一致","fitNote":"内部正常化模型同样给「明显高估」（当前/合理 1.259），正常化系数仅 1.051，不足以改变结论。外部与内部口径一致。","src":["蛋卷/雪球 指数估值接口","恒生指数公司官方十年日频PB 未取得（接口未公开），当前用第三方周频序列"],"note":null,"metrics":{"pe":12.3595,"pb":1.2319,"dividend_yield":3.05,"roe":9.97,"pe_percentile":81.48,"pb_percentile":81.84,"cape":null,"cape_percentile":null}},{"code":"美股","name":"美股","idx":"标普500","asOf":"2026-07-31","lvl":4,"lvlName":"明显高估","rule":"SPEC规则5（CAPE 作长周期锚，处历史约 99% 分位）+ 规则3（PB 94.84% 与 CAPE 两项均>80%）","divergent":true,"weakEarnings":false,"short":"PB 94.8% 分位、CAPE 40.9× 近历史极值；PE 分位仅 60.7%","tiny":"PB 与 CAPE 高位","verdict":"长周期口径（CAPE）与资产端（PB）双双极端，但 TTM PE 分位只有 60.7%——盈利高增长把短期倍数压了下来。两个锚冲突，同时呈现，不合并成单一结论。","key":[{"k":"PE(TTM)","v":"25.49×"},{"k":"PB","v":"5.49×"},{"k":"股息率","v":"1.03%"},{"k":"ROE","v":"21.56%"},{"k":"CAPE","v":"40.91×"}],"pcts":[{"k":"PE 近十年分位","v":60.72},{"k":"PB 近十年分位","v":94.84},{"k":"CAPE 历史分位","v":99.04}],"why":["PB 94.8% 分位、CAPE 40.91× 约处历史 99% 分位，长周期与资产端均为极值","TTM PE 60.7% 分位相对温和：当前盈利增速很高，短期口径不显极端","股息率 1.03%，回报几乎完全依赖盈利增长与倍数维持，向下缓冲最薄"],"fitOk":false,"fit":"有分歧","fitNote":"内部模型给「合理」（当前/合理 0.972），因为它用 DWS 正常化 EPS 310（对应约 23.9×）。而 CAPE 用的是十年平均实际盈利。分歧本质是「用哪段盈利做分母」：若当前高盈利可持续，内部口径对；若均值回归，CAPE 对。本模型不下定论，两个都展示。","src":["蛋卷/雪球 指数估值接口（PE/PB/分位）","multpl.com · Shiller CAPE 40.91、GAAP PE 28.84、PB 5.94、股息率 1.07% （交叉验证）"],"note":"口径差异：蛋卷 PE 25.49× 与 multpl GAAP 口径 28.84× 相差 13%，主因是 GAAP 与调整后盈利的差别。本页主字段采用蛋卷口径以与A股/港股保持一致，multpl 作交叉验证。","metrics":{"pe":25.4861,"pb":5.4949,"dividend_yield":1.03,"roe":21.56,"pe_percentile":60.72,"pb_percentile":94.84,"cape":40.91,"cape_percentile":99.0359}}],"warnings":["A股.pb_pct 抓取值 48.2000 相对核验快照 52.8400 偏离 8.8%，结论文案需复核"]};
+/* END:FALLBACK_MARKET */
+/* BEGIN:FALLBACK_STOCKS */
+const FALLBACK_STOCKS = {"asOfDate":"2026-08-04","builtAt":"2026-08-04T14:27:23+08:00","generator":"build_mobile_dashboard.py","dataSource":"SQLite","listNote":"按现价相对合理区间中枢的偏离排序","marketPositions":[{"market":"A股","index":"沪深300","position":"52%","point":"4588","status":"合理"},{"market":"港股","index":"恒生","position":"0%","point":"25859","status":"明显高估"},{"market":"美股","index":"标普500","position":"40%","point":"7413","status":"合理"}],"stocks":[{"id":"moutai","name":"贵州茅台","code":"600519 · 上交所","currency":"¥","price":1340.4,"priceStr":"¥1,340.40","fair":[1181.88,1444.52],"strict":[1107.96,1203.16],"axis":[916.61,1678.27],"bounds":[1063.69,1181.88,1444.52,1588.97],"status":"偏贵","conf":"中","confNote":"盈利基数（EPS）已由年报确认，稳定性高；估值倍数（终局 PE）依赖五年增速与股息假设，属中等可信——区间上下沿会随年报调整。","strictNote":"按12% / 10%目标年化回报反推的严格买入价带；8%乐观参考不进入严格区间。","action":"停止新增并减仓复核","actionShort":"停止新增并减仓复核","updated":"2026-08-04 收盘","paramsUpdated":"2026-07-31","modelNote":"高确定性消费品：以可持续 EPS × 终局 PE 为主，股息作为回报缓冲。","nextReport":"三季报 · 10 月下旬","calibKey":"利润增速","calib":[{"k":"维持原估值","cond":"增速 3% – 7%","keep":"五年增速假设、终局 PE 全部不变","upd":"仅滚动更新最近盈利与股息口径"},{"k":"只更新盈利","cond":"增速 0%–3% 或 7%–10%","keep":"终局 PE、五年增速中枢框架不变","upd":"更新当年 EPS 基数，区间随之平移，宽度不变"},{"k":"完整重估","cond":"增速 <0% 或 >10%，或分红政策变化","keep":"仅保留估值方法框架","upd":"重估五年增速、终局 PE 与股息假设，区间位置与宽度同时变化"}],"vol":{"sigma":0.268,"sigmaPct":"26.8%","source":"600519.SH 日线收盘价，2022-01-04–2026-08-03（1,109个交易日）已实现波动率：对数日收益率标准差×√252","proxy":false},"market":{"windowNote":"2026-04-01–2026-07-31，26份卖方研报（东方财富研报库，2026Q1业绩后口径）","ratingWindowNote":"近12个月合计50份研报","ratingCounts":{"买入":40,"增持":7,"持有":3},"consensusEps":68.35,"consensusPe":20.55,"impliedPrice":1404,"targetLow":1430,"targetHigh":1865,"targetMedian":1717,"targetCount":7,"targetWindowNote":"2025-11-05–2026-07-20公开目标价（7份）","diffNote":"分析师2026E每股盈利预期中位数¥68.35，与我们模型假设（5%增速下约¥68.9）基本一致；差异主要在目标估值倍数——市场普遍给19–21倍作为“合理”估值，落在我们实用区间18–22倍的上半段，但明显高于我们严格模型对应10%/8%目标回报隐含的更保守估值。","mktMultiple":"PE 19 – 21 ×","ourMultiple":"PE 18 – 22 ×","stance":"基本一致"},"priceShort":"1,340","fairStr":"¥1,182 – 1,445","strictStr":"¥1,108 – 1,203","verdict":"现价 ¥1,340.40 落在实用合理区间（18–22× 2025 EPS）内偏上沿，但高于严格模型区间上限约 11.4%。按现价买入，未来五年年化约 7.4%，低于 10% 的目标回报。","homeParams":[{"k":"五年利润增速假设","v":"≈ 5% / 年","t":"预"},{"k":"终局 PE（模型推导）","v":"18.54 ×","t":"模"}],"params":[{"k":"EPS（2025年报）","v":"¥65.66","t":"实","note":"2025 年度报告口径，估值基准"},{"k":"当前 PE","v":"20.41 ×","t":"模","note":"现价 ÷ 2025 EPS，随价格实时变化"},{"k":"五年利润增速假设","v":"≈ 5% / 年","t":"预","note":"量增放缓、结构升级为主，季度校准"},{"k":"终局 PE","v":"18.54 ×","t":"模","note":"由稳定期 g 3% / ROE 30% / 要求回报 8% 推导"},{"k":"现价预期年化回报","v":"≈ 7.4%","t":"模","note":"五年持有口径，含股息"}],"sens":[{"k":"EPS 变化 ±5%","v":"区间 ± 约 ¥66"},{"k":"终局 PE 变化 ±1 ×","v":"区间 ± 约 ¥66"}],"sensNote":"两者同向变动时影响叠加：EPS +5% 且终局 PE +1×，合理区间上沿将升至约 ¥1,586。","implied":{"type":"simple","lines":["现价 20.41× PE 对应五年年化回报约 7.4%。","要达到 10% 年化，价格需跌至 <b>¥1,108</b>。","要达到 12% 年化，价格需跌至 <b>¥1,108</b>。"]}},{"id":"cmb","name":"招商银行 A","code":"600036 · 上交所","currency":"¥","price":39.46,"priceStr":"¥39.46","fair":[41.7,50.48],"strict":[33.39,44.77],"axis":[32.49,58.59],"bounds":[37.53,41.7,50.48,55.53],"status":"合理偏低","conf":"高","confNote":"账面价值与 ROE 披露频率高、波动小；估值参数相对稳定，区间不易大幅移动。","strictNote":"两阶段剩余收益模型：中性ROE路径在14% / 11.5%目标回报下的严格买入价带；9%乐观参考不进入严格区间。","action":"估值有吸引力；因资产质量处于观察期，等待确认或仅小仓分批","actionShort":"小仓分批 / 等待确认","updated":"2026-08-04 收盘","paramsUpdated":"2026-07-31","modelNote":"银行：以每股净资产 × 合理 PB 为主，长期 ROE 与要求回报率共同决定合理 PB。","nextReport":"三季报 · 10 月下旬","calibKey":"关注率 / 逾期率 / 信用卡不良","calib":[{"k":"维持原估值","cond":"三项企稳或下降","keep":"长期 ROE、要求回报率、合理 PB 区间不变","upd":"仅滚动更新 BVPS 与当期盈利"},{"k":"只更新盈利","cond":"单项小幅上行","keep":"长期 ROE 与合理 PB 区间不变","upd":"更新 BVPS 与当期 ROE，区间按新净资产等比平移"},{"k":"完整重估","cond":"三项连续两季共振恶化","keep":"仅保留 PB–ROE 估值框架","upd":"下调长期稳定 ROE 并上调要求回报率，合理 PB 区间整体重算"}],"vol":{"sigma":0.311,"sigmaPct":"31.1%","source":"600036.SH 日线收盘价，2022-01-04–2026-08-03（1,109个交易日）已实现波动率：对数日收益率标准差×√252","proxy":false},"market":{"windowNote":"2026-04-01–2026-05-05，5份卖方研报（东方财富研报库，2026Q1业绩后口径）","ratingWindowNote":"近12个月合计13份研报","ratingCounts":{"买入":4,"增持":9},"consensusEps":6.08,"consensusPe":6.41,"impliedPrice":39,"targetLow":null,"targetHigh":null,"targetMedian":null,"targetCount":0,"targetWindowNote":"银行股研报较少填写公开目标价，本页改用一致预期EPS×PE反推隐含目标价","diffNote":"分析师2026E每股盈利预期中位数¥6.08，与我们模型量级接近；但市场隐含估值倍数中位数仅6.41倍，反推隐含目标价约¥39，低于我们两个区间的下沿（实用¥42／严格¥44.77）——这是三只标的中唯一一次我们比市场更乐观。差异主要在长期ROE假设：市场当前估值隐含的可持续ROE明显低于我们模型采用的11%–12%，说明市场对零售信贷与资产质量风险的计价比我们更谨慎。","mktMultiple":"PB ≈ 0.89 ×","ourMultiple":"PB 0.95 – 1.15 ×","stance":"更保守"},"priceShort":"39.46","fairStr":"¥42 – 50","strictStr":"¥33.39 – 44.77","verdict":"现价 ¥39.46 低于实用合理区间下沿约 5.4%，并且处在严格买入区间内。招商银行是三只标的中当前安全边际相对最清楚的一只。","homeParams":[{"k":"市场隐含可持续 ROE","v":"10.64%","t":"模"},{"k":"2025 股息率","v":"5.11%","t":"实"}],"params":[{"k":"BVPS 每股净资产","v":"¥43.90","t":"实","note":"2026Q1 报告值扣除已除权年度股息"},{"k":"当前 PB","v":"0.90 ×","t":"模","note":"现价 ÷ BVPS，低于 1 倍净资产"},{"k":"2025 EPS","v":"¥5.70","t":"实","note":"归属于普通股股东口径"},{"k":"股息率","v":"5.11%","t":"实","note":"2025 每股分红 ÷ 现价"},{"k":"市场隐含可持续 ROE","v":"10.64%","t":"模","note":"前提 kₑ=11.5%、g=3%；当前实际 ROE 约 13.4%"},{"k":"中性五年总回报","v":"13.39%","t":"模","note":"含累计分红与期末价格，五年年化口径"}],"sens":[{"k":"BVPS 变化 ±5%","v":"区间 ± 约 ¥2.3"},{"k":"合理 PB 变化 ±0.05 ×","v":"区间 ± 约 ¥2.2"}],"sensNote":"合理 PB 每下调 0.05×，区间整体下移约 ¥2.2；当前 BVPS ¥43.90 是两项敏感度的共同基数。","implied":{"type":"simple","lines":["当前 0.90× PB 隐含市场认为可持续 ROE 只有 <b>10.64%</b>（当前实际 ROE 约 13.4%）。","该读数完全由要求回报率 kₑ 决定：kₑ=8% → 隐含 ROE 7.5%；kₑ=10% → 9.3%；kₑ=11.5% → 10.7%；kₑ=13% → 12.0%。"]}},{"id":"shenghong","name":"胜宏科技 H","code":"02476.HK","currency":"HK$","price":188.4,"priceStr":"HK$188.40","fair":[158.12,193.26],"strict":[98.53,107.66],"axis":[122.63,224.53],"bounds":[142.31,158.12,193.26,212.59],"status":"偏贵","conf":"低","confNote":"盈利预测、利润率与退出估值任一变化都会显著改变合理区间，因此不给出单一目标价。","strictNote":"按 12% / 10% 目标年化回报反推的五年模型区间，与实用区间几乎无重叠。","action":"停止新增；仓位高则减仓复核","actionShort":"停止新增；仓位高则减仓复核","updated":"2026-08-04 收盘","paramsUpdated":"2026-07-31","modelNote":"高增长制造：以预测净利润 × 退出 PE 为主，参数几乎全部是预测值。","nextReport":"中期业绩 · 8 月下旬","calibKey":"PCB 制造分部毛利率与出口收入占比","calib":[{"k":"维持原估值","cond":"毛利率 ≥28% 且出口占比 ≥70%","keep":"2027E 盈利路径、退出 PE 假设不变","upd":"仅更新最近一期实际利润"},{"k":"只更新盈利","cond":"毛利率 25%–28%","keep":"退出 PE 与外推年限不变","upd":"重算 2026E/2027E 净利润与 EPS，区间随盈利同比例移动"},{"k":"完整重估","cond":"毛利率 <25% 或出口收入连续两季下滑","keep":"仅保留退出估值方法","upd":"重估退出 PE、外推年限与情景权重，可靠度与区间宽度同时重设"}],"vol":{"sigma":0.718,"sigmaPct":"71.8%","source":"H股02476.HK仅71个交易日历史（2026-04-21上市至今），样本不足以估计年化波动率；改用同一实体A股300476.SZ的4.6年历史（2022-01-04–2026-08-03，1,109个交易日）已实现波动率作参考","proxy":true},"market":{"windowNote":"H股02476.HK尚无独立覆盖研报；以下引用同一实体A股300476.SZ最近4份研报（2026-04-01起，2026Q1业绩后口径）","ratingWindowNote":"4份研报评级均为买入","ratingCounts":{"买入":4},"consensusEps":9.5,"consensusPe":null,"impliedPrice":null,"targetLow":null,"targetHigh":null,"targetMedian":null,"targetCount":0,"targetWindowNote":"A/H股存在溢折价，不做目标价换算，仅比较每股盈利预期（人民币，集团口径，A/H股对应同一利润池与股数，可直接比较）","diffNote":"分析师2026E每股盈利预期中位数¥9.5（人民币），较我们模型情景基线（¥6.31，对应净利润62亿元）高约51%。我们62亿元本身是2026Q1按季节性外推的保守情景；这个分歧比“估值倍数”更本质——如果市场判断正确，我们模型里“历史中周期参照”“升级后同业锚”这些相对保守的锚点未来可能需要上修。"},"priceShort":"188.4","fairStr":"HK$158 – 193","strictStr":"HK$99 – 108","verdict":"现价 HK$188.40 与两套区间的关系：对 2026E 预测 PE 25.7×，对历史中周期参照利润 PE 66.1×。实用口径与严格口径无重叠（严格上限 HK$108，现价高出约 75%），不宣称存在精确合理价值。","homeParams":[{"k":"2026E 预测利润","v":"≈ 62 亿元","t":"预"},{"k":"历史中周期参照利润","v":"≈ 24.13 亿元","t":"模"}],"params":[{"k":"2026E 预测利润","v":"≈ 62 亿元","t":"预","note":"2026Q1 归母 12.88 亿元按季节性外推"},{"k":"历史中周期参照利润","v":"≈ 24.13 亿元","t":"模","note":"升级前产品结构的历史参照，三口径一致性检查"},{"k":"升级后同业锚","v":"≈ 40.8 亿元","t":"预","note":"沪电股份可比中枢，若产品结构升级为结构性更合适"},{"k":"2025 已实现归母净利","v":"≈ 43.12 亿元","t":"实","note":"2025 年度报告审计数"},{"k":"EV/IC（备考）","v":"7.44 ×","t":"模","note":"已含 H 股 IPO 后资本结构"},{"k":"中性五年 IRR","v":"≈ −1.8%","t":"模","note":"含五年分红与 2031 年终值，不假设估值扩张"}],"sens":[{"k":"2027E EPS 变化 ±5%","v":"区间 ± 约 HK$8.8"},{"k":"退出 PE 变化 ±1 ×","v":"区间 ± 约 HK$8.8"}],"sensNote":"该股两项参数均为预测值，误差易同向发生：2027E EPS −5% 且退出 PE −1×，区间下沿将落到约 HK$142。","implied":{"type":"matrix","intro":"两套口径无重叠——用「盈利口径 × 估值倍数」矩阵替代单一「现价隐含回报」读数：","rows":[{"basis":"2027E 景气延续","ev":"C","eps":8.78,"p18":158,"p20":176,"p22":193,"hl":[false,true,true],"profitYi":74.4},{"basis":"2026E 预测 62亿","ev":"B","eps":7.32,"p18":132,"p20":146,"p22":161,"profitYi":62.0},{"basis":"2025 已实现 43.1亿","ev":"A","eps":5.09,"p18":92,"p20":102,"p22":112,"profitYi":43.12},{"basis":"升级后同业锚 40.8亿","ev":"C","eps":4.82,"p18":87,"p20":96,"p22":106,"profitYi":40.8},{"basis":"历史中周期 24.1亿","ev":"B","eps":2.85,"p18":51,"p20":57,"p22":63,"profitYi":24.13}],"footer":"现价 HK$188.40 只落在最上面一行的 20–22× 区间内。同倍数退出 IRR 12.8%；要拿到 10% 年化，2031 年市场必须给 21.6×。"}}]};
+/* END:FALLBACK_STOCKS */
+
+/* ---- 工具 ---- */
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const pct   = (v,a) => (v - a[0]) / (a[1] - a[0]) * 100;
+const ps    = v => v.toFixed(1) + '%';
+const clamp = v => Math.max(0, Math.min(100, v));
+const fmt = (v, ref) => {
+  const cur = String(ref).indexOf('HK$') === 0 ? 'HK$' : '¥';
+  const n = v >= 100 ? Math.round(v).toLocaleString('en-US') : v.toFixed(1);
+  return cur + n;
+};
+const cap = p => p < 22 ? {l:'0%', t:'0'} : (p > 78 ? {l:'100%', t:'-100%'} : {l:ps(p), t:'-50%'});
+
+/* 对数正态价格分布：中位数=现价（不做方向预测），标准差=σ√T，σ为已实现年化波动率。
+   Abramowitz-Stegun 近似 erf，标准正态CDF精度足够本场景使用。 */
+function erf(x){
+  const sign = x < 0 ? -1 : 1; x = Math.abs(x);
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign * y;
+}
+const Phi = x => 0.5 * (1 + erf(x / Math.SQRT2));
+
+/* T年后价格落在五档（明显低估/合理偏低/合理/偏贵/明显高估）的概率，边界取自 s.bounds（与①同一套边界） */
+function zoneProbs(s, T){
+  const S0 = s.price, sigma = s.vol.sigma;
+  const edges = [null, s.bounds[0], s.bounds[1], s.bounds[2], s.bounds[3], null];
+  const z = x => x === null ? null : Math.log(x / S0) / (sigma * Math.sqrt(T));
+  const cdf = [0, Phi(z(edges[1])), Phi(z(edges[2])), Phi(z(edges[3])), Phi(z(edges[4])), 1];
+  return [0,1,2,3,4].map(i => Math.max(0, cdf[i+1] - cdf[i]));
+}
+
+/* 该股的"计划买入门槛"：招行用实用区间下沿，其余用严格模型区间上限（与叙事口径一致，非通用规则） */
+function buyBarrier(s){
+  return s.id === 'cmb' ? s.fair[0] : s.strict[1];
+}
+
+/* T年内价格至少触达一次买入门槛的概率：反射原理（driftless布朗运动首次通过时间公式）。
+   现价已低于门槛时返回 null，由调用方展示"无需等待"文案而非百分比。 */
+function touchProb(s, T){
+  const barrier = buyBarrier(s);
+  if (barrier >= s.price) return null;
+  const d = Math.log(barrier / s.price);
+  return 2 * Phi(d / (s.vol.sigma * Math.sqrt(T)));
+}
+
+/* ---- 状态 ---- */
+const state = { screen:'list', sel:0, mkt:0, hz:0, data:null, stale:null };
+
+/* ==========================================================================
+   数据装配
+   ========================================================================== */
+function buildMkt(r, i){
+  const ch = MCH[r.lvl];
+  const seg = (on, off) => [0,1,2,3,4].map(z => ({
+    c: ZC[z], o: z === r.lvl ? '1' : '0.2', h: z === r.lvl ? on : off
+  }));
+  return Object.assign({}, r, {
+    i,
+    lvlName: LVL[r.lvl], chBg: ch.bg, chFg: ch.fg, dot: ZC[r.lvl],
+    segs: seg('7px','5px'), segsL: seg('12px','8px'),
+    pctRows: r.pcts.map(p => ({
+      k: p.k, v: p.v.toFixed(1) + '%', w: clamp(p.v) + '%',
+      c: p.v >= 70 ? '#C08A45' : (p.v >= 40 ? '#B9B3A5' : '#245C4E')
+    })),
+    fitBg: r.fitOk ? '#E4EFE9' : '#F6EBDB',
+    fitFg: r.fitOk ? '#245C4E' : '#8A5D22'
+  });
+}
+
+function build(r, i){
+  const a = r.axis, b = r.bounds;
+  const cuts = [a[0], b[0], b[1], b[2], b[3], a[1]];
+  const zones = ZC.map((c, z) => {
+    const w = (cuts[z+1] - cuts[z]) / (a[1] - a[0]) * 100;
+    return { c, k: w >= 15 ? LVL[z] : (w >= 6 ? ZA[z] : ''), w: ps(w) };
+  });
+  const mid = (r.fair[0] + r.fair[1]) / 2;
+  const dev = (r.price - mid) / mid * 100;
+  const st = chipOf(r.status);
+  const cn = CONF[r.conf];
+  const cc = r.conf === '低' ? '#C08A45' : '#245C4E';
+  const loP = pct(b[0], a), hiP = pct(b[3], a);
+  return Object.assign({}, r, {
+    i, zones, dev,
+    pricePct: ps(clamp(pct(r.price, a))),
+    fairPct:  ps(clamp(pct(r.fair[0], a))),
+    fairW:    ps(pct(r.fair[1], a) - pct(r.fair[0], a)),
+    loPct: ps(clamp(loP)), hiPct: ps(clamp(hiP)),
+    loCapL: cap(loP).l, loCapTx: cap(loP).t,
+    hiCapL: cap(hiP).l, hiCapTx: cap(hiP).t,
+    loStr: fmt(b[0], r.priceStr), hiStr: fmt(b[3], r.priceStr),
+    strictLoStr: fmt(r.strict[0], r.priceStr), strictHiStr: fmt(r.strict[1], r.priceStr),
+    devStr: (dev >= 0 ? '+' : '−') + Math.abs(dev).toFixed(1) + '%',
+    devFg: dev >= 0 ? '#8A5D22' : '#245C4E',
+    stBg: st.bg, stFg: st.fg,
+    confDots: [0,1,2].map(k => ({ c: k < cn ? cc : '#E4E0D6' })),
+    homeParams: r.homeParams.map(p => Object.assign({}, p, TAG[p.t])),
+    params:     r.params.map(p => Object.assign({}, p, TAG[p.t])),
+    calibRows:  r.calib.map((c, k) => Object.assign({}, c, CAL[k]))
+  });
+}
+
+/* ==========================================================================
+   片段
+   ========================================================================== */
+
+/* 估值带：五档底色 + 严格区间虚线框（弱化，画在实用区间之下）+ 黑框实用区间 + 黑竖线现价。
+   现价竖线三屏统一：黑芯 1px + 左右各 2px 白边（共 5px），上下各超出色带 5px。
+   size: 'sm'=列表12px（无标注），'lg'=个股页18px（带现价标签与边界刻度）。 */
+const zoneCells = s => s.zones.map(z => `<div style="width:${z.w};background:${z.c};opacity:.55"></div>`).join('');
+const priceLine = s =>
+  `<div style="position:absolute;left:${s.pricePct};top:-5px;bottom:-5px;width:5px;transform:translateX(-2.5px);background:#15181E;border-left:2px solid #fff;border-right:2px solid #fff"></div>`;
+
+/* 严格模型区间在刻度上的几何位置：clamp 到 [0,100]；若可见宽度小于最小可见宽度
+   （含完全落在刻度外的情况），贴边钉出一条最小宽度的虚线框，永远不消失。
+   具体数值不在带内重复标注，由下方「严格模型区间」文字框展示，避免同屏重复同一组数字。 */
+function strictGeom(r){
+  const a = r.axis, MINW = 4;
+  const rawLo = pct(r.strict[0], a), rawHi = pct(r.strict[1], a);
+  let lo = clamp(rawLo), hi = clamp(rawHi);
+  if (hi - lo < MINW){
+    if (rawHi <= 0){ lo = 0; hi = MINW; }
+    else if (rawLo >= 100){ lo = 100 - MINW; hi = 100; }
+    else { const mid = (lo + hi) / 2; lo = Math.max(0, Math.min(100 - MINW, mid - MINW / 2)); hi = lo + MINW; }
+  }
+  return { pct: ps(lo), w: ps(hi - lo) };
+}
+
+function band(s, size, priceLabelText){
+  const lg = size === 'lg';
+  const sg = strictGeom(s);
+  const priceTag = lg ? `<div style="position:relative;height:24px">
+      <div style="position:absolute;left:${s.pricePct};top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="font:600 10.5px/1 'Noto Sans SC';color:#15181E;background:#fff;padding:0 3px;white-space:nowrap">${esc(priceLabelText)}</div>
+        <div style="width:2px;height:9px;background:#15181E"></div>
+      </div>
+    </div>` : '';
+  const boundsRow = lg ? `<div style="display:flex;padding-top:9px">
+      ${s.zones.map(z => `<div style="width:${z.w};font:500 10px/1.5 'Noto Sans SC';color:#6B7280;text-align:center;white-space:nowrap">${esc(z.k)}</div>`).join('')}
+    </div>` : '';
+  return `${priceTag}
+    <div style="position:relative;height:${lg?18:12}px;display:flex;margin:${lg?0:'3px 0'};border-radius:${lg?5:0}px">
+      ${zoneCells(s)}
+      <div style="position:absolute;left:${sg.pct};width:${sg.w};top:0;bottom:0;border:1.5px dashed #7D7261;border-radius:3px"></div>
+      <div style="position:absolute;left:${s.fairPct};width:${s.fairW};top:${lg?'-3px':'-2px'};bottom:${lg?'-3px':'-2px'};border:${lg?'2.5px':'2px'} solid #15181E;border-radius:4px;background:rgba(255,255,255,.3)"></div>
+      ${priceLine(s)}
+    </div>
+    ${boundsRow}`;
+}
+
+function confDots(s, w, h){
+  return s.confDots.map(c => `<span style="width:${w};height:${h};border-radius:3px;background:${c.c}"></span>`).join('');
+}
+
+/* ---- 顶栏 ----
+   常规状态不占屏幕：应用名与"数据截至"routine提示已去掉（与"我的股票"旁的收盘日期重复）。
+   仅在数据抓取失败、页面回退到内嵌快照时显示一条警示——这条不能删，删了就是
+   "静默把旧数据当最新"，违反 SPEC 的硬性要求。 */
+function topBar(){
+  const stale = state.stale;
+  if (!stale) return '';
+  return `<div class="hpad" style="flex:none;padding:8px 22px 0;display:flex;justify-content:flex-end">
+    <span style="font:700 10.5px/1 'Noto Sans SC';color:#8C3F1D;background:#F4E2D8;padding:6px 9px;border-radius:6px;white-space:nowrap">数据未更新 · 使用缓存（截至 ${esc(stale.asOf || '未知')}）</span>
+  </div>`;
+}
+
+/* ==========================================================================
+   页面 1 · 列表（含市场估值温度）
+   ========================================================================== */
+function viewList(){
+  const d = state.data;
+  const markets = d.markets.map(buildMkt);
+  const rows = d.stocks.slice().sort((x,y) => x.dev - y.dev);
+
+  const mCards = markets.map(m => `
+    <div data-act="mkt" data-i="${m.i}" class="mkt-card" style="position:relative;min-width:0;background:#fff;border:1px solid #E1DDD3;border-radius:14px;padding:12px 11px 10px;display:flex;flex-direction:column;gap:9px;cursor:pointer;box-shadow:0 1px 6px rgba(20,24,30,.04)">
+      <span style="position:absolute;top:10px;right:10px;font:400 12px/1 'Noto Sans SC';color:#8B94A3">›</span>
+      <div style="display:flex;flex-direction:column;gap:3px;padding-right:12px">
+        <div style="font:700 14px/1.2 'Noto Sans SC'">${esc(m.name)}</div>
+        <div style="font:400 10px/1.2 'Noto Sans SC';color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.idx)}</div>
+      </div>
+      <div style="display:flex;gap:2px;align-items:flex-end;height:8px">
+        ${m.segs.map(z => `<span style="flex:1;height:${z.h};border-radius:2px;background:${z.c};opacity:${z.o}"></span>`).join('')}
+      </div>
+      <div style="font:700 12px/1.3 'Noto Sans SC';color:${m.chFg}">${esc(m.lvlName)}</div>
+      <div style="font:400 10.5px/1.6 'Noto Sans SC';color:#5A6270;min-height:34px">${esc(m.tiny)}</div>
+    </div>`).join('');
+
+  const sCards = rows.map(s => `
+    <div data-act="detail" data-i="${s.i}" style="background:#fff;border:1px solid #E1DDD3;border-radius:16px;padding:15px 16px;display:flex;flex-direction:column;gap:13px;cursor:pointer;box-shadow:0 1px 6px rgba(20,24,30,.04)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+          <div style="font:700 16px/1.2 'Noto Sans SC';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(100%,180px)">${esc(s.name)}</div>
+          <div style="font:600 11.5px/1 'Noto Sans SC';padding:5px 8px;border-radius:5px;background:${s.stBg};color:${s.stFg};align-self:flex-start">${esc(s.status)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none">
+          <div style="font:600 21px/1 'Source Serif 4',serif;font-variant-numeric:tabular-nums">${esc(s.priceStr)}</div>
+          <div style="font:500 11px/1 'Noto Sans SC';color:${s.devFg};font-variant-numeric:tabular-nums">偏离中枢 ${esc(s.devStr)}</div>
+        </div>
+      </div>
+      ${band(s,'sm')}
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+        <span style="font:400 11.5px/1.4 'Noto Sans SC';color:#6B7280;flex:none">实用合理区间</span>
+        <span style="font:600 13px/1.4 'Source Serif 4',serif;font-variant-numeric:tabular-nums">${esc(s.fairStr)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;border-top:1px solid #F2EFE7;padding-top:11px">
+        <span style="font:500 12px/1.4 'Noto Sans SC';color:#3A414C;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.actionShort)}</span>
+        <span style="font:400 11px/1 'Noto Sans SC';color:#6B7280;white-space:nowrap;flex:none">区间可靠度</span>
+        <span style="display:flex;gap:3px;flex:none">${confDots(s,'12px','4px')}</span>
+        <span style="font:500 11px/1 'Noto Sans SC';color:#6B7280;white-space:nowrap;flex:none">${esc(s.conf)}</span>
+      </div>
+    </div>`).join('');
+
+  return `<div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:fin 200ms ease">
+    <div class="hpad" style="padding:4px 22px 12px;display:flex;flex-direction:column;gap:5px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="font:600 26px/1.2 'Source Serif 4',serif">我的估值</div>
+        <div style="font:400 11.5px/1 'Noto Sans SC';color:#8B94A3">${d.stocks.length} 只 · ${esc(d.stocksAsOf)} 收盘后</div>
+      </div>
+      <div style="font:400 11.5px/1.6 'Noto Sans SC';color:#6B7280">按现价相对合理区间中枢的偏离排序</div>
+    </div>
+    <div class="pane hpad" style="flex:1;overflow-y:auto;padding:2px 22px 30px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="font:700 14.5px/1.2 'Noto Sans SC'">市场估值温度</div>
+        <div class="mkt-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">${mCards}</div>
+      </div>
+      <div style="padding:2px 2px 0;display:flex;flex-direction:column;gap:4px">
+        <div style="font:500 11px/1 'Noto Sans SC';letter-spacing:.14em;color:#8B94A3">我的股票</div>
+      </div>
+      <div class="stock-list">${sCards}</div>
+    </div>
+  </div>`;
+}
+
+/* ==========================================================================
+   页面 2 · 市场估值依据
+   ========================================================================== */
+function viewMarket(){
+  const d = state.data;
+  const m = buildMkt(d.markets[state.mkt], state.mkt);
+
+  const tabs = d.markets.map((r,i) => {
+    const on = i === state.mkt;
+    return `<div data-act="mkttab" data-i="${i}" style="flex:1;text-align:center;padding:9px 0;border-radius:9px;background:${on?'#15181E':'transparent'};color:${on?'#FFFFFF':'#4B535F'};border:1px solid ${on?'#15181E':'#E1DDD3'};font:600 12.5px/1 'Noto Sans SC';cursor:pointer">${esc(r.name)}</div>`;
+  }).join('');
+
+  const flags = [];
+  if (m.divergent) flags.push('PE 与 PB 分位分歧 &gt; 20 个百分点');
+  if (m.weakEarnings) flags.push('盈利口径可能偏弱');
+
+  return `<div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:fin 220ms ease">
+    <div class="hpad" style="flex:none;padding:0 20px 12px;display:flex;align-items:center;gap:11px;border-bottom:1px solid #E1DDD3">
+      <div data-act="list" style="flex:none;height:34px;padding:0 14px 0 10px;border-radius:17px;background:#fff;border:1px solid #E1DDD3;display:flex;align-items:center;gap:5px;cursor:pointer">
+        <span style="font:400 15px/1 'Noto Sans SC';color:#3A414C">‹</span>
+        <span style="font:500 12.5px/1 'Noto Sans SC';color:#3A414C;white-space:nowrap">列表</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+        <div style="font:700 15.5px/1.2 'Noto Sans SC';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.name)} · 估值依据</div>
+        <div style="font:400 10.5px/1.3 'Noto Sans SC';color:#8B94A3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.idx)} · ${esc(m.asOf)} 收盘</div>
+      </div>
+      <div style="flex:none;font:700 11.5px/1 'Noto Sans SC';padding:7px 10px;border-radius:7px;background:${m.chBg};color:${m.chFg};white-space:nowrap">${esc(m.lvlName)}</div>
+    </div>
+
+    <div class="pane hpad" style="flex:1;overflow-y:auto;padding:14px 20px 40px;display:flex;flex-direction:column;gap:13px">
+
+      <div style="display:flex;gap:7px">${tabs}</div>
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:19px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">① 当前判断</div>
+        <div style="display:flex;gap:4px;align-items:center;height:12px">
+          ${m.segsL.map(z => `<span style="flex:1;height:${z.h};border-radius:3px;background:${z.c};opacity:${z.o}"></span>`).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:-6px">
+          <span style="font:400 10px/1.4 'Noto Sans SC';color:#6B7280">明显低估</span>
+          <span style="font:400 10px/1.4 'Noto Sans SC';color:#6B7280">合理</span>
+          <span style="font:400 10px/1.4 'Noto Sans SC';color:#6B7280">明显高估</span>
+        </div>
+        <div style="font:400 13.5px/1.8 'Noto Sans SC';color:#2A303A">${esc(m.verdict)}</div>
+        ${flags.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${flags.map(f =>
+          `<span style="font:500 10px/1 'Noto Sans SC';padding:5px 7px;border-radius:5px;background:#F6EBDB;color:#8A5D22">${f}</span>`).join('')}</div>` : ''}
+      </div>
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:19px 18px;display:flex;flex-direction:column;gap:13px">
+        <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">② 关键数据</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">
+          ${m.key.map(k => `<div style="background:#F7F5F0;border-radius:11px;padding:11px 10px;display:flex;flex-direction:column;gap:5px">
+            <div style="font:400 10.5px/1.3 'Noto Sans SC';color:#5A6270">${esc(k.k)}</div>
+            <div style="font:600 16px/1 'Source Serif 4',serif;font-variant-numeric:tabular-nums">${esc(k.v)}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:19px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">③ 历史分位</div>
+        ${m.pctRows.map(p => `<div style="display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+            <span style="font:400 12.5px/1.4 'Noto Sans SC';color:#4B535F">${esc(p.k)}</span>
+            <span style="font:600 13.5px/1.3 'Source Serif 4',serif;font-variant-numeric:tabular-nums">${esc(p.v)}</span>
+          </div>
+          <div style="height:6px;background:#F2EFE7;border-radius:3px;display:flex;overflow:hidden"><span style="width:${p.w};background:${p.c};opacity:.85"></span></div>
+        </div>`).join('')}
+      </div>
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:19px 18px;display:flex;flex-direction:column;gap:12px">
+        <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">④ 为什么是这一档</div>
+        ${m.why.map(t => `<div style="display:flex;gap:9px;align-items:flex-start">
+          <span style="width:5px;height:5px;border-radius:3px;background:${m.dot};flex:none;margin-top:7px"></span>
+          <span style="font:400 12.5px/1.75 'Noto Sans SC';color:#3A414C;flex:1">${esc(t)}</span>
+        </div>`).join('')}
+        <div style="font:400 11px/1.7 'Noto Sans SC';color:#8B94A3;border-top:1px solid #F2EFE7;padding-top:10px">触发规则：${esc(m.rule)}</div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:19px 18px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">⑤ 与内部正常化模型</div>
+          <div style="font:700 11.5px/1 'Noto Sans SC';padding:6px 9px;border-radius:6px;background:${m.fitBg};color:${m.fitFg};white-space:nowrap">${esc(m.fit)}</div>
+        </div>
+        <div style="font:400 12.5px/1.8 'Noto Sans SC';color:#3A414C">${esc(m.fitNote)}</div>
+      </div>
+
+      ${m.note ? `<div style="border:1px dashed #C08A45;border-radius:12px;padding:13px 14px;font:400 12px/1.75 'Noto Sans SC';color:#8A5D22">${esc(m.note)}</div>` : ''}
+
+      <div style="border:1px solid #EFEBE2;border-radius:14px;padding:15px 16px;display:flex;flex-direction:column;gap:9px">
+        <div style="font:600 12px/1.4 'Noto Sans SC';color:#3A414C">外部数据源</div>
+        ${m.src.map(t => `<div style="font:400 11.5px/1.6 'Noto Sans SC';color:#6B7280">${esc(t)}</div>`).join('')}
+        <div style="font:400 11px/1.7 'Noto Sans SC';color:#6B7280;border-top:1px solid #F2EFE7;padding-top:9px">${esc(d.boundaryNote)}</div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+/* ==========================================================================
+   页面 3 · 个股详情（合并原卡片与详情，含股票切换标签）
+   ========================================================================== */
+function impliedBlock(s){
+  const im = s.implied;
+  if (!im) return '';
+  if (im.type === 'simple'){
+    return `<div style="display:flex;flex-direction:column;gap:11px">
+      ${im.lines.map(l => `<div style="font:400 12.5px/1.8 'Noto Sans SC';color:#3A414C">${l}</div>`).join('')}
+    </div>`;
+  }
+  const head = `<div style="display:flex;gap:6px;padding-bottom:8px;border-bottom:1px solid #F0ECE3">
+      <span style="flex:1.7;font:500 10.5px/1.3 'Noto Sans SC';color:#8B94A3">盈利口径</span>
+      <span style="flex:.7;font:500 10.5px/1.3 'Noto Sans SC';color:#8B94A3;text-align:right">EPS</span>
+      <span style="flex:.8;font:500 10.5px/1.3 'Noto Sans SC';color:#8B94A3;text-align:right">18×</span>
+      <span style="flex:.8;font:500 10.5px/1.3 'Noto Sans SC';color:#8B94A3;text-align:right">20×</span>
+      <span style="flex:.8;font:500 10.5px/1.3 'Noto Sans SC';color:#8B94A3;text-align:right">22×</span>
+    </div>`;
+  const rows = im.rows.map(r => {
+    const hl = r.hl || [false,false,false];
+    const cell = (v,on) => `<span style="flex:.8;font:${on?600:400} 12px/1.4 'Source Serif 4',serif;font-variant-numeric:tabular-nums;text-align:right;color:${on?'#8C3F1D':'#3A414C'}">${v.toLocaleString('en-US')}</span>`;
+    return `<div style="display:flex;gap:6px;align-items:baseline;padding:9px 0;border-bottom:1px solid #F7F5F0">
+      <span style="flex:1.7;font:400 11.5px/1.4 'Noto Sans SC';color:#4B535F">${esc(r.basis)}</span>
+      <span style="flex:.7;font:400 12px/1.4 'Source Serif 4',serif;font-variant-numeric:tabular-nums;text-align:right;color:#6B7280">${r.eps.toFixed(2)}</span>
+      ${cell(r.p18,hl[0])}${cell(r.p20,hl[1])}${cell(r.p22,hl[2])}
+    </div>`;
+  }).join('');
+  return `<div style="display:flex;flex-direction:column;gap:0">
+    <div style="font:400 12px/1.75 'Noto Sans SC';color:#4B535F;padding-bottom:11px">${esc(im.intro)}</div>
+    ${head}${rows}
+    <div style="font:400 11.5px/1.8 'Noto Sans SC';color:#6B7280;padding-top:11px">${esc(im.footer)}</div>
+  </div>`;
+}
+
+function viewDetail(){
+  const stocks = state.data.stocks;
+  const d = stocks[state.sel];
+  const chips = stocks.map((s,i) => {
+    const on = i === state.sel;
+    return `<div data-act="chip" data-i="${i}" style="flex:none;height:28px;padding:0 11px;border-radius:14px;background:${on?'#15181E':'transparent'};color:${on?'#fff':'#4B535F'};border:1px solid ${on?'#15181E':'#E1DDD3'};font:500 11.5px/28px 'Noto Sans SC';cursor:pointer;white-space:nowrap">${esc(s.name)}</div>`;
+  }).join('');
+
+  return `<div style="flex:1;display:flex;flex-direction:column;min-height:0;animation:fin 200ms ease">
+    <div class="hpad dnarrow" style="flex:none;padding:0 20px 11px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid #E1DDD3">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div data-act="list" style="flex:none;height:34px;padding:0 14px 0 10px;border-radius:17px;background:#fff;border:1px solid #E1DDD3;display:flex;align-items:center;gap:5px;cursor:pointer">
+          <span style="font:400 15px/1 'Noto Sans SC';color:#3A414C">‹</span>
+          <span style="font:500 12.5px/1 'Noto Sans SC';color:#3A414C;white-space:nowrap">列表</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+          <div style="font:700 16px/1.2 'Noto Sans SC';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.name)}</div>
+          <div style="font:400 10.5px/1.3 'Noto Sans SC';color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.code)} · ${esc(d.priceStr)}</div>
+        </div>
+        <div style="flex:none;font:700 11.5px/1 'Noto Sans SC';padding:7px 10px;border-radius:7px;background:${d.stBg};color:${d.stFg};white-space:nowrap">${esc(d.status)}</div>
+      </div>
+      <div class="pane" style="display:flex;gap:6px;overflow-x:auto">${chips}</div>
+    </div>
+
+    <div id="detailPane" class="pane hpad dnarrow" style="flex:1;overflow-y:auto;padding:16px 20px 40px;display:flex;flex-direction:column;gap:14px">
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;gap:16px">
+        <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">① 结论与行动</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span style="font:400 11px/1 'Noto Sans SC';color:#8B94A3">当前价格</span>
+            <span style="font:600 34px/1 'Source Serif 4',serif;font-variant-numeric:tabular-nums">${esc(d.priceStr)}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <span style="font:400 11px/1 'Noto Sans SC';color:#8B94A3">偏离区间中枢</span>
+            <span style="font:600 20px/1 'Source Serif 4',serif;font-variant-numeric:tabular-nums;color:${d.devFg}">${esc(d.devStr)}</span>
+          </div>
+        </div>
+        <div style="font:400 14px/1.8 'Noto Sans SC';color:#2A303A">${esc(d.verdict)}</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          ${band(d,'lg','现价 ' + d.priceShort)}
+          <div style="position:relative;height:26px;margin-top:5px">
+            <div style="position:absolute;left:${d.loPct};top:0;width:1px;height:6px;background:#8B94A3"></div>
+            <div style="position:absolute;left:${d.hiPct};top:0;width:1px;height:6px;background:#8B94A3"></div>
+            <div style="position:absolute;left:${d.loCapL};top:8px;transform:translateX(${d.loCapTx});font:400 10px/1.3 'Noto Sans SC';color:#6B7280;white-space:nowrap">明显低估上限 ${esc(d.loStr)}</div>
+            <div style="position:absolute;left:${d.hiCapL};top:8px;transform:translateX(${d.hiCapTx});font:400 10px/1.3 'Noto Sans SC';color:#6B7280;white-space:nowrap">偏贵上限 ${esc(d.hiStr)}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:11px;background:#F7F5F0;border-radius:12px;padding:14px">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+            <span style="display:flex;align-items:center;gap:7px"><span style="font:600 12.5px/1.4 'Noto Sans SC';color:#15181E">实用合理区间</span><span style="width:20px;height:10px;border:2px solid #15181E;border-radius:3px;flex:none"></span></span>
+            <span style="font:600 13.5px/1.4 'Source Serif 4',serif;font-variant-numeric:tabular-nums">${esc(d.fairStr)}</span>
+          </div>
+          <div style="font:400 11.5px/1.6 'Noto Sans SC';color:#8B94A3;margin-top:-5px">可持续盈利 × 合理估值倍数 × 市场交易惯例</div>
+          <div style="height:1px;background:#E7E3D9"></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+            <span style="display:flex;align-items:center;gap:7px"><span style="font:600 12.5px/1.4 'Noto Sans SC';color:#5A6270">严格模型区间</span><span style="width:20px;height:10px;border:1.5px dashed #7D7261;border-radius:3px;flex:none"></span></span>
+            <span style="font:600 13.5px/1.4 'Source Serif 4',serif;font-variant-numeric:tabular-nums;color:#5A6270">${esc(d.strictStr)}</span>
+          </div>
+          <div style="font:400 11.5px/1.6 'Noto Sans SC';color:#8B94A3;margin-top:-5px">${esc(d.strictNote)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;border:1px solid #EFEBE2;border-radius:12px;padding:13px 14px">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="font:600 12.5px/1 'Noto Sans SC';color:#3A414C">区间可靠度</span>
+            <span style="display:flex;gap:3px">${confDots(d,'18px','5px')}</span>
+            <span style="font:700 13px/1 'Noto Sans SC'">${esc(d.conf)}</span>
+          </div>
+          <div style="font:400 12px/1.7 'Noto Sans SC';color:#6B7280">${esc(d.confNote)}</div>
+        </div>
+        <div style="background:#15181E;border-radius:12px;padding:14px 15px;display:flex;flex-direction:column;gap:5px">
+          <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.14em;color:#9AA1AC">当前行动提示</div>
+          <div style="font:500 14px/1.6 'Noto Sans SC';color:#fff">${esc(d.action)}</div>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">② 关键参数</div>
+          <div style="font:400 10.5px/1 'Noto Sans SC';color:#6B7280">${esc(d.paramsUpdated)}</div>
+        </div>
+        <div style="font:400 11.5px/1.6 'Noto Sans SC';color:#8B94A3;margin-top:-6px">${esc(d.modelNote)}</div>
+        ${d.params.map(p => `<div style="display:flex;flex-direction:column;gap:5px;padding:11px 0;border-top:1px solid #F0ECE3">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <span style="font:500 13.5px/1.4 'Noto Sans SC';color:#3A414C">${esc(p.k)}</span>
+            <span style="font:600 15px/1.3 'Source Serif 4',serif;font-variant-numeric:tabular-nums;white-space:nowrap">${esc(p.v)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+            <span style="font:500 10px/1 'Noto Sans SC';padding:4px 6px;border-radius:4px;background:${p.tBg};color:${p.tFg};border:${p.tBd}">${esc(p.t)}</span>
+            <span style="font:400 11px/1.5 'Noto Sans SC';color:#6B7280">${esc(p.note)}</span>
+          </div>
+        </div>`).join('')}
+      </div>
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;gap:16px">
+        <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">③ 什么会改变这个判断</div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+            <div style="font:700 13.5px/1.4 'Noto Sans SC'">下季财报校准</div>
+            <div style="font:400 10.5px/1 'Noto Sans SC';color:#6B7280">${esc(d.nextReport)}</div>
+          </div>
+          <div style="font:400 11.5px/1.7 'Noto Sans SC';color:#8B94A3;margin-top:-5px">${esc(d.calibKey)}落在哪一档，决定模型改动的幅度。</div>
+          ${d.calibRows.map(c => `<div style="border:1px solid ${c.bd};border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:10px;background:${c.bg}">
+            <div style="display:flex;align-items:baseline;gap:9px">
+              <span style="width:8px;height:8px;border-radius:4px;background:${c.dot};flex:none"></span>
+              <span style="font:700 13px/1.3 'Noto Sans SC';color:${c.fg};flex:none">${esc(c.k)}</span>
+              <span style="font:500 11.5px/1.4 'Noto Sans SC';color:#4B535F;margin-left:auto;text-align:right;font-variant-numeric:tabular-nums">${esc(c.cond)}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid rgba(21,24,30,.07);padding-top:10px">
+              <div style="display:flex;gap:9px"><span style="font:500 11px/1.6 'Noto Sans SC';color:#8B94A3;width:40px;flex:none">维持</span><span style="font:400 11.5px/1.6 'Noto Sans SC';color:#4B535F;flex:1">${esc(c.keep)}</span></div>
+              <div style="display:flex;gap:9px"><span style="font:500 11px/1.6 'Noto Sans SC';color:#8B94A3;width:40px;flex:none">更新</span><span style="font:400 11.5px/1.6 'Noto Sans SC';color:#4B535F;flex:1">${esc(c.upd)}</span></div>
+            </div>
+          </div>`).join('')}
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:11px;border-top:1px solid #F0ECE3;padding-top:15px">
+          <div style="font:700 13.5px/1.4 'Noto Sans SC'">估值敏感度</div>
+          ${d.sens.map(x => `<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <span style="font:400 12.5px/1.6 'Noto Sans SC';color:#4B535F;flex:1">${esc(x.k)}</span>
+            <span style="font:600 13px/1.4 'Source Serif 4',serif;font-variant-numeric:tabular-nums;white-space:nowrap">${esc(x.v)}</span>
+          </div>`).join('')}
+          <div style="font:400 11.5px/1.7 'Noto Sans SC';color:#8B94A3">${esc(d.sensNote)}</div>
+        </div>
+
+        ${d.conf === '低' ? `<div style="border:1px dashed #C08A45;border-radius:12px;padding:13px 14px;font:700 12px/1.6 'Noto Sans SC';color:#8A5D22">可靠度低 · 以上面 ① 的两套区间替代单一目标价</div>` : ''}
+      </div>
+
+      <div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;gap:15px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+          <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">④ 现价隐含什么</div>
+          <div style="font:400 10.5px/1 'Noto Sans SC';color:#6B7280">反推口径</div>
+        </div>
+        ${impliedBlock(d)}
+        <div style="font:400 11px/1.7 'Noto Sans SC';color:#6B7280;border-top:1px solid #F0ECE3;padding-top:11px">本体系不跟随机构目标价：这里回答的是「现价已经假设了什么」，不是「别人认为该值多少」。</div>
+      </div>
+
+      ${probBlock(d)}
+      ${marketBlock(d)}
+
+    </div>
+  </div>`;
+}
+
+/* ==========================================================================
+   ⑤ 价格区间概率：对数正态模型，σ取真实已实现波动率，无方向漂移假设
+   ========================================================================== */
+function probBlock(d){
+  const T = [1,2,3,5][state.hz || 0];
+  const probs = zoneProbs(d, T);
+  const touch = touchProb(d, T);
+  const barrier = buyBarrier(d);
+  const barrierLabel = d.id === 'cmb' ? '实用合理区间下沿' : '严格模型区间上限';
+  const barrierStr = fmt(barrier, d.priceStr);
+
+  const tabs = [1,2,3,5].map((h,i) => {
+    const on = i === (state.hz || 0);
+    return `<div data-act="hz" data-i="${i}" style="flex:1;text-align:center;padding:8px 0;border-radius:9px;background:${on?'#15181E':'transparent'};color:${on?'#fff':'#4B535F'};border:1px solid ${on?'#15181E':'#E1DDD3'};font:600 12.5px/1 'Noto Sans SC';cursor:pointer">${h}年</div>`;
+  }).join('');
+
+  const bar = probs.map((p,z) => `<div style="width:${(p*100).toFixed(1)}%;background:${ZC[z]};opacity:.72"></div>`).join('');
+  const rows = probs.map((p,z) => {
+    const pct = p * 100;
+    const isMax = p === Math.max(...probs);
+    return `<div style="display:flex;align-items:center;gap:9px">
+      <span style="width:8px;height:8px;border-radius:2px;background:${ZC[z]};flex:none"></span>
+      <span style="font:400 12px/1.4 'Noto Sans SC';color:#3A414C;width:62px;flex:none">${LVL[z]}</span>
+      <span style="flex:1;height:6px;background:#F2EFE7;border-radius:3px;overflow:hidden;display:flex"><span style="width:${Math.max(pct*2.2,3)}%;background:${ZC[z]};opacity:.72"></span></span>
+      <span style="font-weight:${isMax?700:500};font-size:12.5px;line-height:1.3;font-family:'Source Serif 4',serif;font-variant-numeric:tabular-nums;width:44px;text-align:right;flex:none">${pct.toFixed(0)}%</span>
+    </div>`;
+  }).join('');
+
+  const touchBox = touch !== null
+    ? `<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+        <div style="font:500 12px/1.4 'Noto Sans SC';color:#9AA1AC;flex:1">${T}年内<b style="color:#fff">触达</b>买入门槛（${barrierLabel} ${barrierStr}）的概率</div>
+        <div style="font:600 20px/1 'Source Serif 4',serif;color:#9FD8C4;font-variant-numeric:tabular-nums;flex:none">${(touch*100).toFixed(0)}%</div>
+      </div>
+      <div style="font:400 11px/1.6 'Noto Sans SC';color:#8B94A3">期间任一时点触达即算，与上方「期末落点」是两回事，随年限增加而上升。</div>`
+    : `<div style="font:500 13px/1.6 'Noto Sans SC';color:#fff">现价已低于计划买入门槛（${barrierLabel} ${barrierStr}），无需等待触达。</div>`;
+
+  return `<div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;gap:15px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+      <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">⑤ 价格区间概率</div>
+      <div style="font:400 10.5px/1 'Noto Sans SC';color:#6B7280">对数正态模型</div>
+    </div>
+    <div style="font:400 12px/1.7 'Noto Sans SC';color:#4B535F;margin-top:-6px">不预测涨跌方向：中位数取现价，宽度由已实现年化波动率 ${esc(d.vol.sigmaPct)} 决定，随年限 √T 扩大。</div>
+    <div style="display:flex;gap:7px">${tabs}</div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font:700 13px/1.4 'Noto Sans SC'">${T}年后落点概率</div>
+      <div style="display:flex;height:16px;border-radius:4px;overflow:hidden">${bar}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${rows}</div>
+    </div>
+    <div style="background:#15181E;border-radius:12px;padding:14px 15px;display:flex;flex-direction:column;gap:9px">${touchBox}</div>
+    <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid #F0ECE3;padding-top:13px">
+      <div style="font:600 12px/1.4 'Noto Sans SC';color:#3A414C">计算依据</div>
+      <div style="font:400 11.5px/1.8 'Noto Sans SC';color:#6B7280">${esc(d.vol.source)}。假设对数收益率服从正态分布、无方向漂移；五档边界与①一致，不随年限调整——年限越长两端概率同时上升，是模型的正常特征，不是矛盾。</div>
+    </div>
+  </div>`;
+}
+
+/* ==========================================================================
+   ⑥ 市场观点：卖方研报一致预期 vs 我们自己的两套区间
+   ========================================================================== */
+function marketBlock(d){
+  const m = d.market;
+  const ratingRow = Object.entries(m.ratingCounts).map(([k,v]) =>
+    `<span style="font:500 11px/1 'Noto Sans SC';padding:5px 8px;border-radius:6px;background:#F2EFE7;color:#3A414C">${esc(k)} ${v}</span>`).join('');
+
+  let compareBlock;
+  if (m.targetLow){
+    // 有公开目标价（茅台）：两条对比条，同一刻度
+    const lo = Math.min(d.axis[0], m.targetLow), hi = Math.max(d.axis[1], m.targetHigh);
+    const cp = x => ps(clamp((x - lo) / (hi - lo) * 100));
+    compareBlock = `<div style="display:flex;flex-direction:column;gap:13px">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;justify-content:space-between"><span style="font:600 12px/1 'Noto Sans SC'">我们的实用合理区间</span><span style="font:600 12px/1 'Noto Sans SC';font-variant-numeric:tabular-nums">${esc(d.fairStr)}</span></div>
+        <div style="position:relative;height:12px;background:#F0ECE3;border-radius:6px">
+          <div style="position:absolute;left:${cp(d.fair[0])};width:${ps(clamp((d.fair[1]-lo)/(hi-lo)*100)-clamp((d.fair[0]-lo)/(hi-lo)*100))};top:0;bottom:0;background:#3A414C;border-radius:6px"></div>
+          <div style="position:absolute;left:${cp(d.price)};top:-3px;bottom:-3px;width:3px;transform:translateX(-1.5px);background:#15181E;border-left:1px solid #fff;border-right:1px solid #fff"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;justify-content:space-between"><span style="font:600 12px/1 'Noto Sans SC';color:#6B7280">市场公开目标价（${m.targetCount}份）</span><span style="font:600 12px/1 'Noto Sans SC';color:#6B7280;font-variant-numeric:tabular-nums">${esc(fmt(m.targetLow,d.priceStr))+' – '+esc(fmt(m.targetHigh,d.priceStr))}</span></div>
+        <div style="position:relative;height:12px;background:#F0ECE3;border-radius:6px">
+          <div style="position:absolute;left:${cp(m.targetLow)};width:${ps(clamp((m.targetHigh-lo)/(hi-lo)*100)-clamp((m.targetLow-lo)/(hi-lo)*100))};top:0;bottom:0;background:repeating-linear-gradient(45deg,#B9B3A5,#B9B3A5 3px,#CFCABC 3px,#CFCABC 6px);border-radius:6px"></div>
+          <div style="position:absolute;left:${cp(d.price)};top:-3px;bottom:-3px;width:3px;transform:translateX(-1.5px);background:#15181E;border-left:1px solid #fff;border-right:1px solid #fff"></div>
+        </div>
+      </div>
+      <div style="font:400 10.5px/1 'Noto Sans SC';color:#6B7280">竖线为现价 · 两条轴刻度一致 · 隐含一致预期(EPS×PE中位数)约 ${esc(fmt(m.impliedPrice, d.priceStr))}</div>
+    </div>`;
+  } else if (m.impliedPrice){
+    // 无公开目标价，只有隐含一致预期（招行）：单条对比 我们实用区间 vs 隐含一致预期点位
+    const lo = Math.min(d.axis[0], m.impliedPrice*0.9), hi = Math.max(d.axis[1], m.impliedPrice*1.1);
+    const cp = x => ps(clamp((x - lo) / (hi - lo) * 100));
+    compareBlock = `<div style="display:flex;flex-direction:column;gap:13px">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;justify-content:space-between"><span style="font:600 12px/1 'Noto Sans SC'">我们的实用合理区间</span><span style="font:600 12px/1 'Noto Sans SC';font-variant-numeric:tabular-nums">${esc(d.fairStr)}</span></div>
+        <div style="position:relative;height:12px;background:#F0ECE3;border-radius:6px">
+          <div style="position:absolute;left:${cp(d.fair[0])};width:${ps(clamp((d.fair[1]-lo)/(hi-lo)*100)-clamp((d.fair[0]-lo)/(hi-lo)*100))};top:0;bottom:0;background:#3A414C;border-radius:6px"></div>
+          <div style="position:absolute;left:${cp(d.price)};top:-3px;bottom:-3px;width:3px;transform:translateX(-1.5px);background:#15181E;border-left:1px solid #fff;border-right:1px solid #fff"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;justify-content:space-between"><span style="font:600 12px/1 'Noto Sans SC';color:#6B7280">市场隐含一致预期</span><span style="font:600 12px/1 'Noto Sans SC';color:#6B7280;font-variant-numeric:tabular-nums">≈ ${esc(fmt(m.impliedPrice, d.priceStr))}</span></div>
+        <div style="position:relative;height:12px;background:#F0ECE3;border-radius:6px">
+          <div style="position:absolute;left:${cp(m.impliedPrice-1)};width:${ps(clamp((m.impliedPrice+1-lo)/(hi-lo)*100)-clamp((m.impliedPrice-1-lo)/(hi-lo)*100))};top:0;bottom:0;background:repeating-linear-gradient(45deg,#B9B3A5,#B9B3A5 3px,#CFCABC 3px,#CFCABC 6px);border-radius:6px"></div>
+          <div style="position:absolute;left:${cp(d.price)};top:-3px;bottom:-3px;width:3px;transform:translateX(-1.5px);background:#15181E;border-left:1px solid #fff;border-right:1px solid #fff"></div>
+        </div>
+      </div>
+      <div style="font:400 10.5px/1 'Noto Sans SC';color:#6B7280">竖线为现价 · 隐含一致预期 = 分析师EPS预测中位数 × PE假设中位数；${esc(m.targetWindowNote)}</div>
+    </div>`;
+  } else {
+    // 无可比目标价（胜宏）：只比每股盈利预期
+    compareBlock = `<div style="display:flex;flex-direction:column;gap:10px;background:#F7F5F0;border-radius:12px;padding:14px">
+      <div style="display:flex;justify-content:space-between;gap:12px"><span style="font:400 12.5px/1.4 'Noto Sans SC';color:#6B7280">分析师2026E每股盈利预期（人民币，中位数）</span><span style="font:600 12.5px/1.4 'Noto Sans SC'">¥${m.consensusEps.toFixed(2)}</span></div>
+      <div style="height:1px;background:#E7E3D9"></div>
+      <div style="display:flex;justify-content:space-between;gap:12px"><span style="font:400 12.5px/1.4 'Noto Sans SC';color:#6B7280">我们模型2026E EPS假设</span><span style="font:600 12.5px/1.4 'Noto Sans SC'">¥6.31</span></div>
+      <div style="height:1px;background:#E7E3D9"></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><span style="font:400 12.5px/1.4 'Noto Sans SC';color:#6B7280">差异</span><span style="font:700 12px/1 'Noto Sans SC';padding:6px 9px;border-radius:6px;background:#F6EBDB;color:#8A5D22">市场高约51%</span></div>
+      <div style="font:400 10.5px/1.6 'Noto Sans SC';color:#8B94A3">${esc(m.targetWindowNote)}</div>
+    </div>`;
+  }
+
+  let multipleBlock = '';
+  if (m.mktMultiple){
+    const STANCE = {
+      '基本一致': {bg:'#E4EFE9', fg:'#245C4E'},
+      '更乐观':   {bg:'#F6EBDB', fg:'#8A5D22'},
+      '明显更乐观': {bg:'#F4E2D8', fg:'#8C3F1D'},
+      '更保守':   {bg:'#EDE9E3', fg:'#5A6270'}
+    }[m.stance] || {bg:'#F0ECE3', fg:'#4B535F'};
+    multipleBlock = `<div style="display:flex;flex-direction:column;gap:10px;background:#F7F5F0;border-radius:12px;padding:14px">
+      <div style="display:flex;justify-content:space-between;gap:12px"><span style="font:400 12.5px/1.4 'Noto Sans SC';color:#6B7280">市场通常采用</span><span style="font:600 12.5px/1.4 'Noto Sans SC'">${esc(m.mktMultiple)}</span></div>
+      <div style="height:1px;background:#E7E3D9"></div>
+      <div style="display:flex;justify-content:space-between;gap:12px"><span style="font:400 12.5px/1.4 'Noto Sans SC';color:#6B7280">我们采用</span><span style="font:600 12.5px/1.4 'Noto Sans SC'">${esc(m.ourMultiple)}</span></div>
+      <div style="height:1px;background:#E7E3D9"></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><span style="font:400 12.5px/1.4 'Noto Sans SC';color:#6B7280">相对我们</span><span style="font:700 12px/1 'Noto Sans SC';padding:6px 9px;border-radius:6px;background:${STANCE.bg};color:${STANCE.fg}">${esc(m.stance)}</span></div>
+    </div>`;
+  }
+
+  return `<div style="background:#fff;border:1px solid #E1DDD3;border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;gap:15px">
+    <div style="font:500 10.5px/1 'Noto Sans SC';letter-spacing:.16em;color:#8B94A3">⑥ 市场观点</div>
+    <div style="font:400 11.5px/1.6 'Noto Sans SC';color:#6B7280">${esc(m.windowNote)}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${ratingRow}<span style="font:400 11px/1.6 'Noto Sans SC';color:#8B94A3">·${esc(m.ratingWindowNote)}</span></div>
+    ${compareBlock}
+    ${multipleBlock}
+    <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid #F0ECE3;padding-top:13px">
+      <div style="font:600 12.5px/1.4 'Noto Sans SC'">差异主要来自</div>
+      <div style="font:400 12.5px/1.8 'Noto Sans SC';color:#4B535F">${esc(m.diffNote)}</div>
+    </div>
+  </div>`;
+}
+
+/* ==========================================================================
+   渲染与交互
+   ========================================================================== */
+function render(){
+  const app = document.getElementById('app');
+  if (!state.data){
+    app.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;font:400 12.5px/1.8 'Noto Sans SC';color:#6B7280">正在加载数据…</div>`;
+    return;
+  }
+  let body;
+  if (state.screen === 'list')        body = viewList();
+  else if (state.screen === 'market') body = viewMarket();
+  else                                body = viewDetail();
+  app.innerHTML = topBar() + body;
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.getAttribute('data-act');
+  const i = parseInt(el.getAttribute('data-i'), 10);
+  if (act === 'mkt' || act === 'mkttab'){ state.screen = 'market'; state.mkt = i; render(); }
+  else if (act === 'list'){ state.screen = 'list'; render(); }
+  else if (act === 'detail'){ state.screen = 'detail'; state.sel = i; render(); }
+  else if (act === 'chip'){
+    state.sel = i; render();
+    const p = document.getElementById('detailPane');
+    if (p) p.scrollTop = 0;
+  }
+  else if (act === 'hz'){ state.hz = i; render(); }
+});
+
+/* ==========================================================================
+   数据加载：fetch 成功 → 真实数据；失败 → FALLBACK 并标记「数据未更新」
+   ========================================================================== */
+async function loadJSON(path){
+  const res = await fetch(path, {cache:'no-store'});
+  if (!res.ok) throw new Error(path + ' HTTP ' + res.status);
+  return res.json();
+}
+
+async function boot(){
+  let mkt = null, stk = null, stale = null, reasons = [];
+
+  try { mkt = await loadJSON('./data/market_temperature.json'); }
+  catch (err){ reasons.push('市场温度：' + err.message); }
+
+  // meta 里若标记 stale，说明最近一次抓取失败、JSON 是旧的，必须提示。
+  if (mkt){
+    try {
+      const meta = await loadJSON('./data/market_temperature.meta.json');
+      if (meta && meta.stale) reasons.push('市场温度最近一次抓取失败：' + (meta.reason || '原因未记录'));
+    } catch (err){ /* meta 缺失不视为失败 */ }
+  }
+
+  try { stk = await loadJSON('./data/stocks.json'); }
+  catch (err){ reasons.push('个股：' + err.message); }
+
+  if (!mkt){ mkt = FALLBACK_MARKET; }
+  if (!stk){ stk = FALLBACK_STOCKS; }
+  if (!mkt || !stk){
+    document.getElementById('app').innerHTML =
+      `<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px;text-align:center;font:400 12.5px/1.8 'Noto Sans SC';color:#8C3F1D">数据文件与内嵌快照都不可用，无法渲染。<br>请先运行 build_mobile_dashboard.py 与 update_market_temperature.py。</div>`;
+    return;
+  }
+  if (reasons.length) stale = { asOf: mkt.asOfDate, reasons };
+
+  state.data = {
+    asOfDate: mkt.asOfDate,
+    stocksAsOf: (stk.asOfDate || '').slice(5),
+    boundaryNote: mkt.boundaryNote,
+    markets: mkt.markets,
+    stocks: stk.stocks.map(build)
+  };
+  state.stale = stale;
+  render();
+}
+
+render();
+boot();
+</script>
+</body>
+</html>
