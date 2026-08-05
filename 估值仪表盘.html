@@ -790,7 +790,13 @@ document.addEventListener('click', e => {
     const p = document.getElementById('detailPane');
     if (p) p.scrollTop = 0;
   }
-  else if (act === 'hz'){ state.hz = i; render(); }
+  else if (act === 'hz'){
+    const p = document.getElementById('detailPane');
+    const st = p ? p.scrollTop : 0;
+    state.hz = i; render();
+    const p2 = document.getElementById('detailPane');
+    if (p2) p2.scrollTop = st;
+  }
 });
 
 /* ==========================================================================
