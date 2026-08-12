@@ -1,9 +1,7 @@
 {
   "stale": false,
-  "asOfDate": "2026-08-10",
-  "fetchedAt": "2026-08-11T16:16:30+08:00",
-  "warnings": [
-    "A股.pb_pct 抓取值 57.5200 相对核验快照 52.8400 偏离 8.9%，结论文案需复核"
-  ],
+  "asOfDate": "2026-08-11",
+  "fetchedAt": "2026-08-12T16:17:03+08:00",
+  "warnings": [],
   "reason": null
 }
