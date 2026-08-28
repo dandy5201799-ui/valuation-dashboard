@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>缠论看盘工具</title>
+<meta name="theme-color" content="#111827">
+<style>
+:root {
+  color-scheme: light;
+  --ink: #172033;
+  --muted: #647184;
+  --line: #d8dee8;
+  --panel: #ffffff;
+  --bg: #f3f5f8;
+  --soft: #eef2f7;
+  --red: #d93448;
+  --green: #148a5b;
+  --blue: #2563eb;
+  --amber: #b7791f;
+  --violet: #6d5bd0;
+  --shadow: 0 14px 34px rgba(30, 41, 59, 0.10);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+button, input, select, textarea { font: inherit; }
+button {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 8px;
+  cursor: pointer;
+}
+button:hover { border-color: #aeb8c8; }
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+}
+.sidebar {
+  background: #111827;
+  color: #f8fafc;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.brand h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+.brand span {
+  color: #9ca3af;
+  font-size: 13px;
+}
+.control-block {
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding-top: 16px;
+}
+.control-block h2 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #cbd5e1;
+  font-weight: 650;
+}
+.field {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+.field label {
+  color: #aeb8c8;
+  font-size: 12px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 9px 10px;
+  outline: none;
+}
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.55;
+}
+.field input::file-selector-button {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 9px;
+  margin-right: 10px;
+  color: #111827;
+  background: #e5e7eb;
+}
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #cbd5e1;
+  font-size: 13px;
+  margin: 9px 0;
+}
+.check-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #f8fafc;
+}
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.segmented button {
+  padding: 8px 6px;
+  font-size: 13px;
+  color: #cbd5e1;
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+}
+.segmented button.active {
+  color: #111827;
+  background: #f8fafc;
+}
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.actions button {
+  padding: 10px 8px;
+  font-weight: 700;
+}
+.primary {
+  background: #f8fafc;
+  color: #111827;
+}
+.secondary {
+  background: rgba(255,255,255,0.08);
+  color: #f8fafc;
+  border-color: rgba(255,255,255,0.15);
+}
+.note {
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.main {
+  min-width: 0;
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+}
+.topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) repeat(4, minmax(110px, 0.35fr));
+  gap: 12px;
+}
+.status-card, .panel, .metric {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.status-card {
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+.ticker {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ticker h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 0;
+}
+.ticker small { color: var(--muted); }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3343a4;
+  font-weight: 750;
+  font-size: 12px;
+}
+.status-card p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.6;
+}
+.metric {
+  padding: 14px;
+  display: grid;
+  align-content: space-between;
+  min-height: 102px;
+}
+.metric span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.metric strong {
+  font-size: 23px;
+  letter-spacing: 0;
+}
+.metric em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+.chart-panel {
+  padding: 14px;
+  min-width: 0;
+}
+.chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.chart-head h2, .panel h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.legend i {
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+canvas {
+  width: 100%;
+  height: 520px;
+  display: block;
+  background: linear-gradient(#ffffff, #fbfcfe);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.panel {
+  padding: 16px;
+  min-width: 0;
+}
+.panel h2 {
+  margin-bottom: 12px;
+}
+.list {
+  display: grid;
+  gap: 10px;
+}
+.item {
+  border: 1px solid var(--line);
+  background: #fbfcfe;
+  border-radius: 8px;
+  padding: 11px;
+}
+.item strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+.item p {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.scenario {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.scenario b {
+  font-size: 13px;
+  color: #0f172a;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table th, .table td {
+  border-bottom: 1px solid var(--line);
+  padding: 9px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+.table th {
+  color: var(--muted);
+  font-weight: 650;
+}
+.pill {
+  display: inline-flex;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.pill.buy { color: var(--green); background: #e9f8f1; }
+.pill.sell { color: var(--red); background: #fdecef; }
+.pill.wait { color: var(--amber); background: #fff6dd; }
+.pill.hold { color: var(--blue); background: #eaf1ff; }
+.footer {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 1120px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .topbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .status-card { grid-column: 1 / -1; }
+  .grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .main, .sidebar { padding: 14px; }
+  .topbar { grid-template-columns: 1fr; }
+  .actions { grid-template-columns: 1fr; }
+  canvas { height: 430px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div>
+        <h1>缠论看盘工具</h1>
+        <span>分型 · 笔 · 中枢 · 背驰 · 买卖点</span>
+      </div>
+    </div>
+
+    <section class="control-block">
+      <h2>标的与级别</h2>
+      <div class="field">
+        <label for="symbolInput">股票名称 / 代码</label>
+        <input id="symbolInput" value="招商银行 600036">
+      </div>
+      <div class="field">
+        <label>分析级别</label>
+        <div class="segmented" id="levelButtons">
+          <button data-level="日线" class="active">日线</button>
+          <button data-level="30分钟">30分</button>
+          <button data-level="5分钟">5分</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="styleSelect">操作目标</label>
+        <select id="styleSelect">
+          <option value="position">建仓 / 加仓择时</option>
+          <option value="swing">波段持有 / 减仓</option>
+          <option value="t">日内做 T</option>
+          <option value="defense">高估防守</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="control-block">
+      <h2>估值约束</h2>
+      <div class="field">
+        <label for="valuationSelect">估值位置</label>
+        <select id="valuationSelect">
+          <option value="cheap">严格区间内或偏低</option>
+          <option value="fair" selected>实用区间中部</option>
+          <option value="expensive">高于实用区间</option>
+          <option value="unknown">未知 / 只看结构</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="riskInput">单次 T 仓位比例</label>
+        <input id="riskInput" type="number" min="5" max="50" step="5" value="20">
+      </div>
+    </section>
+
+    <section class="control-block">
+      <h2>缠论规则</h2>
+      <label class="check-row"><input id="mergeIncluded" type="checkbox" checked> 先处理包含关系</label>
+      <label class="check-row"><input id="strictPens" type="checkbox" checked> 严格笔：端点必须是区间极值</label>
+      <label class="check-row"><input id="extendCenters" type="checkbox" checked> 中枢延伸直到有效离开</label>
+      <p class="note">完整链路：原始 K 线 → 标准 K 线 → 分型 → 笔 → 线段 → 中枢 → 背驰 → 三类买卖点。</p>
+    </section>
+
+    <section class="control-block">
+      <h2>导入行情</h2>
+      <div class="field">
+        <label for="csvFile">CSV 字段：date, open, high, low, close, volume</label>
+        <input id="csvFile" type="file" accept=".csv,text/csv">
+      </div>
+      <div class="actions">
+        <button class="primary" id="analyzeBtn">重新分析</button>
+        <button class="secondary" id="sampleBtn">载入样例</button>
+      </div>
+      <p class="note">工具按缠论做结构化辅助，不预测明天涨跌。结论必须同时看级别、位置、背驰、成交确认和失效条件。</p>
+    </section>
+
+    <section class="control-block">
+      <h2>手动记录</h2>
+      <div class="field">
+        <label for="memoInput">复盘备注</label>
+        <textarea id="memoInput" placeholder="记录：今天为什么动手？信号是否满足？失效条件是什么？"></textarea>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <section class="topbar">
+      <div class="status-card">
+        <div class="ticker">
+          <h2 id="titleText">招商银行 600036</h2>
+          <small id="timeText">样例数据</small>
+        </div>
+        <span class="badge" id="stateBadge">中枢震荡</span>
+        <p id="summaryText">正在分析最近走势结构。</p>
+      </div>
+      <div class="metric">
+        <span>当前价</span>
+        <strong id="lastPrice">--</strong>
+        <em id="changeText">--</em>
+      </div>
+      <div class="metric">
+        <span>最近中枢</span>
+        <strong id="centerText">--</strong>
+        <em id="centerState">--</em>
+      </div>
+      <div class="metric">
+        <span>缠论信号</span>
+        <strong id="signalText">--</strong>
+        <em id="signalDetail">--</em>
+      </div>
+      <div class="metric">
+        <span>行动</span>
+        <strong id="actionText">--</strong>
+        <em id="confidenceText">--</em>
+      </div>
+    </section>
+
+    <section class="panel chart-panel">
+      <div class="chart-head">
+        <h2>结构主图</h2>
+        <div class="legend">
+          <span><i style="background:#111827"></i>K线</span>
+          <span><i style="background:#2563eb"></i>笔</span>
+          <span><i style="background:#6d5bd0"></i>线段</span>
+          <span><i style="background:#f59e0b"></i>中枢</span>
+          <span><i style="background:#16a34a"></i>买点</span>
+          <span><i style="background:#dc2626"></i>卖点</span>
+        </div>
+      </div>
+      <canvas id="chart" width="1400" height="650" aria-label="缠论结构图"></canvas>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>价格结构</h2>
+        <div class="list" id="priceList"></div>
+      </div>
+      <div class="panel">
+        <h2>成交确认</h2>
+        <div class="list" id="volumeList"></div>
+      </div>
+      <div class="panel">
+        <h2>操作结论</h2>
+        <div class="list" id="decisionList"></div>
+      </div>
+      <div class="panel">
+        <h2>规则链路</h2>
+        <div class="list" id="ruleList"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>三种情景</h2>
+      <div class="list" id="scenarioList"></div>
+    </section>
+
+    <section class="panel">
+      <h2>最近信号</h2>
+      <table class="table">
+        <thead>
+          <tr><th>日期</th><th>类型</th><th>价格</th><th>依据</th><th>失效条件</th></tr>
+        </thead>
+        <tbody id="signalsTable"></tbody>
+      </table>
+    </section>
+
+    <p class="footer">说明：这里采用简化、可机器化的缠论识别规则，适合看盘辅助和复盘记录；实盘前仍要用你的估值体系、仓位纪律和交易成本再过滤一遍。</p>
+  </main>
+</div>
+
+<script>
+const sampleRows = [
+  ["2026-06-01", 36.20, 36.58, 35.88, 36.12, 842100],
+  ["2026-06-02", 36.08, 36.44, 35.72, 35.86, 910500],
+  ["2026-06-03", 35.80, 36.10, 35.28, 35.40, 1120500],
+  ["2026-06-04", 35.34, 35.72, 34.95, 35.08, 1321000],
+  ["2026-06-05", 35.02, 35.28, 34.60, 34.78, 1538800],
+  ["2026-06-08", 34.70, 35.22, 34.52, 35.05, 1264300],
+  ["2026-06-09", 35.06, 35.64, 34.88, 35.50, 1219000],
+  ["2026-06-10", 35.54, 36.18, 35.36, 36.00, 1396000],
+  ["2026-06-11", 36.08, 36.74, 35.92, 36.55, 1513000],
+  ["2026-06-12", 36.58, 36.88, 36.10, 36.22, 1197000],
+  ["2026-06-15", 36.18, 36.42, 35.80, 35.95, 1009000],
+  ["2026-06-16", 35.92, 36.36, 35.70, 36.28, 966000],
+  ["2026-06-17", 36.30, 36.84, 36.10, 36.72, 1123000],
+  ["2026-06-18", 36.78, 37.26, 36.48, 37.12, 1417000],
+  ["2026-06-19", 37.10, 37.42, 36.76, 36.92, 1338000],
+  ["2026-06-22", 36.86, 37.20, 36.45, 36.58, 1077000],
+  ["2026-06-23", 36.50, 36.80, 36.10, 36.22, 1014000],
+  ["2026-06-24", 36.20, 36.62, 35.95, 36.48, 935000],
+  ["2026-06-25", 36.52, 37.18, 36.38, 37.05, 1212000],
+  ["2026-06-26", 37.08, 37.74, 36.90, 37.58, 1489000],
+  ["2026-06-29", 37.62, 38.18, 37.44, 37.92, 1760000],
+  ["2026-06-30", 37.96, 38.32, 37.56, 37.80, 1615000],
+  ["2026-07-01", 37.78, 38.02, 37.26, 37.38, 1353000],
+  ["2026-07-02", 37.32, 37.70, 36.92, 37.12, 1169000],
+  ["2026-07-03", 37.08, 37.52, 36.84, 37.40, 922000],
+  ["2026-07-06", 37.42, 38.08, 37.20, 37.96, 1273000],
+  ["2026-07-07", 38.02, 38.58, 37.80, 38.42, 1588000],
+  ["2026-07-08", 38.48, 38.86, 38.12, 38.22, 1449000],
+  ["2026-07-09", 38.18, 38.40, 37.76, 37.88, 1195000],
+  ["2026-07-10", 37.82, 38.10, 37.35, 37.52, 1117000],
+  ["2026-07-13", 37.48, 37.92, 37.08, 37.70, 893000],
+  ["2026-07-14", 37.74, 38.30, 37.52, 38.12, 1046000],
+  ["2026-07-15", 38.18, 38.75, 37.96, 38.62, 1324000],
+  ["2026-07-16", 38.64, 39.20, 38.36, 39.06, 1668000],
+  ["2026-07-17", 39.10, 39.46, 38.82, 39.18, 1783000],
+  ["2026-07-20", 39.15, 39.38, 38.72, 38.86, 1379000],
+  ["2026-07-21", 38.80, 39.05, 38.42, 38.54, 1127000],
+  ["2026-07-22", 38.50, 38.88, 38.14, 38.36, 993000],
+  ["2026-07-23", 38.34, 38.72, 38.02, 38.62, 870000],
+  ["2026-07-24", 38.66, 39.12, 38.44, 39.00, 1016000],
+  ["2026-07-27", 39.04, 39.42, 38.74, 39.28, 1235000],
+  ["2026-07-28", 39.30, 39.56, 38.86, 39.02, 1211000],
+  ["2026-07-29", 38.96, 39.18, 38.52, 38.70, 1045000],
+  ["2026-07-30", 38.64, 38.92, 38.18, 38.38, 980000],
+  ["2026-07-31", 38.34, 38.80, 38.06, 38.66, 849000],
+  ["2026-08-03", 38.70, 39.24, 38.48, 39.12, 1078000],
+  ["2026-08-04", 39.16, 39.78, 38.94, 39.58, 1428000],
+  ["2026-08-05", 39.62, 40.08, 39.18, 39.42, 1557000],
+  ["2026-08-06", 39.36, 39.70, 38.88, 39.04, 1316000],
+  ["2026-08-07", 39.00, 39.28, 38.55, 38.78, 1182000],
+  ["2026-08-10", 38.72, 39.02, 38.28, 38.44, 1032000],
+  ["2026-08-11", 38.38, 38.88, 38.04, 38.70, 902000],
+  ["2026-08-12", 38.74, 39.28, 38.50, 39.10, 1086000],
+  ["2026-08-13", 39.16, 39.82, 38.98, 39.66, 1433000],
+  ["2026-08-14", 39.72, 40.26, 39.40, 40.08, 1735000],
+  ["2026-08-17", 40.12, 40.42, 39.74, 40.18, 1684000],
+  ["2026-08-18", 40.10, 40.28, 39.54, 39.70, 1399000],
+  ["2026-08-19", 39.62, 39.90, 39.08, 39.28, 1215000],
+  ["2026-08-20", 39.22, 39.62, 38.82, 38.96, 1098000],
+  ["2026-08-21", 38.92, 39.18, 38.50, 38.72, 998000]
+].map(([date, open, high, low, close, volume]) => ({ date, open, high, low, close, volume }));
+
+const $ = (id) => document.getElementById(id);
+let rows = sampleRows.slice();
+let currentLevel = "日线";
+
+function formatPrice(value) {
+  return Number(value).toFixed(2);
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/).filter(Boolean);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const find = (names) => names.map((n) => headers.indexOf(n)).find((i) => i >= 0);
+  const idx = {
+    date: find(["date", "日期", "time"]),
+    open: find(["open", "开盘"]),
+    high: find(["high", "最高"]),
+    low: find(["low", "最低"]),
+    close: find(["close", "收盘"]),
+    volume: find(["volume", "vol", "成交量"])
+  };
+  if (Object.values(idx).some((v) => v === undefined)) return [];
+  return lines.slice(1).map((line) => {
+    const cells = line.split(",").map((c) => c.trim());
+    return {
+      date: cells[idx.date],
+      open: Number(cells[idx.open]),
+      high: Number(cells[idx.high]),
+      low: Number(cells[idx.low]),
+      close: Number(cells[idx.close]),
+      volume: Number(cells[idx.volume] || 0)
+    };
+  }).filter((r) => r.date && [r.open, r.high, r.low, r.close].every(Number.isFinite));
+}
+
+function ema(values, period) {
+  const k = 2 / (period + 1);
+  const out = [];
+  values.forEach((value, index) => {
+    out[index] = index === 0 ? value : value * k + out[index - 1] * (1 - k);
+  });
+  return out;
+}
+
+function macd(data) {
+  const closes = data.map((r) => r.close);
+  const fast = ema(closes, 12);
+  const slow = ema(closes, 26);
+  const diff = fast.map((v, i) => v - slow[i]);
+  const dea = ema(diff, 9);
+  const hist = diff.map((v, i) => (v - dea[i]) * 2);
+  return { diff, dea, hist };
+}
+
+function normalizeBars(data) {
+  if (!$("mergeIncluded").checked) {
+    return data.map((r, index) => ({ ...r, index, rawStart: index, rawEnd: index, mergedCount: 1 }));
+  }
+  const out = [];
+  let direction = 0;
+  data.forEach((bar, rawIndex) => {
+    const cur = { ...bar, index: out.length, rawStart: rawIndex, rawEnd: rawIndex, mergedCount: 1 };
+    if (!out.length) {
+      out.push(cur);
+      return;
+    }
+    let last = out[out.length - 1];
+    if (out.length >= 2) {
+      const prev = out[out.length - 2];
+      if (last.high > prev.high && last.low > prev.low) direction = 1;
+      if (last.high < prev.high && last.low < prev.low) direction = -1;
+    }
+    const included = (cur.high <= last.high && cur.low >= last.low) || (cur.high >= last.high && cur.low <= last.low);
+    if (!included) {
+      out.push(cur);
+      return;
+    }
+    const up = direction >= 0;
+    const merged = {
+      ...last,
+      date: cur.date,
+      open: last.open,
+      close: cur.close,
+      high: up ? Math.max(last.high, cur.high) : Math.min(last.high, cur.high),
+      low: up ? Math.max(last.low, cur.low) : Math.min(last.low, cur.low),
+      volume: last.volume + cur.volume,
+      rawEnd: rawIndex,
+      mergedCount: last.mergedCount + 1
+    };
+    out[out.length - 1] = merged;
+  });
+  return out.map((r, index) => ({ ...r, index }));
+}
+
+function findFractals(data) {
+  const fractals = [];
+  for (let i = 1; i < data.length - 1; i += 1) {
+    const left = data[i - 1];
+    const mid = data[i];
+    const right = data[i + 1];
+    if (mid.high > left.high && mid.high > right.high && mid.low > left.low && mid.low > right.low) {
+      fractals.push({ index: i, type: "top", price: mid.high, date: mid.date });
+    }
+    if (mid.low < left.low && mid.low < right.low && mid.high < left.high && mid.high < right.high) {
+      fractals.push({ index: i, type: "bottom", price: mid.low, date: mid.date });
+    }
+  }
+  return fractals;
+}
+
+function hasEndpointExtreme(data, a, b) {
+  const start = Math.min(a.index, b.index);
+  const end = Math.max(a.index, b.index);
+  const slice = data.slice(start, end + 1);
+  if (a.type === "bottom" && b.type === "top") {
+    return a.price <= Math.min(...slice.map((r) => r.low)) && b.price >= Math.max(...slice.map((r) => r.high));
+  }
+  if (a.type === "top" && b.type === "bottom") {
+    return a.price >= Math.max(...slice.map((r) => r.high)) && b.price <= Math.min(...slice.map((r) => r.low));
+  }
+  return false;
+}
+
+function buildPens(fractals, data) {
+  const pens = [];
+  let last = null;
+  const strict = $("strictPens").checked;
+  fractals.forEach((f) => {
+    if (!last) {
+      last = f;
+      return;
+    }
+    if (f.type === last.type) {
+      if ((f.type === "top" && f.price > last.price) || (f.type === "bottom" && f.price < last.price)) {
+        last = f;
+      }
+      return;
+    }
+    if (f.index - last.index >= 4 && (!strict || hasEndpointExtreme(data, last, f))) {
+      pens.push({
+        start: last,
+        end: f,
+        direction: f.price > last.price ? "up" : "down",
+        high: Math.max(last.price, f.price),
+        low: Math.min(last.price, f.price)
+      });
+      last = f;
+    }
+  });
+  return pens;
+}
+
+function buildSegments(pens) {
+  const segments = [];
+  let start = 0;
+  for (let i = 2; i < pens.length; i += 1) {
+    const three = pens.slice(i - 2, i + 1);
+    const hasBreak = three[2].direction === "up"
+      ? three[2].end.price > Math.max(three[0].high, three[1].high)
+      : three[2].end.price < Math.min(three[0].low, three[1].low);
+    if (hasBreak || i === pens.length - 1) {
+      const group = pens.slice(start, i + 1);
+      segments.push({
+        startPen: start,
+        endPen: i,
+        start: group[0].start,
+        end: group[group.length - 1].end,
+        direction: group[group.length - 1].end.price > group[0].start.price ? "up" : "down",
+        high: Math.max(...group.map((p) => p.high)),
+        low: Math.min(...group.map((p) => p.low))
+      });
+      start = Math.max(0, i - 1);
+    }
+  }
+  return segments;
+}
+
+function findCenters(pens) {
+  const centers = [];
+  const extend = $("extendCenters").checked;
+  for (let i = 0; i <= pens.length - 3; i += 1) {
+    const group = pens.slice(i, i + 3);
+    const zg = Math.min(...group.map((p) => p.high));
+    const zd = Math.max(...group.map((p) => p.low));
+    if (zg > zd) {
+      const center = {
+        startIndex: group[0].start.index,
+        endIndex: group[2].end.index,
+        high: zg,
+        low: zd,
+        mid: (zg + zd) / 2,
+        penStart: i,
+        penEnd: i + 2
+      };
+      if (extend) {
+        let j = i + 3;
+        while (j < pens.length) {
+          const p = pens[j];
+          const touches = p.high >= center.low && p.low <= center.high;
+          if (!touches) break;
+          center.endIndex = p.end.index;
+          center.penEnd = j;
+          center.high = Math.min(center.high, p.high);
+          center.low = Math.max(center.low, p.low);
+          center.mid = (center.high + center.low) / 2;
+          j += 1;
+        }
+        i = Math.max(i, center.penEnd - 2);
+      }
+      const prev = centers[centers.length - 1];
+      if (!prev || center.startIndex > prev.endIndex) centers.push(center);
+    }
+  }
+  return centers;
+}
+
+function sumAbs(values, start, end) {
+  let total = 0;
+  for (let i = Math.max(0, start); i <= Math.min(values.length - 1, end); i += 1) {
+    total += Math.abs(values[i] || 0);
+  }
+  return total;
+}
+
+function detectDivergence(data, pens, macdData) {
+  const signals = [];
+  const downPens = pens.filter((p) => p.direction === "down");
+  const upPens = pens.filter((p) => p.direction === "up");
+  for (let i = 1; i < downPens.length; i += 1) {
+    const prev = downPens[i - 1];
+    const cur = downPens[i];
+    const prevPower = sumAbs(macdData.hist, prev.start.index, prev.end.index);
+    const curPower = sumAbs(macdData.hist, cur.start.index, cur.end.index);
+    if (cur.end.price < prev.end.price && curPower < prevPower * 0.85) {
+      signals.push({
+        index: cur.end.index,
+        date: cur.end.date,
+        type: "底背驰",
+        side: "buy",
+        price: cur.end.price,
+        basis: "价格新低，但 MACD 柱面积收缩",
+        invalid: `跌破 ${formatPrice(cur.end.price)} 后仍不能快速收回`
+      });
+    }
+  }
+  for (let i = 1; i < upPens.length; i += 1) {
+    const prev = upPens[i - 1];
+    const cur = upPens[i];
+    const prevPower = sumAbs(macdData.hist, prev.start.index, prev.end.index);
+    const curPower = sumAbs(macdData.hist, cur.start.index, cur.end.index);
+    if (cur.end.price > prev.end.price && curPower < prevPower * 0.85) {
+      signals.push({
+        index: cur.end.index,
+        date: cur.end.date,
+        type: "顶背驰",
+        side: "sell",
+        price: cur.end.price,
+        basis: "价格新高，但 MACD 柱面积收缩",
+        invalid: `放量站稳 ${formatPrice(cur.end.price)} 上方`
+      });
+    }
+  }
+  return signals.sort((a, b) => a.index - b.index);
+}
+
+function detectChanPoints(data, pens, centers, divergenceSignals) {
+  const points = divergenceSignals.map((s) => ({
+    ...s,
+    point: s.side === "buy" ? "一买候选" : "一卖候选"
+  }));
+  centers.forEach((center) => {
+    const after = pens.filter((p) => p.start.index >= center.endIndex || p.end.index >= center.endIndex);
+    after.forEach((p, offset) => {
+      const prev = after[offset - 1];
+      if (!prev) return;
+      const leavesUp = prev.direction === "up" && prev.end.price > center.high;
+      const pullbackHolds = p.direction === "down" && p.end.price >= center.high;
+      if (leavesUp && pullbackHolds) {
+        points.push({
+          index: p.end.index,
+          date: p.end.date,
+          type: "三买",
+          point: "三买确认",
+          side: "buy",
+          price: p.end.price,
+          basis: `离开中枢上沿 ${formatPrice(center.high)} 后回踩不回中枢`,
+          invalid: `跌回中枢上沿 ${formatPrice(center.high)} 下方`
+        });
+      }
+      const leavesDown = prev.direction === "down" && prev.end.price < center.low;
+      const reboundFails = p.direction === "up" && p.end.price <= center.low;
+      if (leavesDown && reboundFails) {
+        points.push({
+          index: p.end.index,
+          date: p.end.date,
+          type: "三卖",
+          point: "三卖确认",
+          side: "sell",
+          price: p.end.price,
+          basis: `离开中枢下沿 ${formatPrice(center.low)} 后反抽不回中枢`,
+          invalid: `重新站回中枢下沿 ${formatPrice(center.low)} 上方`
+        });
+      }
+    });
+  });
+  for (let i = 1; i < points.length; i += 1) {
+    const prev = points[i - 1];
+    const cur = points[i];
+    if (prev.side === "buy" && cur.side === "buy" && cur.price > prev.price) {
+      cur.type = cur.type === "三买" ? cur.type : "二买";
+      cur.point = cur.point === "三买确认" ? cur.point : "二买确认";
+      cur.basis = cur.basis || "第一类买点后回踩不破前低";
+      cur.invalid = cur.invalid || `跌破前低 ${formatPrice(prev.price)}`;
+    }
+    if (prev.side === "sell" && cur.side === "sell" && cur.price < prev.price) {
+      cur.type = cur.type === "三卖" ? cur.type : "二卖";
+      cur.point = cur.point === "三卖确认" ? cur.point : "二卖确认";
+      cur.basis = cur.basis || "第一类卖点后反抽不破前高";
+      cur.invalid = cur.invalid || `突破前高 ${formatPrice(prev.price)}`;
+    }
+  }
+  return points.sort((a, b) => a.index - b.index);
+}
+
+function classify(data, pens, centers, signals, segments) {
+  const last = data[data.length - 1];
+  const prev = data[data.length - 2] || last;
+  const lastCenter = centers[centers.length - 1];
+  const previousCenter = centers[centers.length - 2];
+  const lastSignal = signals[signals.length - 1];
+  const lastSegment = segments[segments.length - 1];
+  const recentPens = pens.slice(-4);
+  let trend = "结构未完整";
+  if (lastCenter && previousCenter) {
+    if (lastCenter.mid > previousCenter.mid * 1.01) trend = "中枢上移";
+    else if (lastCenter.mid < previousCenter.mid * 0.99) trend = "中枢下移";
+    else trend = "中枢震荡";
+  } else if (recentPens.length >= 2) {
+    trend = recentPens[recentPens.length - 1].direction === "up" ? "反弹段" : "回落段";
+  }
+  let location = "无明确中枢";
+  if (lastCenter) {
+    if (last.close > lastCenter.high) location = "中枢上方";
+    else if (last.close < lastCenter.low) location = "中枢下方";
+    else location = "中枢内部";
+  }
+  const avgVol = data.slice(-12, -1).reduce((s, r) => s + r.volume, 0) / Math.max(1, Math.min(11, data.length - 1));
+  const volumeState = last.volume > avgVol * 1.25 ? "放量" : last.volume < avgVol * 0.75 ? "缩量" : "平量";
+  const direction = last.close > prev.close ? "上涨" : last.close < prev.close ? "下跌" : "持平";
+  return { last, prev, lastCenter, previousCenter, lastSignal, lastSegment, trend, location, volumeState, direction, avgVol };
+}
+
+function decisionFrom(analysis) {
+  const valuation = $("valuationSelect").value;
+  const style = $("styleSelect").value;
+  const risk = Number($("riskInput").value || 20);
+  const { last, lastCenter, lastSignal, trend, location, volumeState, direction } = analysis;
+  let action = "等";
+  let badgeClass = "wait";
+  let confidence = 55;
+  const reasons = [];
+  const invalids = [];
+  const centerLow = lastCenter ? formatPrice(lastCenter.low) : "--";
+  const centerHigh = lastCenter ? formatPrice(lastCenter.high) : "--";
+
+  if (lastSignal?.side === "buy") {
+    action = valuation === "expensive" ? "只观察" : "试买";
+    badgeClass = valuation === "expensive" ? "wait" : "buy";
+    confidence += 12;
+    reasons.push(`${lastSignal.point || lastSignal.type}出现：${lastSignal.basis}`);
+    invalids.push(lastSignal.invalid);
+  }
+  if (lastSignal?.side === "sell") {
+    action = "减仓";
+    badgeClass = "sell";
+    confidence += 12;
+    reasons.push(`${lastSignal.point || lastSignal.type}出现：${lastSignal.basis}`);
+    invalids.push(lastSignal.invalid);
+  }
+  if (lastCenter && location === "中枢上方" && direction === "上涨" && volumeState !== "缩量") {
+    action = valuation === "cheap" ? "持有" : "等回踩";
+    badgeClass = valuation === "cheap" ? "hold" : "wait";
+    confidence += 8;
+    reasons.push(`价格离开中枢上沿 ${centerHigh}，但需要回踩不回中枢确认第三类买点。`);
+    invalids.push(`跌回中枢上沿 ${centerHigh} 下方，突破判断降级。`);
+  }
+  if (lastCenter && location === "中枢下方" && direction === "下跌") {
+    action = valuation === "cheap" ? "等底分型" : "防守";
+    badgeClass = valuation === "cheap" ? "wait" : "sell";
+    confidence += 8;
+    reasons.push(`价格跌出中枢下沿 ${centerLow}，当前还不是安全低吸点。`);
+    invalids.push(`放量收回中枢下沿 ${centerLow} 上方，跌破判断降级。`);
+  }
+  if (valuation === "expensive") {
+    if (badgeClass === "buy") {
+      action = "不追";
+      badgeClass = "wait";
+    }
+    reasons.push("估值高于实用区间，缠论只用于止盈止损，不用于做多 T。");
+    confidence -= 5;
+  }
+  if (style === "t" && lastCenter && location === "中枢内部") {
+    action = "区间T";
+    badgeClass = "hold";
+    reasons.push(`围绕中枢 ${centerLow}-${centerHigh} 做低吸高抛，单次 T 仓位不超过 ${risk}%。`);
+    invalids.push(`有效跌破 ${centerLow} 时停止做多 T。`);
+  }
+  if (!reasons.length) {
+    reasons.push("结构信号不够集中，等待分型、背驰或中枢离开确认。");
+    invalids.push("出现放量跌破最近低点或放量突破最近高点后重新判定。");
+  }
+  confidence = Math.max(35, Math.min(88, confidence));
+  return { action, badgeClass, confidence, reasons, invalids };
+}
+
+function analyze() {
+  const rawData = rows.slice(-140);
+  const data = normalizeBars(rawData).slice(-90);
+  const fractals = findFractals(data);
+  const pens = buildPens(fractals, data);
+  const segments = buildSegments(pens);
+  const centers = findCenters(pens);
+  const macdData = macd(data);
+  const divergenceSignals = detectDivergence(data, pens, macdData);
+  const signals = detectChanPoints(data, pens, centers, divergenceSignals);
+  const analysis = classify(data, pens, centers, signals, segments);
+  const decision = decisionFrom(analysis);
+  renderSummary(rawData, data, fractals, pens, segments, centers, signals, analysis, decision);
+  drawChart(data, fractals, pens, segments, centers, signals, macdData);
+}
+
+function renderSummary(rawData, data, fractals, pens, segments, centers, signals, analysis, decision) {
+  const { last, prev, lastCenter, trend, location, volumeState, direction } = analysis;
+  $("titleText").textContent = $("symbolInput").value || "未命名标的";
+  $("timeText").textContent = `${last.date} · ${currentLevel}`;
+  $("lastPrice").textContent = formatPrice(last.close);
+  const change = last.close - prev.close;
+  $("changeText").textContent = `${change >= 0 ? "+" : ""}${formatPrice(change)} / ${change >= 0 ? "+" : ""}${(change / prev.close * 100).toFixed(2)}%`;
+  $("stateBadge").textContent = `${trend} · ${location}`;
+  $("summaryText").textContent = `原始 ${rawData.length} 根 K 线处理为 ${data.length} 根标准 K 线，识别出 ${fractals.length} 个分型、${pens.length} 笔、${segments.length} 段、${centers.length} 个中枢。当前 ${direction} 且${volumeState}，缠论主判断是：${decision.reasons[0]}`;
+  $("centerText").textContent = lastCenter ? `${formatPrice(lastCenter.low)}-${formatPrice(lastCenter.high)}` : "未形成";
+  $("centerState").textContent = lastCenter ? location : "至少需要更多 K 线";
+  $("signalText").textContent = analysis.lastSignal ? (analysis.lastSignal.point || analysis.lastSignal.type) : "等待";
+  $("signalDetail").textContent = analysis.lastSignal ? analysis.lastSignal.basis : "暂无背驰候选";
+  $("actionText").textContent = decision.action;
+  $("confidenceText").textContent = `置信度 ${decision.confidence}%`;
+
+  $("priceList").innerHTML = [
+    item("走势类型", `${trend}，当前价格位于${location}。`),
+    item("最近一笔", pens.length ? `${pens[pens.length - 1].direction === "up" ? "向上一笔" : "向下一笔"}：${formatPrice(pens[pens.length - 1].start.price)} 到 ${formatPrice(pens[pens.length - 1].end.price)}。` : "笔结构还不完整。"),
+    item("关键区间", lastCenter ? `中枢下沿 ${formatPrice(lastCenter.low)} 是支撑，上沿 ${formatPrice(lastCenter.high)} 是压力。` : "等待三笔重叠形成中枢。")
+  ].join("");
+  $("volumeList").innerHTML = [
+    item("量价关系", `今天${direction}，成交量为${volumeState}。`),
+    item("确认强度", volumeState === "放量" ? "方向有成交配合，但仍需看位置是否在中枢边界。" : volumeState === "缩量" ? "成交确认不足，突破或跌破都要打折。" : "成交没有明显异动，按结构边界处理。"),
+    item("背驰辅助", analysis.lastSignal ? analysis.lastSignal.basis : "MACD 力度暂未给出清晰衰竭信号。")
+  ].join("");
+  $("decisionList").innerHTML = [
+    `<div class="item"><strong><span class="pill ${decision.badgeClass}">${decision.action}</span></strong><p>${decision.reasons.join(" ")}</p></div>`,
+    item("失效条件", decision.invalids[0] || "跌破最近低点或突破失败后重新判断。"),
+    item("仓位纪律", `${$("styleSelect").selectedOptions[0].textContent}；单次 T 仓位上限 ${$("riskInput").value || 20}%，底仓和 T 仓分开。`)
+  ].join("");
+  $("ruleList").innerHTML = [
+    item("标准化", $("mergeIncluded").checked ? `已处理包含关系：${rawData.length} 根原始 K 线合并为 ${data.length} 根标准 K 线。` : "未处理包含关系，直接使用原始 K 线。"),
+    item("笔与线段", `当前口径识别 ${pens.length} 笔、${segments.length} 段；${$("strictPens").checked ? "端点必须满足区间极值。" : "端点只要求分型交替和最小间隔。"}`),
+    item("中枢口径", $("extendCenters").checked ? `三笔重叠形成中枢，并向后延伸到有效离开；共 ${centers.length} 个。` : `只按连续三笔重叠生成基础中枢；共 ${centers.length} 个。`)
+  ].join("");
+  renderScenarios(lastCenter, last, decision);
+  renderSignals(signals, data);
+}
+
+function item(title, body) {
+  return `<div class="item"><strong>${title}</strong><p>${body}</p></div>`;
+}
+
+function renderScenarios(center, last, decision) {
+  const high = center ? formatPrice(center.high) : formatPrice(Math.max(...rows.slice(-20).map((r) => r.high)));
+  const low = center ? formatPrice(center.low) : formatPrice(Math.min(...rows.slice(-20).map((r) => r.low)));
+  $("scenarioList").innerHTML = [
+    scenario("向上突破", `放量站上 ${high} 且回踩不跌回中枢，按第三类买点候选处理；高估标的只视为持仓观察，不追。`),
+    scenario("中枢震荡", `价格在 ${low}-${high} 内运行，以中枢下沿低吸、上沿高抛为主；信号不足时宁可等。`),
+    scenario("向下跌破", `有效跌破 ${low}，做多 T 停止；若反抽不能回到中枢内，按第二类卖点或防守减仓处理。`)
+  ].join("");
+}
+
+function scenario(title, body) {
+  return `<div class="item scenario"><b>${title}</b><p>${body}</p></div>`;
+}
+
+function renderSignals(signals, data) {
+  const recent = signals.slice(-8).reverse();
+  $("signalsTable").innerHTML = recent.length ? recent.map((s) => `
+    <tr>
+      <td>${s.date}</td>
+      <td><span class="pill ${s.side === "buy" ? "buy" : "sell"}">${s.type}</span></td>
+      <td>${formatPrice(s.price)}</td>
+      <td>${s.basis}</td>
+      <td>${s.invalid}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="5">最近 ${data.length} 根 K 线内暂无背驰候选信号。</td></tr>`;
+}
+
+function drawChart(data, fractals, pens, segments, centers, signals, macdData) {
+  const canvas = $("chart");
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+  const pad = { left: 58, right: 18, top: 22, bottom: 112 };
+  const chartH = h - pad.top - pad.bottom;
+  const volTop = h - 90;
+  const volH = 52;
+  const highs = data.map((r) => r.high);
+  const lows = data.map((r) => r.low);
+  const maxP = Math.max(...highs) * 1.01;
+  const minP = Math.min(...lows) * 0.99;
+  const maxV = Math.max(...data.map((r) => r.volume));
+  const x = (i) => pad.left + (i / Math.max(1, data.length - 1)) * (w - pad.left - pad.right);
+  const y = (p) => pad.top + (maxP - p) / (maxP - minP) * chartH;
+  const candleW = Math.max(4, Math.min(12, (w - pad.left - pad.right) / data.length * 0.58));
+
+  ctx.strokeStyle = "#e5eaf2";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#647184";
+  ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+  for (let i = 0; i <= 4; i += 1) {
+    const py = pad.top + chartH * i / 4;
+    const price = maxP - (maxP - minP) * i / 4;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, py);
+    ctx.lineTo(w - pad.right, py);
+    ctx.stroke();
+    ctx.fillText(formatPrice(price), 8, py + 4);
+  }
+
+  centers.forEach((c) => {
+    ctx.fillStyle = "rgba(245, 158, 11, 0.13)";
+    ctx.strokeStyle = "rgba(217, 119, 6, 0.72)";
+    const rx = x(c.startIndex);
+    const rw = x(c.endIndex) - rx;
+    const ry = y(c.high);
+    const rh = y(c.low) - y(c.high);
+    ctx.fillRect(rx, ry, Math.max(rw, 12), Math.max(rh, 3));
+    ctx.strokeRect(rx, ry, Math.max(rw, 12), Math.max(rh, 3));
+  });
+
+  data.forEach((r, i) => {
+    const rising = r.close >= r.open;
+    const cx = x(i);
+    ctx.strokeStyle = rising ? "#d93448" : "#148a5b";
+    ctx.fillStyle = rising ? "#d93448" : "#148a5b";
+    ctx.beginPath();
+    ctx.moveTo(cx, y(r.high));
+    ctx.lineTo(cx, y(r.low));
+    ctx.stroke();
+    const top = y(Math.max(r.open, r.close));
+    const bottom = y(Math.min(r.open, r.close));
+    ctx.fillRect(cx - candleW / 2, top, candleW, Math.max(2, bottom - top));
+    const vh = r.volume / maxV * volH;
+    ctx.globalAlpha = 0.42;
+    ctx.fillRect(cx - candleW / 2, volTop + volH - vh, candleW, vh);
+    ctx.globalAlpha = 1;
+  });
+
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  pens.forEach((p, i) => {
+    const sx = x(p.start.index);
+    const sy = y(p.start.price);
+    const ex = x(p.end.index);
+    const ey = y(p.end.price);
+    if (i === 0) ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+  });
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(109, 91, 208, 0.92)";
+  ctx.lineWidth = 3;
+  segments.forEach((s) => {
+    ctx.beginPath();
+    ctx.moveTo(x(s.start.index), y(s.start.price));
+    ctx.lineTo(x(s.end.index), y(s.end.price));
+    ctx.stroke();
+  });
+
+  fractals.slice(-30).forEach((f) => {
+    ctx.fillStyle = f.type === "bottom" ? "#16a34a" : "#dc2626";
+    ctx.beginPath();
+    if (f.type === "bottom") {
+      ctx.moveTo(x(f.index), y(f.price) + 10);
+      ctx.lineTo(x(f.index) - 5, y(f.price) + 18);
+      ctx.lineTo(x(f.index) + 5, y(f.price) + 18);
+    } else {
+      ctx.moveTo(x(f.index), y(f.price) - 10);
+      ctx.lineTo(x(f.index) - 5, y(f.price) - 18);
+      ctx.lineTo(x(f.index) + 5, y(f.price) - 18);
+    }
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  signals.slice(-10).forEach((s) => {
+    const sx = x(s.index);
+    const sy = y(s.price);
+    ctx.fillStyle = s.side === "buy" ? "#16a34a" : "#dc2626";
+    ctx.beginPath();
+    ctx.arc(sx, sy, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#111827";
+    ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.fillText(s.point || s.type, sx + 9, sy - 9);
+  });
+
+  ctx.strokeStyle = "#94a3b8";
+  ctx.beginPath();
+  ctx.moveTo(pad.left, volTop - 10);
+  ctx.lineTo(w - pad.right, volTop - 10);
+  ctx.stroke();
+  ctx.fillStyle = "#647184";
+  ctx.fillText("成交量", 8, volTop + 10);
+
+  const macdTop = h - 28;
+  ctx.strokeStyle = "#6d5bd0";
+  ctx.beginPath();
+  macdData.hist.forEach((v, i) => {
+    const mx = x(i);
+    const my = macdTop - Math.max(-18, Math.min(18, v * 40));
+    if (i === 0) ctx.moveTo(mx, my);
+    else ctx.lineTo(mx, my);
+  });
+  ctx.stroke();
+}
+
+$("levelButtons").addEventListener("click", (event) => {
+  if (event.target.matches("button")) {
+    currentLevel = event.target.dataset.level;
+    document.querySelectorAll("#levelButtons button").forEach((btn) => btn.classList.toggle("active", btn === event.target));
+    analyze();
+  }
+});
+$("analyzeBtn").addEventListener("click", analyze);
+$("sampleBtn").addEventListener("click", () => {
+  rows = sampleRows.slice();
+  $("csvFile").value = "";
+  analyze();
+});
+$("csvFile").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const parsed = parseCsv(await file.text());
+  if (parsed.length >= 20) {
+    rows = parsed;
+    analyze();
+  } else {
+    alert("CSV 至少需要 20 行，并包含 date, open, high, low, close, volume 字段。");
+  }
+});
+["symbolInput", "styleSelect", "valuationSelect", "riskInput", "mergeIncluded", "strictPens", "extendCenters"].forEach((id) => {
+  $(id).addEventListener("input", analyze);
+  $(id).addEventListener("change", analyze);
+});
+window.addEventListener("resize", analyze);
+analyze();
+</script>
+</body>
+</html>
