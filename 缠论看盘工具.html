@@ -417,6 +417,18 @@ canvas {
     </section>
 
     <section class="control-block">
+      <h2>实时行情 <span id="feedTag" style="color:#22c55e;font-size:11px;font-weight:600"></span></h2>
+      <div class="field">
+        <label for="symbolInput">（拉取按钮 → 自动解析市场代码，A股适用）</label>
+      </div>
+      <div class="actions">
+        <button class="primary" id="realtimeBtn">拉取实时行情</button>
+        <button class="secondary" id="autoMapBtn">一键填充自选</button>
+      </div>
+      <p class="note" id="feedNote">A股（如 招商银行/600036/sh600036）可直接拉取；港股等不支持自动拉取的标的，请用下方手动 CSV 导入。</p>
+    </section>
+
+    <section class="control-block">
       <h2>导入行情</h2>
       <div class="field">
         <label for="csvFile">CSV 字段：date, open, high, low, close, volume</label>
@@ -426,6 +438,7 @@ canvas {
         <button class="primary" id="analyzeBtn">重新分析</button>
         <button class="secondary" id="sampleBtn">载入样例</button>
       </div>
+      <p class="note" id="dataSourceNote">当前数据来源：样例数据</p>
       <p class="note">工具按缠论做结构化辅助，不预测明天涨跌。结论必须同时看级别、位置、背驰、成交确认和失效条件。</p>
     </section>
 
@@ -469,6 +482,13 @@ canvas {
         <em id="confidenceText">--</em>
       </div>
     </section>
+
+    <div id="feedBar" style="display:none;align-items:center;gap:10px;padding:9px 14px;background:#eef7ff;border:1px solid #bcd7f0;border-radius:8px;color:#1d4ed8;font-size:13px;">
+      <span id="feedBarText">正在拉取行情…</span>
+      <span style="flex:1"></span>
+      <span id="feedBarLevel" style="font-weight:650"></span>
+      <button id="feedCancelBtn" style="padding:3px 10px;font-size:12px">关闭</button>
+    </div>
 
     <section class="panel chart-panel">
       <div class="chart-head">
@@ -590,36 +610,206 @@ const sampleRows = [
 const $ = (id) => document.getElementById(id);
 let rows = sampleRows.slice();
 let currentLevel = "日线";
+let dataSource = "样例数据";        // 样例 / 实时 / CSV
+let currentSymbol = null;           // 解析出的市场代码, 如 sh600036
+let fetchSeq = 0;                   // 防止过期的拉取回调覆盖新数据
+let realtimeCache = {};             // { level: {symbol, rows, ts} } 级别数据缓存
+
+// A股代码解析与自选快捷映射
+const WATCHLIST = {
+  "招商银行": "sh600036",
+  "招商银行 600036": "sh600036",
+  "600036": "sh600036",
+  "sh600036": "sh600036",
+  "贵州茅台": "sh600519",
+  "贵州茅台 600519": "sh600519",
+  "600519": "sh600519",
+  "sh600519": "sh600519"
+};
+// 本级列表: 一(下拉/按钮) 一键填充自选用的真实估值标的
+const LEVEL_SCALE = { "日线": 240, "30分钟": 30, "5分钟": 5 };
+const LEVEL_COUNT = { "日线": 320, "30分钟": 480, "5分钟": 800 };
+
+function normalizeSymbol(text) {
+  if (!text) return null;
+  const t = String(text).trim();
+  const look = WATCHLIST[t] || t;
+  let hint = "", code = "";
+  // 后缀形式 600036.sh / 600519.SH
+  let m = look.match(/(\d{5,6})\s*\.\s*(sh|sz|bj|hk)/i);
+  if (m) { code = m[1]; hint = m[2]; }
+  else {
+    // 前缀形式 sh600036 / 600036.sh / 600036
+    m = look.match(/(sh|sz|bj|hk)\s*(\d{5,6})/i) || look.match(/(\d{5,6})/);
+    if (m) { code = m[2] || m[1]; hint = m[1] && /^(sh|sz|bj|hk)$/i.test(m[1]) ? m[1] : ""; }
+  }
+  if (!code) return null;
+  const prefix = hint.toLowerCase();
+  let sym;
+  if (prefix === "sh" || prefix === "sz" || prefix === "bj") sym = prefix + code;
+  else if (prefix === "hk") sym = "hk" + code;
+  else if (/^6\d{5}$/.test(code)) sym = "sh" + code;
+  else if (/^(0|3)\d{5}$/.test(code)) sym = "sz" + code;
+  else if (/^(4|8|9)\d{5}$/.test(code)) sym = "bj" + code;
+  else if (/^\d{5}$/.test(code)) sym = "hk" + code;
+  else return null;
+  return sym;
+}
+
+function isAStock(sym) { return /^(sh|sz|bj)/.test(sym); }
 
 function formatPrice(value) {
   return Number(value).toFixed(2);
 }
 
+// 把一行切成单元格: 兼容逗号 / Tab / 空格分隔(空格分隔仅在无逗号无Tab时启用)
+function splitCells(line) {
+  const t = line.trim();
+  if (t.includes(",")) return t.split(",").map((c) => c.trim());
+  if (t.includes("\t")) return t.split("\t").map((c) => c.trim());
+  // 无逗号无Tab: 以连续空白(一个或多个)分隔; 仅当拆分后单元格数>=4才接受, 避免把无表头换行误拆
+  const cells = t.split(/\s+/);
+  return cells.length >= 4 ? cells : [line];
+}
+
+function toFuzzyNum(v) {
+  if (v == null || v === "") return NaN;
+  const n = Number(String(v).replace(/[,\uff0c%\s¥$]/g, ""));
+  return n;
+}
+
 function parseCsv(text) {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean);
+  if (!text) return [];
+  const lines = text.trim().split(/\r?\n/).filter((l) => l.trim() !== "" && !/^\s*(#|\/\/)/.test(l));
   if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  let headerIdx = 0;
+  let headers = splitCells(lines[0]).map((h) => h.toLowerCase());
   const find = (names) => names.map((n) => headers.indexOf(n)).find((i) => i >= 0);
-  const idx = {
-    date: find(["date", "日期", "time"]),
-    open: find(["open", "开盘"]),
-    high: find(["high", "最高"]),
-    low: find(["low", "最低"]),
-    close: find(["close", "收盘"]),
-    volume: find(["volume", "vol", "成交量"])
+  let idx = {
+    date: find(["date", "日期", "time", "时间", "day", "datetime"]),
+    open: find(["open", "开盘", "o"]),
+    high: find(["high", "最高", "h"]),
+    low: find(["low", "最低", "l"]),
+    close: find(["close", "收盘", "收", "c"]),
+    volume: find(["volume", "vol", "成交量", "量", "v"])
   };
-  if (Object.values(idx).some((v) => v === undefined)) return [];
-  return lines.slice(1).map((line) => {
-    const cells = line.split(",").map((c) => c.trim());
-    return {
-      date: cells[idx.date],
-      open: Number(cells[idx.open]),
-      high: Number(cells[idx.high]),
-      low: Number(cells[idx.low]),
-      close: Number(cells[idx.close]),
-      volume: Number(cells[idx.volume] || 0)
+  // 若第一行不是表头(数据行), 按固定顺序 日期,开,高,低,收,量 解析
+  if (Object.values(idx).every((v) => v === undefined)) {
+    headerIdx = -1;
+    idx = { date: 0, open: 1, high: 2, low: 3, close: 4, volume: 5 };
+  }
+  const source = headerIdx === -1 ? lines : lines.slice(1);
+  const out = [];
+  source.forEach((line, r) => {
+    const cells = splitCells(line);
+    const date = (cells[idx.date] || "").replace(/T.*/, "").trim();
+    const open = toFuzzyNum(cells[idx.open]);
+    const high = toFuzzyNum(cells[idx.high]);
+    const low = toFuzzyNum(cells[idx.low]);
+    const close = toFuzzyNum(cells[idx.close]);
+    const volume = toFuzzyNum(cells[idx.volume]);
+    if (!date || ![open, high, low, close].every(Number.isFinite)) return;
+    out.push({ date, open, high, low, close, volume: Number.isFinite(volume) ? volume : 0 });
+  });
+  return out;
+}
+
+// 新浪 JSONP 拉取 (script 标签加载, 绕开 CORS); 返回 Promise<rows>
+function fetchSina(symbol, scale, datalen) {
+  return new Promise((resolve, reject) => {
+    const cb = "sinaK" + (++fetchGid);
+    const url = `https://quotes.sina.cn/cn/api/jsonp_v2.php/${cb}/CN_MarketDataService.getKLineData?symbol=${encodeURIComponent(symbol)}&scale=${scale}&ma=no&datalen=${datalen}`;
+    const prev = window[cb];
+    const timeout = setTimeout(() => { cleanup(); reject(new Error("请求超时")); }, 15000);
+    const script = document.createElement("script");
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[cb];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cb] = (ret) => {
+      try {
+        cleanup();
+        if (!ret || !Array.isArray(ret) || !ret.length) { reject(new Error("接口未返回数据")); return; }
+        const rows = ret.map((r) => ({
+          date: String(r.day || "").replace(" ", "_"),
+          open: Number(r.open),
+          high: Number(r.high),
+          low: Number(r.low),
+          close: Number(r.close),
+          volume: Number(r.volume || 0)
+        }));
+        resolve(rows);
+      } catch (e) { reject(e); }
     };
-  }).filter((r) => r.date && [r.open, r.high, r.low, r.close].every(Number.isFinite));
+    script.src = url;
+    script.onerror = () => { cleanup(); reject(new Error("脚本加载失败(可能被拦截)")); };
+    document.body.appendChild(script);
+  });
+}
+let fetchGid = 0;
+
+function showFeed(on, text, level) {
+  const bar = $("feedBar");
+  if (!bar) return;
+  if (!on) { bar.style.display = "none"; return; }
+  bar.style.display = "flex";
+  $("feedBarText").textContent = text || "正在拉取行情…";
+  if (level) $("feedBarLevel").textContent = level;
+  else $("feedBarLevel").textContent = "";
+  $("feedTag").textContent = "实时";
+}
+
+function setDataSource(label, color) {
+  dataSource = label;
+  const n = $("dataSourceNote");
+  if (n) { n.textContent = "当前数据来源：" + label; n.style.color = color || "#647184"; }
+}
+
+// 主拉取入口: 解析输入框代码 → 按当前级别拉取数据
+async function loadRealtime() {
+  const input = $("symbolInput").value;
+  const sym = normalizeSymbol(input);
+  if (!sym) { alert("无法识别代码，示例：招商银行 / 600036 / 600036.sh / sh600036（A股）。\n港股等标的请用 CSV 手动导入。"); return; }
+  if (!isAStock(sym)) {
+    alert(`【${sym}】不是 A 股（可能是港股/美股）。新浪行情接口暂不支持港股，请用手动 CSV 导入该标的数据。`);
+    return;
+  }
+  const seq = ++fetchSeq;
+  const level = currentLevel;
+  const scale = LEVEL_SCALE[level];
+  const count = LEVEL_COUNT[level] || 240;
+  currentSymbol = sym;
+  showFeed(true, `正在拉取 ${sym} · ${level} 行情…`, level);
+  setDataSource("实时", "#1d4ed8");
+  try {
+    const rows = await fetchSina(sym, scale, count);
+    if (seq !== fetchSeq) return; // 已被更新的请求覆盖
+    if (!rows || rows.length < 20) { showFeed(false); alert("拉取结果不足，请稍后重试或换 CSV。"); return; }
+    realtimeCache[level] = { symbol: sym, rows, ts: Date.now() };
+    rowsLoaded(rows, `实时(${sym} · ${level})`);
+    showFeed(false);
+  } catch (e) {
+    if (seq !== fetchSeq) return;
+    showFeed(false);
+    setDataSource("回落到上一次数据", "#b7791f");
+    alert(`拉取失败：${e.message || e}。仅 A 股可用，可稍后重试，或用 CSV 手动导入。`);
+  }
+}
+
+function rowsLoaded(newRows, sourceLabel) {
+  rows = newRows.slice();
+  dataSource = sourceLabel;
+  setDataSource(sourceLabel, sourceLabel.indexOf("实时") >= 0 ? "#1d4ed8" : "#647184");
+  analyze();
+}
+
+// 一键填充自选: 在输入框填入招行,并切到日线
+function fillWatchlist() {
+  $("symbolInput").value = "招商银行 600036";
+  currentLevel = "日线";
+  setLevelButtons("日线");
+  loadRealtime();
 }
 
 function ema(values, period) {
@@ -1020,8 +1210,10 @@ function analyze() {
 
 function renderSummary(rawData, data, fractals, pens, segments, centers, signals, analysis, decision) {
   const { last, prev, lastCenter, trend, location, volumeState, direction } = analysis;
-  $("titleText").textContent = $("symbolInput").value || "未命名标的";
-  $("timeText").textContent = `${last.date} · ${currentLevel}`;
+  const symLabel = currentSymbol ? ` ${currentSymbol.toUpperCase()}` : "";
+  const srcTag = dataSource === "实时" ? " · 实时" : (dataSource === "手动 CSV" ? " · CSV" : "");
+  $("titleText").textContent = `${$("symbolInput").value || "未命名标的"}${symLabel}`;
+  $("timeText").textContent = `${srcTag}${last.date} · ${currentLevel}`;
   $("lastPrice").textContent = formatPrice(last.close);
   const change = last.close - prev.close;
   $("changeText").textContent = `${change >= 0 ? "+" : ""}${formatPrice(change)} / ${change >= 0 ? "+" : ""}${(change / prev.close * 100).toFixed(2)}%`;
@@ -1226,17 +1418,39 @@ function drawChart(data, fractals, pens, segments, centers, signals, macdData) {
   ctx.stroke();
 }
 
+function setLevelButtons(level) {
+  currentLevel = level;
+  document.querySelectorAll("#levelButtons button").forEach((btn) => btn.classList.toggle("active", btn.dataset.level === level));
+}
+
 $("levelButtons").addEventListener("click", (event) => {
   if (event.target.matches("button")) {
-    currentLevel = event.target.dataset.level;
-    document.querySelectorAll("#levelButtons button").forEach((btn) => btn.classList.toggle("active", btn === event.target));
-    analyze();
+    setLevelButtons(event.target.dataset.level);
+    const cache = realtimeCache[currentLevel];
+    if (dataSource === "实时" && cache && cache.symbol === currentSymbol) {
+      // 已缓存该级别实时数据, 直接切换展示
+      rows = cache.rows.slice();
+      analyze();
+    } else if (dataSource === "实时" && currentSymbol) {
+      // 实时模式切换级别 → 拉对应级别真实数据
+      loadRealtime();
+    } else {
+      analyze();
+    }
   }
 });
 $("analyzeBtn").addEventListener("click", analyze);
+$("realtimeBtn").addEventListener("click", loadRealtime);
+$("autoMapBtn").addEventListener("click", fillWatchlist);
+$("feedCancelBtn").addEventListener("click", () => { showFeed(false); fetchSeq++; });
 $("sampleBtn").addEventListener("click", () => {
   rows = sampleRows.slice();
   $("csvFile").value = "";
+  currentSymbol = null;
+  realtimeCache = {};
+  fetchSeq++;
+  showFeed(false);
+  setDataSource("样例数据", "#647184");
   analyze();
 });
 $("csvFile").addEventListener("change", async (event) => {
@@ -1245,16 +1459,23 @@ $("csvFile").addEventListener("change", async (event) => {
   const parsed = parseCsv(await file.text());
   if (parsed.length >= 20) {
     rows = parsed;
+    currentSymbol = null;
+    fetchSeq++;
+    showFeed(false);
+    setDataSource("手动 CSV", "#647184");
     analyze();
   } else {
-    alert("CSV 至少需要 20 行，并包含 date, open, high, low, close, volume 字段。");
+    alert("CSV 至少需要 20 行，并包含 date, open, high, low, close, volume 字段。\n已兼容逗号/Tab/空格分隔及中英文表头。");
   }
 });
-["symbolInput", "styleSelect", "valuationSelect", "riskInput", "mergeIncluded", "strictPens", "extendCenters"].forEach((id) => {
+["styleSelect", "valuationSelect", "riskInput", "mergeIncluded", "strictPens", "extendCenters"].forEach((id) => {
   $(id).addEventListener("input", analyze);
   $(id).addEventListener("change", analyze);
 });
 window.addEventListener("resize", analyze);
+
+// 打开时默认渲染样例
+setDataSource("样例数据", "#647184");
 analyze();
 </script>
 </body>
