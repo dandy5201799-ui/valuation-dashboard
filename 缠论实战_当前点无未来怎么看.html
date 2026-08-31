@@ -1,0 +1,99 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论实战 · 停在当前点，怎么判断趋势</title><style>
+*{box-sizing:border-box}body{font-family:-apple-system,'PingFang SC',sans-serif;background:#eef1f5;margin:0;padding:18px;color:#1a2233}
+.wrap{max-width:1060px;margin:0 auto}h1{font-size:20px;margin:0 0 4px}.sub{color:#667085;font-size:13px;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;box-shadow:0 8px 22px rgba(30,41,59,.08);padding:16px;margin-bottom:14px}
+canvas{width:100%;height:auto;display:block;background:#fafbfc;border:1px solid #e2e7ee;border-radius:10px}
+.controls{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;align-items:center}
+input[type=range]{flex:1;min-width:220px}
+label{font-size:13px;color:#344054}
+.panel{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.btn{flex:1;min-width:150px;border:none;border-radius:9px;padding:12px 14px;font-size:14px;cursor:pointer;color:#fff;font-family:inherit;text-align:left;line-height:1.5}
+.b-red{background:#d64045}.b-green{background:#22a06b}.b-blue{background:#2563eb}.b-mid{background:#8a6d1b}
+.tip{font-size:14px;line-height:1.9;color:#344054;padding:13px 16px;background:#f6f9fd;border-left:4px solid #2563eb;border-radius:8px;margin-top:12px;display:none}
+.tip.show{display:block}
+.legend{display:flex;gap:16px;font-size:13px;color:#555;margin-top:8px;flex-wrap:wrap}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.now{font-size:14px;font-weight:700;color:#d64045;margin-top:10px}
+</style></head><body><div class="wrap">
+<h1>🎯 缠论实战 · 停在"当前点"，没有未来数据，怎么判断</h1>
+<div class="sub">用<b>招商银行真实日线</b>，模拟"走到今天、没有未来"的实战判断。拖动滑块可切换"当前点"，体会在任意一天你必须做判断、却没有未来答案的感受。</div>
+<div class="card">
+<canvas id="cv"></canvas>
+<div class="legend">
+<span><i class="dot" style="background:#c0392b"></i>阳K</span><span><i class="dot" style="background:#1a7a4c"></i>阴K</span>
+<span><i class="dot" style="background:#d64045"></i>当前点/近高</span><span><i class="dot" style="background:#1a7a4c"></i>近低</span>
+</div>
+<div class="controls">
+<label>往前回看「当前点」在你手边：</label>
+<input type="range" id="slider" min="0" max="0" step="1">
+<span id="posLabel"></span>
+</div>
+<div class="now" id="nowline"></div>
+<div class="panel">
+<div class="btn b-red" id="j0">◆ 当前走势方向判断</div>
+<div class="btn b-green" id="j1">■ 近高/近低在哪</div>
+<div class="btn b-mid" id="j2">≡ 现在像不像箱体</div>
+<div class="btn b-blue" id="j3">→ 反转/转折怎么判断</div>
+</div>
+<div class="tip" id="tipA"></div>
+<div class="tip" id="tipB"></div>
+<div class="tip" id="tipC"></div>
+<div class="tip" id="tipD"></div>
+</div>
+<script>
+const DATA=[{"d": "2026-06-01", "o": 36.997, "c": 37.197, "h": 37.197, "l": 36.797}, {"d": "2026-06-02", "o": 37.157, "c": 37.797, "h": 37.877, "l": 37.047}, {"d": "2026-06-03", "o": 37.807, "c": 37.497, "h": 37.807, "l": 37.247}, {"d": "2026-06-04", "o": 37.397, "c": 37.097, "h": 37.647, "l": 36.987}, {"d": "2026-06-05", "o": 37.177, "c": 37.577, "h": 37.697, "l": 37.107}, {"d": "2026-06-08", "o": 37.397, "c": 37.497, "h": 37.757, "l": 37.357}, {"d": "2026-06-09", "o": 37.497, "c": 37.487, "h": 37.637, "l": 37.397}, {"d": "2026-06-10", "o": 37.447, "c": 37.897, "h": 38.077, "l": 37.377}, {"d": "2026-06-11", "o": 37.927, "c": 37.727, "h": 38.087, "l": 37.567}, {"d": "2026-06-12", "o": 37.587, "c": 38.337, "h": 38.347, "l": 37.337}, {"d": "2026-06-15", "o": 38.207, "c": 37.947, "h": 38.367, "l": 37.727}, {"d": "2026-06-16", "o": 37.807, "c": 37.567, "h": 37.887, "l": 37.407}, {"d": "2026-06-17", "o": 37.677, "c": 37.227, "h": 37.847, "l": 37.137}, {"d": "2026-06-18", "o": 37.147, "c": 36.257, "h": 37.197, "l": 36.257}, {"d": "2026-06-22", "o": 36.007, "c": 36.647, "h": 36.897, "l": 35.947}, {"d": "2026-06-23", "o": 36.647, "c": 36.397, "h": 37.187, "l": 36.347}, {"d": "2026-06-24", "o": 36.487, "c": 35.757, "h": 36.577, "l": 35.747}, {"d": "2026-06-25", "o": 35.727, "c": 35.227, "h": 35.987, "l": 35.197}, {"d": "2026-06-26", "o": 35.377, "c": 34.997, "h": 35.467, "l": 34.877}, {"d": "2026-06-29", "o": 34.897, "c": 35.417, "h": 35.717, "l": 34.397}, {"d": "2026-06-30", "o": 35.367, "c": 34.497, "h": 35.387, "l": 34.347}, {"d": "2026-07-01", "o": 34.517, "c": 34.907, "h": 35.117, "l": 34.277}, {"d": "2026-07-02", "o": 35.277, "c": 35.597, "h": 35.797, "l": 35.127}, {"d": "2026-07-03", "o": 35.667, "c": 35.827, "h": 36.057, "l": 35.347}, {"d": "2026-07-06", "o": 35.697, "c": 36.727, "h": 36.757, "l": 35.517}, {"d": "2026-07-07", "o": 36.717, "c": 36.547, "h": 36.857, "l": 36.297}, {"d": "2026-07-08", "o": 36.357, "c": 36.937, "h": 36.967, "l": 36.147}, {"d": "2026-07-09", "o": 36.697, "c": 36.547, "h": 36.807, "l": 36.367}, {"d": "2026-07-10", "o": 36.61, "c": 36.88, "h": 36.92, "l": 36.33}, {"d": "2026-07-13", "o": 36.81, "c": 37.25, "h": 37.4, "l": 36.71}, {"d": "2026-07-14", "o": 37.1, "c": 37.18, "h": 37.24, "l": 36.82}, {"d": "2026-07-15", "o": 37.0, "c": 37.76, "h": 37.96, "l": 36.75}, {"d": "2026-07-16", "o": 37.7, "c": 37.67, "h": 38.12, "l": 37.5}, {"d": "2026-07-17", "o": 37.76, "c": 38.02, "h": 38.2, "l": 37.68}, {"d": "2026-07-20", "o": 37.95, "c": 38.91, "h": 38.91, "l": 37.89}, {"d": "2026-07-21", "o": 39.18, "c": 37.99, "h": 39.4, "l": 37.9}, {"d": "2026-07-22", "o": 37.85, "c": 38.71, "h": 38.71, "l": 37.63}, {"d": "2026-07-23", "o": 38.68, "c": 38.91, "h": 38.99, "l": 38.45}, {"d": "2026-07-24", "o": 39.18, "c": 39.2, "h": 39.25, "l": 38.9}, {"d": "2026-07-27", "o": 39.12, "c": 39.0, "h": 39.24, "l": 38.69}, {"d": "2026-07-28", "o": 39.17, "c": 39.59, "h": 39.59, "l": 38.95}, {"d": "2026-07-29", "o": 39.98, "c": 39.66, "h": 40.07, "l": 39.49}, {"d": "2026-07-30", "o": 39.66, "c": 40.55, "h": 40.55, "l": 39.55}, {"d": "2026-07-31", "o": 39.85, "c": 39.62, "h": 40.17, "l": 39.04}, {"d": "2026-08-03", "o": 39.88, "c": 40.36, "h": 40.42, "l": 39.8}, {"d": "2026-08-04", "o": 40.16, "c": 39.28, "h": 40.16, "l": 39.21}, {"d": "2026-08-05", "o": 39.18, "c": 38.94, "h": 39.48, "l": 38.72}, {"d": "2026-08-06", "o": 39.0, "c": 38.97, "h": 39.15, "l": 38.47}, {"d": "2026-08-07", "o": 38.9, "c": 38.8, "h": 39.1, "l": 38.48}, {"d": "2026-08-10", "o": 38.79, "c": 38.91, "h": 39.27, "l": 38.7}, {"d": "2026-08-11", "o": 39.0, "c": 38.95, "h": 39.2, "l": 38.77}, {"d": "2026-08-12", "o": 38.95, "c": 38.7, "h": 38.97, "l": 38.56}, {"d": "2026-08-13", "o": 38.59, "c": 38.77, "h": 38.81, "l": 38.5}, {"d": "2026-08-14", "o": 38.65, "c": 38.46, "h": 38.75, "l": 38.46}, {"d": "2026-08-17", "o": 38.35, "c": 38.2, "h": 38.46, "l": 38.06}, {"d": "2026-08-18", "o": 38.15, "c": 38.29, "h": 38.36, "l": 38.03}, {"d": "2026-08-19", "o": 38.55, "c": 39.15, "h": 39.15, "l": 38.4}, {"d": "2026-08-20", "o": 38.8, "c": 38.86, "h": 39.07, "l": 38.47}, {"d": "2026-08-21", "o": 38.8, "c": 38.9, "h": 39.1, "l": 38.76}];
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let cut=DATA.length-1; // 当前点 = 最后一个数据(最新), 用户可前移
+let showPanel=1;
+function px(){cv.width=Math.max(820,cv.parentElement.clientWidth-6);cv.height=Math.max(500,cv.width*0.62);document.getElementById('slider').max=DATA.length-1}
+const padL=54,padT=40,padB=46;
+function x(i){const sub=DATA.slice(0,cut+1);return padL+(cv.width-padL-30)*(i/(sub.length-1))}
+function yv(v){const sub=DATA.slice(0,cut+1);const mnm=Math.min(...sub.map(d=>d.l)),mxm=Math.max(...sub.map(d=>d.h));const g=mxm-mnm;return padT+(cv.height-padT-padB)*(1-(v-(mnm-g*0.07))/((mxm+g*0.06)-(mnm-g*0.07)))}
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#fafbfc';ctx.fillRect(0,0,cv.width,cv.height);
+  const sub=DATA.slice(0,cut+1);
+  const mnm=Math.min(...sub.map(d=>d.l)),mxm=Math.max(...sub.map(d=>d.h));
+  ctx.strokeStyle='#edf1f6';ctx.lineWidth=1;
+  for(let k=0;k<=6;k++){const v=mnm+(mxm-mnm)*k/6,yy=yv(v);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(cv.width-30,yy);ctx.stroke();ctx.fillStyle='#8894a6';ctx.font='11px sans-serif';ctx.textAlign='right';ctx.fillText(v.toFixed(1),padL-7,yy+4)}
+  // 日期轴
+  ctx.textAlign='center';ctx.font='10px sans-serif';ctx.fillStyle='#99a4b4';
+  sub.forEach((dd,i)=>{ if(i%8===0) ctx.fillText(dd.d.slice(5),x(i),cv.height-padB+20); });
+  // 当前点垂直线
+  ctx.save();ctx.strokeStyle='#d64045';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(x(cut),padT);ctx.lineTo(x(cut),cv.height-padB);ctx.stroke();ctx.restore();
+  ctx.font='bold 12px sans-serif';ctx.fillStyle='#d64045';ctx.fillText('当前点 '+DATA[cut].d, x(cut), padT+12);
+  // K线
+  const bw=Math.max(1.5,cv.width/sub.length*0.5);
+  sub.forEach((dd,i)=>{const up=dd.c>=dd.o;ctx.strokeStyle=up?'#c0392b':'#1a7a4c';ctx.fillStyle=up?'rgba(192,57,43,.9)':'rgba(26,122,76,.9)';ctx.beginPath();ctx.moveTo(x(i),yv(dd.l));ctx.lineTo(x(i),yv(dd.h));ctx.stroke();const top=Math.min(yv(dd.o),yv(dd.c)),bot=Math.max(yv(dd.o),yv(dd.c));ctx.fillRect(x(i)-bw/2,top,bw,Math.max(1.5,bot-top));});
+  // 近高/近低标注(基于cut之前局部极值)
+  if(showPanel>=2){
+    // 近低: cut前最低收盘; 近高: 一小段最高
+    const win=sub.slice(Math.max(0,cut-20),cut+1);
+    const lo=win.reduce((a,b)=>a.c<b.c?a:b);
+    const hi=win.reduce((a,b)=>a.c>b.c?a:b);
+    const ilo=DATA.indexOf(lo), ihi=DATA.indexOf(hi);
+    ctx.font='bold 11px sans-serif';
+    ctx.fillStyle='#1a7a4c';ctx.fillText('近低 '+lo.c, x(ilo), yv(lo.c)+18);
+    ctx.fillStyle='#d64045';ctx.fillText('近高 '+hi.c, x(ihi), yv(hi.c)-14);
+  }
+  document.getElementById('nowline').textContent='〔当前停在：'+DATA[cut].d+'，收盘 '+DATA[cut].c+'〕你在这天判断，没有未来。';
+  document.getElementById('posLabel').textContent=DATA[cut].d;
+  showPanel>=1?drawTips():showTipBy(showPanel);
+}
+function hideAll(){['A','B','C','D'].forEach((k,i)=>{document.getElementById('tip'+k).classList.remove('show')})}
+function drawTips(){}
+// 四个判断按钮的说明
+const GUIDE={
+ A:`<b>◆ 第一步：当下这段走势，方向是什么？</b><br>不看未来，只看"当前点"已出现的 K 线：最近一段的<b>收盘高点是抬高还是走低</b>？<br>就招商银行当前：从 38.2 往上到 40.5 附近（7月底高点），再回落、再反抽——<b>更接近"反弹中的整理"</b>，还没走出明确单边。判断：<b>当前是"反弹乏力、在 38–40 之间整理"</b>，不是强的上升，也不是恐慌下跌。`,
+ B:`<b>■ 第二步：近高、近低在哪？</b><br>找出"当前点"之前最近的关键<b>高位</b>和<b>低位</b>，作为判断突破/跌破的参照物。<br>当前点附近：<b>近期高点约 40.4–40.5（7/30、8/3）</b>，<b>近期低点约 38.2（8/17）</b>。<br>意义：上方 40.4 过不去=压力，下方 38.2 破不破=支撑。这就是你要盯的两个价位。`,
+ C:`<b>≡ 第三步：当前像不像箱体？</b><br>箱体 = 高点低点被卡在一条线里来回。当前 38.2–40.4 之间，股价已多日在这区间里上下（8月整月），<b>更像一个箱体/震荡区，上沿≈40.4、下沿≈38.2</b>。<br>在箱体里：<b>不谈反转</b>，只是高抛低吸。<b>什么时候有方向</b>——突破 40.4 或跌破 38.2 且站稳。`,
+ D:`<b>→ 第四步：反转/转折到底怎么判断（当前点，无未来）</b><br>你没有未来，所以只能设"触发条件"，等信号兑现：<br>① 若<b>收盘站上 40.4</b>且回抽不回 → 看多，可能向上；<br>② 若<b>收盘跌破 38.2</b>且回抽不回 → 看空，可能转跌；<br>③ 两者之间都不动 → 仍在箱体整理。<br><b>关键</b>：实战不是"预测"，是<b>设好触发价位 + 等确认 + 设失效</b>——这跟你的估值体系"每个判断都要有失效条件"是同一套思想。`
+};
+function showTipBy(n){hideAll();document.getElementById('tip'+chr(n)).innerHTML=GUID[chr(n)];document.getElementById('tip'+chr(n)).classList.add('show')}
+function chr(n){return ['A','B','C','D'][n-1]}
+['j0','j1','j2','j3'].forEach((id,i)=>{document.getElementById(id).addEventListener('click',()=>{showPanel=i+1;hideAll();showTipBy(i+1);draw()})});
+document.getElementById('slider').addEventListener('input',(e)=>{cut=+e.target.value;draw()});
+window.addEventListener('resize',()=>{px();draw()});
+px();showTipBy(1);draw();
+</script></body></html>

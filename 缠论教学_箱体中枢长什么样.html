@@ -1,0 +1,85 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论教学 · 箱体长什么样</title><style>
+*{box-sizing:border-box}body{font-family:-apple-system,'PingFang SC',sans-serif;background:#eef1f5;margin:0;padding:18px;color:#1a2233}
+.wrap{max-width:1020px;margin:0 auto}h1{font-size:21px;margin:0 0 4px}.sub{color:#667085;font-size:13px;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;box-shadow:0 8px 22px rgba(30,41,59,.08);padding:16px;margin-bottom:14px}
+canvas{width:100%;height:auto;display:block;background:#fafbfc;border:1px solid #e2e7ee;border-radius:10px}
+.controls{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+button{border:none;border-radius:9px;padding:11px 16px;font-size:14px;cursor:pointer;font-family:inherit}
+.b1{background:#eef2f7;color:#334155}.b2{background:#2563eb;color:#fff}
+.tip{font-size:14px;line-height:1.85;color:#344054;padding:13px 16px;background:#f6f9fd;border-left:4px solid #2563eb;border-radius:8px;margin-top:12px}
+.legend{display:flex;gap:18px;font-size:13px;color:#555;margin-top:8px;flex-wrap:wrap}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.zone-tag{display:inline-block;background:#fff3cd;color:#9a6700;border-radius:6px;padding:2px 10px;font-size:13px;margin-top:6px}
+.gray{color:#667085}
+</style></head><body><div class="wrap">
+<h1>📦 缠论教学 · 箱体（中枢）长什么样</h1>
+<div class="sub">前面讲了"涨"和"跌"，现在讲第三种：<b>横盘</b>。横盘震荡挤出来的区间就叫<b>箱体</b>（缠论术语：中枢）。本图用标准示例演示。</div>
+<div class="card">
+<canvas id="cv"></canvas>
+<div class="legend">
+<span><i class="dot" style="background:#c0392b"></i>阳K</span><span><i class="dot" style="background:#1a7a4c"></i>阴K</span>
+<span id="leg_box" style="display:none"><i class="dot" style="background:#f5a623"></i>箱体区间</span>
+<span id="leg_trend" style="display:none"><i class="dot" style="background:#22a06b"></i>趋势段(图上沿/下沿)</span>
+</div>
+<div class="controls">
+<button class="b1" id="b1">❶ 先看整段走势</button>
+<button class="b2" id="b2">点这里：显示箱体</button>
+</div>
+<div class="tip" id="tip"><b>❶ 现在看整段图</b>：这段走势其实分三段——左边<b>向上</b>、中间<b>来回晃</b>、右边<b>向下</b>。<br>中间那段"来回晃、高不上去、低不破下来"的，就是<b>横盘/箱体</b>。先自己感觉"中间那一段是箱体吧？"再看答案。</div>
+</div>
+<script>
+const DATA=[{"d": "D1", "o": 40, "c": 43.400000000000006, "h": 44.300000000000004, "l": 39.3}, {"d": "D2", "o": 43.400000000000006, "c": 45.60000000000001, "h": 46.50000000000001, "l": 42.7}, {"d": "D3", "o": 45.60000000000001, "c": 49.000000000000014, "h": 49.90000000000001, "l": 44.900000000000006}, {"d": "D4", "o": 49.000000000000014, "c": 51.20000000000002, "h": 52.100000000000016, "l": 48.30000000000001}, {"d": "D5", "o": 51.20000000000002, "c": 54.60000000000002, "h": 55.50000000000002, "l": 50.500000000000014}, {"d": "D6", "o": 54.60000000000002, "c": 56.800000000000026, "h": 57.700000000000024, "l": 53.90000000000002}, {"d": "D7", "o": 56.800000000000026, "c": 60.20000000000003, "h": 61.10000000000003, "l": 56.10000000000002}, {"d": "D8", "o": 60.20000000000003, "c": 62.400000000000034, "h": 63.30000000000003, "l": 59.50000000000003}, {"d": "D9", "o": 48, "c": 50.2, "h": 50.5, "l": 47.6}, {"d": "D10", "o": 50.2, "c": 48.4, "h": 50.6, "l": 48.1}, {"d": "D11", "o": 48.4, "c": 51.0, "h": 51.3, "l": 48.1}, {"d": "D12", "o": 51.0, "c": 49.5, "h": 51.4, "l": 49.1}, {"d": "D13", "o": 49.5, "c": 51.3, "h": 51.6, "l": 49.2}, {"d": "D14", "o": 51.3, "c": 50.5, "h": 51.7, "l": 50.2}, {"d": "D15", "o": 50.5, "c": 51.5, "h": 51.8, "l": 50.1}, {"d": "D16", "o": 51.5, "c": 49.5, "h": 51.9, "l": 49.2}, {"d": "D17", "o": 49.5, "c": 51.1, "h": 51.4, "l": 49.2}, {"d": "D18", "o": 51.1, "c": 49.9, "h": 51.5, "l": 49.5}, {"d": "D19", "o": 49.9, "c": 51.5, "h": 51.8, "l": 49.6}, {"d": "D20", "o": 51.5, "c": 49.9, "h": 51.9, "l": 49.6}, {"d": "D21", "o": 49.9, "c": 51.5, "h": 51.8, "l": 49.5}, {"d": "D22", "o": 51.5, "c": 50.5, "h": 51.9, "l": 50.2}, {"d": "D23", "o": 50.5, "c": 51.5, "h": 51.8, "l": 50.2}, {"d": "D24", "o": 51.5, "c": 50.1, "h": 51.9, "l": 49.7}, {"d": "D25", "o": 50.1, "c": 51.5, "h": 51.8, "l": 49.8}, {"d": "D26", "o": 51.5, "c": 50.4, "h": 51.9, "l": 50.1}, {"d": "D27", "o": 50.4, "c": 51.5, "h": 51.8, "l": 50.0}, {"d": "D28", "o": 51.5, "c": 49.8, "h": 51.9, "l": 49.5}, {"d": "D29", "o": 49.8, "c": 51.3, "h": 51.6, "l": 49.5}, {"d": "D30", "o": 51.3, "c": 50.4, "h": 51.7, "l": 50.0}, {"d": "D31", "o": 50.4, "c": 51.5, "h": 51.8, "l": 50.1}, {"d": "D32", "o": 51.5, "c": 50.2, "h": 51.9, "l": 49.9}, {"d": "D33", "o": 50.2, "c": 47.8, "h": 50.7, "l": 47.2}, {"d": "D34", "o": 47.8, "c": 44.7, "h": 48.3, "l": 44.1}, {"d": "D35", "o": 44.7, "c": 40.9, "h": 45.2, "l": 40.3}, {"d": "D36", "o": 40.9, "c": 36.4, "h": 41.4, "l": 35.8}, {"d": "D37", "o": 36.4, "c": 31.2, "h": 36.9, "l": 30.6}, {"d": "D38", "o": 31.2, "c": 25.3, "h": 31.7, "l": 24.7}, {"d": "D39", "o": 25.3, "c": 18.7, "h": 25.8, "l": 18.1}], BOX={"i0": 8, "i1": 31, "top": 52.0, "bot": 46.0};
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let showBox=false;
+function px(){cv.width=Math.max(720,cv.parentElement.clientWidth-6);cv.height=Math.max(420,cv.width*0.58)}
+const padL=50,padT=40,padB=46;
+function x(i){return padL+(cv.width-padL-30)*(i/(DATA.length-1))}
+function yv(v){const mnm=Math.min(...DATA.map(d=>d.l)),mxm=Math.max(...DATA.map(d=>d.h));const gap=mxm-mnm;return padT+(cv.height-padT-padB)*(1-(v-(mnm-gap*0.06))/((mxm+gap*0.06)-(mnm-gap*0.06)))}
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#fafbfc';ctx.fillRect(0,0,cv.width,cv.height);
+  const mnm=Math.min(...DATA.map(d=>d.l)),mxm=Math.max(...DATA.map(d=>d.h));
+  ctx.strokeStyle='#edf1f6';ctx.lineWidth=1;
+  for(let k=0;k<=8;k++){const v=mnm+(mxm-mnm)*k/8,yy=yv(v);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(cv.width-30,yy);ctx.stroke();ctx.fillStyle='#8894a6';ctx.font='11px sans-serif';ctx.textAlign='right';ctx.fillText(v.toFixed(0),padL-7,yy+4)}
+  ctx.textAlign='center';ctx.font='bold 13px sans-serif';ctx.fillStyle='#223044';ctx.fillText('一个标准箱体示例（上涨 → 横盘箱体 → 下跌）',cv.width/2,22);
+  ctx.font='12px sans-serif';ctx.fillStyle='#99a4b4';ctx.fillText(data_label(),padL+10,cv.height-padB+12);
+  function data_label(){return '';}
+  // 三段分隔标签
+  ctx.font='bold 11px sans-serif';
+  ctx.fillStyle='#1a7a4c';ctx.fillText('上涨段',x(4),yv(47.5)+0);
+  ctx.fillStyle='#b9761a';ctx.fillText('横盘箱体区',x(BOX.i0+3),yv(52.5)-8);
+  ctx.fillStyle='#d64045';ctx.fillText('下跌段',x(BOX.i1+6),yv(54)-0);
+  // K线
+  const bw=Math.max(1.5,cv.width/DATA.length*0.5);
+  for(let i=0;i<DATA.length;i++){const d=DATA[i];const up=d.c>=d.o;ctx.strokeStyle=up?'#c0392b':'#1a7a4c';ctx.fillStyle=up?'rgba(192,57,43,.85)':'rgba(26,122,76,.85)';ctx.beginPath();ctx.moveTo(x(i),yv(d.l));ctx.lineTo(x(i),yv(d.h));ctx.stroke();const top=Math.min(yv(d.o),yv(d.c)),bot=Math.max(yv(d.o),yv(d.c));ctx.fillRect(x(i)-bw/2,top,bw,Math.max(1.5,bot-top));}
+  // 箱体
+  if(showBox){
+    // 填充箱体
+    const x0=x(BOX.i0),x1=x(BOX.i1),yt=yv(BOX.top),yb=yv(BOX.bot);
+    ctx.save();
+    ctx.fillStyle='rgba(245,166,35,0.15)';ctx.fillRect(x0,yt,x1-x0,yb-yt);
+    ctx.strokeStyle='#f5a623';ctx.lineWidth=2;
+    ctx.setLineDash([7,4]);
+    // 上沿(压力) 下沿(支撑)
+    ctx.beginPath();ctx.moveTo(x0,yt);ctx.lineTo(x1,yt);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x0,yb);ctx.lineTo(x1,yb);ctx.stroke();
+    // 竖直边
+    ctx.beginPath();ctx.moveTo(x0,yt);ctx.lineTo(x0,yb);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x1,yt);ctx.lineTo(x1,yb);ctx.stroke();
+    ctx.setLineDash([]);
+    // 上沿下沿标签
+    ctx.fillStyle='#b9761a';ctx.font='bold 12px sans-serif';ctx.textAlign='left';
+    ctx.fillText('上沿／压力位 '+BOX.top,x0+6,yt-8);
+    ctx.fillText('下沿／支撑位 '+BOX.bot,x0+6,yb+18);
+    ctx.restore();
+  }
+  const tip=document.getElementById('tip');
+  const legb=document.getElementById('leg_box'),legt=document.getElementById('leg_trend');
+  if(showBox){legb.style.display='';legt.style.display='none';tip.innerHTML='<b>❷ 这就是箱体</b>：橙色框框住的中间那段，就是<b>横盘（箱体/中枢）</b>。<br>看上沿（压力位52）、下沿（支撑位46）——价格在这中间<b>上不去、下不破</b>，来回震荡。<br><b>关键</b>：这段里根本没有趋势（既不上涨也不下跌），所以不要在这谈"趋势反转"。<b>要等它突破上沿或跌破下沿，才有方向。</b>';}
+  else {legb.style.display='none';legt.style.display='';tip.innerHTML='<b>❶ 看整段</b>：左段向上、中段来回晃、右段向下。中间来回晃那段就是<b>横盘箱体</b>。先自己圈一下它大概在哪，再点下面按钮看答案。';}
+}
+document.getElementById('b1').addEventListener('click',()=>{showBox=false;draw()});
+document.getElementById('b2').addEventListener('click',()=>{showBox=true;draw()});
+window.addEventListener('resize',()=>{px();draw()});
+px();draw();
+</script></body></html>

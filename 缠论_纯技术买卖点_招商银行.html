@@ -1,0 +1,153 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论纯技术买卖点 · 招商银行</title><style>
+*{box-sizing:border-box}body{font-family:-apple-system,'PingFang SC',sans-serif;background:#eef1f5;margin:0;padding:18px;color:#1a2233}
+.wrap{max-width:1100px;margin:0 auto}h1{font-size:20px;margin:0 0 4px}.sub{color:#667085;font-size:13px;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;box-shadow:0 8px 22px rgba(30,41,59,.08);padding:16px;margin-bottom:14px}
+canvas{width:100%;height:auto;display:block;background:#fafbfc;border:1px solid #e2e7ee;border-radius:10px}
+.controls{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;align-items:center}
+input[type=range]{flex:1;min-width:220px}label{font-size:13px;color:#344054}
+.cut-tag{font-size:15px;font-weight:700;color:#d64045;margin-top:6px}
+.verdict{font-size:15px;line-height:1.8;padding:15px 18px;border-radius:10px;margin-top:14px;font-weight:600}
+.v-buy{background:#e5f6ee;border:1px solid #8bd5b4;color:#0e6f46}
+.v-sell{background:#fdeaea;border:1px solid #eeb6b6;color:#a12222}
+.v-hold{background:#eef2f7;border:1px solid #c9d4e3;color:#33475e}
+.posbar{margin-top:12px;background:#eceff4;border-radius:8px;height:16px;position:relative}
+.posfill{position:absolute;top:0;bottom:0;border-radius:8px}
+.detail{font-size:13px;color:#4b5968;margin-top:12px;line-height:1.8}
+.legend{display:flex;gap:16px;font-size:13px;color:#555;margin-top:8px;flex-wrap:wrap}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+</style></head><body><div class="wrap">
+<h1>🎯 缠论 · 纯技术买卖点（验证理论本身）</h1>
+<div class="sub">拖动滑块把「当前点」停在任何一天。右侧只根据<b>该日及之前</b>的数据，用缠论纯技术信号（箱体位置 + MACD背驰）给出<b>买/卖/持有</b>建议。<b>不掺估值、不做综合判断，只看缠论自己怎么说。</b></div>
+<div class="card">
+<canvas id="cv"></canvas>
+<div class="legend">
+<span><i class="dot" style="background:#c0392b"></i>阳K</span><span><i class="dot" style="background:#1a7a4c"></i>阴K</span>
+<span><i class="dot" style="background:#22a06b"></i>MACD红柱(涨动能)</span><span><i class="dot" style="background:#d64045"></i>MACD绿柱(跌动能)</span>
+<span><i class="dot" style="background:#b7791f"></i>箱体上下沿</span>
+</div>
+<div class="controls">
+<label><b>拖动当前点：</b></label>
+<input type="range" id="slider" min="20" max="0" step="1">
+</div>
+<div class="cut-tag" id="nowtag"></div>
+<div class="verdict" id="verdict"></div>
+<div class="posbar" id="posbar"><div class="posfill" id="posfill"></div></div>
+<div class="detail" id="detail"></div>
+</div>
+<script>
+const DATA=[{"d": "2026-06-01", "o": 36.997, "c": 37.197, "h": 37.197, "l": 36.797, "macd": 0.0, "dif": 0.0, "dea": 0.0}, {"d": "2026-06-02", "o": 37.157, "c": 37.797, "h": 37.877, "l": 37.047, "macd": 0.077, "dif": 0.048, "dea": 0.01}, {"d": "2026-06-03", "o": 37.807, "c": 37.497, "h": 37.807, "l": 37.247, "macd": 0.082, "dif": 0.061, "dea": 0.02}, {"d": "2026-06-04", "o": 37.397, "c": 37.097, "h": 37.647, "l": 36.987, "macd": 0.03, "dif": 0.038, "dea": 0.024}, {"d": "2026-06-05", "o": 37.177, "c": 37.577, "h": 37.697, "l": 37.107, "macd": 0.056, "dif": 0.059, "dea": 0.031}, {"d": "2026-06-08", "o": 37.397, "c": 37.497, "h": 37.757, "l": 37.357, "macd": 0.059, "dif": 0.068, "dea": 0.038}, {"d": "2026-06-09", "o": 37.497, "c": 37.487, "h": 37.637, "l": 37.397, "macd": 0.056, "dif": 0.073, "dea": 0.045}, {"d": "2026-06-10", "o": 37.447, "c": 37.897, "h": 38.077, "l": 37.377, "macd": 0.103, "dif": 0.109, "dea": 0.058}, {"d": "2026-06-11", "o": 37.927, "c": 37.727, "h": 38.087, "l": 37.567, "macd": 0.104, "dif": 0.123, "dea": 0.071}, {"d": "2026-06-12", "o": 37.587, "c": 38.337, "h": 38.347, "l": 37.337, "macd": 0.175, "dif": 0.18, "dea": 0.093}, {"d": "2026-06-15", "o": 38.207, "c": 37.947, "h": 38.367, "l": 37.727, "macd": 0.16, "dif": 0.192, "dea": 0.113}, {"d": "2026-06-16", "o": 37.807, "c": 37.567, "h": 37.887, "l": 37.407, "macd": 0.091, "dif": 0.169, "dea": 0.124}, {"d": "2026-06-17", "o": 37.677, "c": 37.227, "h": 37.847, "l": 37.137, "macd": -0.003, "dif": 0.122, "dea": 0.124}, {"d": "2026-06-18", "o": 37.147, "c": 36.257, "h": 37.197, "l": 36.257, "macd": -0.187, "dif": 0.007, "dea": 0.1}, {"d": "2026-06-22", "o": 36.007, "c": 36.647, "h": 36.897, "l": 35.947, "macd": -0.245, "dif": -0.053, "dea": 0.07}, {"d": "2026-06-23", "o": 36.647, "c": 36.397, "h": 37.187, "l": 36.347, "macd": -0.302, "dif": -0.119, "dea": 0.032}, {"d": "2026-06-24", "o": 36.487, "c": 35.757, "h": 36.577, "l": 35.747, "macd": -0.404, "dif": -0.22, "dea": -0.018}, {"d": "2026-06-25", "o": 35.727, "c": 35.227, "h": 35.987, "l": 35.197, "macd": -0.514, "dif": -0.34, "dea": -0.083}, {"d": "2026-06-26", "o": 35.377, "c": 34.997, "h": 35.467, "l": 34.877, "macd": -0.584, "dif": -0.447, "dea": -0.156}, {"d": "2026-06-29", "o": 34.897, "c": 35.417, "h": 35.717, "l": 34.397, "macd": -0.54, "dif": -0.493, "dea": -0.223}, {"d": "2026-06-30", "o": 35.367, "c": 34.497, "h": 35.387, "l": 34.347, "macd": -0.598, "dif": -0.597, "dea": -0.298}, {"d": "2026-07-01", "o": 34.517, "c": 34.907, "h": 35.117, "l": 34.277, "macd": -0.545, "dif": -0.639, "dea": -0.366}, {"d": "2026-07-02", "o": 35.277, "c": 35.597, "h": 35.797, "l": 35.127, "macd": -0.389, "dif": -0.609, "dea": -0.415}, {"d": "2026-07-03", "o": 35.667, "c": 35.827, "h": 36.057, "l": 35.347, "macd": -0.234, "dif": -0.561, "dea": -0.444}, {"d": "2026-07-06", "o": 35.697, "c": 36.727, "h": 36.757, "l": 35.517, "macd": -0.001, "dif": -0.445, "dea": -0.444}, {"d": "2026-07-07", "o": 36.717, "c": 36.547, "h": 36.857, "l": 36.297, "macd": 0.13, "dif": -0.363, "dea": -0.428}, {"d": "2026-07-08", "o": 36.357, "c": 36.937, "h": 36.967, "l": 36.147, "macd": 0.263, "dif": -0.264, "dea": -0.395}, {"d": "2026-07-09", "o": 36.697, "c": 36.547, "h": 36.807, "l": 36.367, "macd": 0.29, "dif": -0.214, "dea": -0.359}, {"d": "2026-07-10", "o": 36.61, "c": 36.88, "h": 36.92, "l": 36.33, "macd": 0.34, "dif": -0.146, "dea": -0.316}, {"d": "2026-07-13", "o": 36.81, "c": 37.25, "h": 37.4, "l": 36.71, "macd": 0.407, "dif": -0.062, "dea": -0.265}, {"d": "2026-07-14", "o": 37.1, "c": 37.18, "h": 37.24, "l": 36.82, "macd": 0.424, "dif": -0.0, "dea": -0.212}, {"d": "2026-07-15", "o": 37.0, "c": 37.76, "h": 37.96, "l": 36.75, "macd": 0.49, "dif": 0.094, "dea": -0.151}, {"d": "2026-07-16", "o": 37.7, "c": 37.67, "h": 38.12, "l": 37.5, "macd": 0.497, "dif": 0.159, "dea": -0.089}, {"d": "2026-07-17", "o": 37.76, "c": 38.02, "h": 38.2, "l": 37.68, "macd": 0.521, "dif": 0.237, "dea": -0.024}, {"d": "2026-07-20", "o": 37.95, "c": 38.91, "h": 38.91, "l": 37.89, "macd": 0.624, "dif": 0.366, "dea": 0.054}, {"d": "2026-07-21", "o": 39.18, "c": 37.99, "h": 39.4, "l": 37.9, "macd": 0.537, "dif": 0.389, "dea": 0.121}, {"d": "2026-07-22", "o": 37.85, "c": 38.71, "h": 38.71, "l": 37.63, "macd": 0.543, "dif": 0.461, "dea": 0.189}, {"d": "2026-07-23", "o": 38.68, "c": 38.91, "h": 38.99, "l": 38.45, "macd": 0.541, "dif": 0.528, "dea": 0.257}, {"d": "2026-07-24", "o": 39.18, "c": 39.2, "h": 39.25, "l": 38.9, "macd": 0.544, "dif": 0.597, "dea": 0.325}, {"d": "2026-07-27", "o": 39.12, "c": 39.0, "h": 39.24, "l": 38.69, "macd": 0.486, "dif": 0.628, "dea": 0.386}, {"d": "2026-07-28", "o": 39.17, "c": 39.59, "h": 39.59, "l": 38.95, "macd": 0.492, "dif": 0.693, "dea": 0.447}, {"d": "2026-07-29", "o": 39.98, "c": 39.66, "h": 40.07, "l": 39.49, "macd": 0.471, "dif": 0.741, "dea": 0.506}, {"d": "2026-07-30", "o": 39.66, "c": 40.55, "h": 40.55, "l": 39.55, "macd": 0.537, "dif": 0.842, "dea": 0.573}, {"d": "2026-07-31", "o": 39.85, "c": 39.62, "h": 40.17, "l": 39.04, "macd": 0.422, "dif": 0.837, "dea": 0.626}, {"d": "2026-08-03", "o": 39.88, "c": 40.36, "h": 40.42, "l": 39.8, "macd": 0.41, "dif": 0.882, "dea": 0.677}, {"d": "2026-08-04", "o": 40.16, "c": 39.28, "h": 40.16, "l": 39.21, "macd": 0.231, "dif": 0.822, "dea": 0.706}, {"d": "2026-08-05", "o": 39.18, "c": 38.94, "h": 39.48, "l": 38.72, "macd": 0.051, "dif": 0.738, "dea": 0.712}, {"d": "2026-08-06", "o": 39.0, "c": 38.97, "h": 39.15, "l": 38.47, "macd": -0.074, "dif": 0.666, "dea": 0.703}, {"d": "2026-08-07", "o": 38.9, "c": 38.8, "h": 39.1, "l": 38.48, "macd": -0.183, "dif": 0.589, "dea": 0.68}, {"d": "2026-08-10", "o": 38.79, "c": 38.91, "h": 39.27, "l": 38.7, "macd": -0.24, "dif": 0.53, "dea": 0.65}, {"d": "2026-08-11", "o": 39.0, "c": 38.95, "h": 39.2, "l": 38.77, "macd": -0.27, "dif": 0.481, "dea": 0.616}, {"d": "2026-08-12", "o": 38.95, "c": 38.7, "h": 38.97, "l": 38.56, "macd": -0.318, "dif": 0.418, "dea": 0.577}, {"d": "2026-08-13", "o": 38.59, "c": 38.77, "h": 38.81, "l": 38.5, "macd": -0.333, "dif": 0.369, "dea": 0.535}, {"d": "2026-08-14", "o": 38.65, "c": 38.46, "h": 38.75, "l": 38.46, "macd": -0.374, "dif": 0.301, "dea": 0.488}, {"d": "2026-08-17", "o": 38.35, "c": 38.2, "h": 38.46, "l": 38.06, "macd": -0.422, "dif": 0.224, "dea": 0.436}, {"d": "2026-08-18", "o": 38.15, "c": 38.29, "h": 38.36, "l": 38.03, "macd": -0.427, "dif": 0.169, "dea": 0.382}, {"d": "2026-08-19", "o": 38.55, "c": 39.15, "h": 39.15, "l": 38.4, "macd": -0.305, "dif": 0.192, "dea": 0.344}, {"d": "2026-08-20", "o": 38.8, "c": 38.86, "h": 39.07, "l": 38.47, "macd": -0.255, "dif": 0.185, "dea": 0.312}, {"d": "2026-08-21", "o": 38.8, "c": 38.9, "h": 39.1, "l": 38.76, "macd": -0.211, "dif": 0.18, "dea": 0.286}];
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let cut=DATA.length-1;
+function px(){cv.width=Math.max(880,cv.parentElement.clientWidth-6);cv.height=Math.max(560,cv.width*0.68);document.getElementById('slider').max=DATA.length-1;document.getElementById('slider').value=cut}
+const padL=54,padT=40,padB=48;
+function xs(i){const s=sub();return padL+(cv.width-padL-34)*(i/Math.max(1,s.length-1))}
+function yv(v){const s=sub();const mn=Math.min(...s.map(d=>d.l)),mx=Math.max(...s.map(d=>d.h));const g=(mx-mn)||1;return padT+(cv.height-padT-padB-70)*(1-(v-(mn-g*0.07))/((mx+g*0.06)-(mn-g*0.07)))}
+function yvMacd(v){// 副图MACD, 底部70px
+  const s=sub();const mx=Math.max(...s.map(d=>Math.abs(d.macd||0)))*1.3||1;
+  const base=cv.height-padB+30;
+  return padT+(cv.height-padT-padB)*(1-(v-(-mx))/(2*mx)) // 复用主区高度,简易
+}
+function sub(){return DATA.slice(0,cut+1)}
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#fafbfc';ctx.fillRect(0,0,cv.width,cv.height);
+  const s=sub();const mn=Math.min(...s.map(d=>d.l)),mx=Math.max(...s.map(d=>d.h));
+  ctx.strokeStyle='#edf1f6';ctx.lineWidth=1;
+  const priceH=Math.min(cv.height-padB-70,cv.height-padB);
+  for(let k=0;k<=6;k++){const v=mn+(mx-mn)*k/6,yy=padT+(priceH-padT)*(1-k/6);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(cv.width-34,yy);ctx.stroke();ctx.fillStyle='#8894a6';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText(v.toFixed(1),padL-6,yy+3)}
+  // 分离: 主图价格区到 padT..priceH, 副图MACD区 priceH..cv.height-padB
+  const macdVal=s.map(d=>d.macd||0);const macx=Math.max(...macdVal.map(Math.abs))*1.2||1;
+  // 画MACD柱(副图)
+  document.getElementById('cv');
+  ctx.strokeStyle='#dfe6ef';
+  for(let k=0;k<=4;k++){const yy=priceH+(cv.height-padB-priceH)*k/4;ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(cv.width-34,yy);ctx.stroke()}
+  ctx.fillStyle='#667085';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText('MACD 12,26,9',padL,priceH-6);
+  ctx.textAlign='center';
+  s.forEach((d,i)=>{if(i%8===0){ctx.fillStyle='#99a4b4';ctx.font='9px sans-serif';ctx.fillText(d.d.slice(5),xs(i),cv.height-padB+14)}});
+  // 主图K线
+  const bw=Math.max(1.5,cv.width/s.length*0.44);
+  s.forEach((d,i)=>{const up=d.c>=d.o;ctx.strokeStyle=up?'#c0392b':'#1a7a4c';ctx.fillStyle=up?'rgba(192,57,43,.9)':'rgba(26,122,76,.9)';ctx.beginPath();ctx.moveTo(xs(i),yyP(d.l));ctx.lineTo(xs(i),yyP(d.h));ctx.stroke();const t=Math.min(yyP(d.o),yyP(d.c)),b=Math.max(yyP(d.o),yyP(d.c));ctx.fillRect(xs(i)-bw/2,t,bw,Math.max(1,b-t));});
+  // MACD柱
+  const mp=priceH; // 副图顶
+  s.forEach((d,i)=>{const m=d.macd||0;const hh=(Math.abs(m)/macx)*(cv.height-padB-mp)/2;const mid=mp+(cv.height-padB-mp)*0.32;
+    ctx.fillStyle=m>=0?'rgba(34,160,107,.85)':'rgba(214,64,69,.85)';
+    const yy0=m>=0?mid-hh:mid;ctx.fillRect(xs(i)-bw/2,yy0,bw,h);});
+  // 当前点竖线
+  ctx.save();ctx.strokeStyle='#d64045';ctx.lineWidth=2;ctx.setLineDash([5,3]);
+  ctx.beginPath();ctx.moveTo(xs(cut),padT);ctx.lineTo(xs(cut),cv.height-padB);ctx.stroke();ctx.restore();
+  ctx.font='bold 12px sans-serif';ctx.fillStyle='#d64045';ctx.textAlign='center';ctx.fillText('▮ 当前点 '+s[cut].d, xs(cut), padT+14);
+  document.getElementById('nowtag').textContent='当前停在：'+s[cut].d+'　收盘 '+s[cut].c.toFixed(2)+'　MACD柱 '+s[cut].macd;
+  // 箱体框 + 买卖点计算 + 建议
+  computeVerdict(s);
+}
+function yyP(v){const s=sub();const mn=Math.min(...s.map(d=>d.l)),mx=Math.max(...s.map(d=>d.h));const g=(mx-mn)||1;const priceH=Math.min(cv.height-padB-70,cv.height-padB);return padT+(priceH-padT)*(1-(v-(mn-g*0.07))/((mx+g*0.06)-(mn-g*0.07)))}
+function computeVerdict(s){
+  const w=Math.min(22,cut+1);const seg=s.slice(Math.max(0,cut-w+1));
+  // 箱体上下沿
+  const top=Math.min(...seg.map(d=>d.h));
+  const bot=Math.max(...seg.map(d=>d.l));
+  // 当前价位置(百分比: 0=下沿,1=上沿)
+  const pos=(s[cut].c-bot)/((top-bot)||1);
+  // 背驰判断: 近高处MACD比较
+  let beichi=null;
+  // 找最近一个阶段高点(前20根内最高)和它的macd
+  let hi=seg[0];seg.forEach(d=>{if(d.h>hi.h)hi=d});
+  // 找这个高点之前的那个波段高点(涨)的macd对比
+  const iHi=DATA.indexOf(hi);
+  if(iHi>2){
+    // 之前的高点
+    let prevHi=seg[0];seg.forEach(d=>{if(d.h>prevHi.h&&d!==hi)prevHi=d});
+    const iPrev=DATA.indexOf(prevHi);
+    if(iPrev>=0&&iHi>=0&&iPrev<iHi){
+      const mHi=hi.macd||0, mPrev=prevHi.macd||0;
+      // 顶背驰: 价格hi>prevHi 但 macd动能 mHi < mPrev
+      if(hi.h>=prevHi.h && Math.abs(mHi)<Math.abs(mPrev)) beichi='顶背驰';
+      else if(mHi>=mPrev) beichi='未背驰(动能跟上)';
+    }
+  }
+  // 建议
+  let vType,vTxt,dTxt;
+  const cur=s[cut].c;
+  // 位置区间分档 (pos: 0下沿 0.5中枢 1上沿)
+  const nearHigh=(top-cur)/top; // 差值占比
+  if(cur>=top-(top-bot)*0.08){ // 极近/在箱体上沿
+    vType='sell'; vTxt='建议：卖 / 减仓（接近箱体上沿）';
+  } else if(cur<=bot+(top-bot)*0.08){ // 极近/在箱体下沿
+    vType='buy'; vTxt='建议：买 / 加仓（接近箱体下沿）';
+  } else {
+    vType='hold'; vTxt='建议：持有 / 等待（处箱体中段，无买卖信号）';
+  }
+  // 叠加背驰修正
+  if(beichi==='顶背驰' && cur>=(bot+top)/2){vType='sell';vTxt='建议：卖 / 减仓（顶背驰，做T止盈或波段减）';}
+  if(beichi==='底背驰' && cur<=(bot+top)/2){vType='buy';vTxt='建议：买 / 加仓（底背驰，做T低吸或波段加）';}
+  // 突破判断(在箱体外)
+  if(cur>top){vType='hold';vTxt='建议：观察突破（收盘站稳上沿='+top.toFixed(2)+'才算真突破，可能转多）';}
+  if(cur<bot){vType='hold';vTxt='建议：观察破位（收盘跌破下沿='+bot.toFixed(2)+'才算真跌破，可能转空）';}
+  const v=document.getElementById('verdict');
+  v.className='verdict '+(vType==='buy'?'v-buy':vType==='sell'?'v-sell':'v-hold');
+  v.innerHTML='【'+s[cut].d+'】'+vTxt;
+  // 位置条
+  const bar=document.getElementById('posbar'),fill=document.getElementById('posfill');
+  fill.style.width=Math.max(2,Math.min(98,pos*100))+'%';
+  fill.style.background=vType==='buy'?'#22a06b':vType==='sell'?'#d64045':'#2563eb';
+  const d=document.getElementById('detail');
+  d.innerHTML='箱体：下沿(支撑)<b>'+bot.toFixed(2)+'</b> ~ 上沿(压力)<b>'+top.toFixed(2)+'</b>；当前价 <b>'+cur.toFixed(2)+'</b>，位置 <b>'+Math.round(pos*100)+'%</b>'+(pos>0.75?'（贴近上沿）':pos<0.25?'（贴近下沿）':'（中段）')+'。<br>'
+  +'背驰：'+(beichi||'（阶段高点MACD动能对比暂不明显）')+'<br>'
+  +'<span style="color:#667085">注：这是缠论<b>纯技术</b>信号，不含估值判断，仅供验证理论。做T依据看上下沿，趋势看突破后。</span>';
+  // 画箱体
+  ctx.save();ctx.strokeStyle='#b7791f';ctx.lineWidth=2;ctx.setLineDash([6,3]);
+  const x0=xs(Math.max(0,cut-w+1)),x1=xs(cut),yt=yyP(top),yb=yyP(bot);
+  ctx.fillStyle='rgba(183,121,31,0.1)';ctx.fillRect(x0,yt,x1-x0,yb-yt);
+  ctx.strokeRect(x0,yt,x1-x0,yb-yt);
+  ctx.setLineDash([]);ctx.font='bold 11px sans-serif';ctx.fillStyle='#b7791f';ctx.textAlign='left';
+  ctx.fillText('压力 '+top.toFixed(2),x0+4,yt-6);ctx.fillText('支撑 '+bot.toFixed(2),x0+4,yb+15);
+  // 买/卖点标签
+  ctx.font='bold 11px sans-serif';
+  ctx.fillStyle='#22a06b';ctx.fillText('← 买点区(下沿)',x0+4,yb+28);
+  ctx.fillStyle='#d64045';ctx.fillText('卖点区(上沿) →',xs(cut)-30,yt-20);
+  ctx.restore();
+}
+document.getElementById('slider').addEventListener('input',(e)=>{cut=+e.target.value;draw()});
+window.addEventListener('resize',()=>{px();draw()});
+px();draw();
+</script></body></html>
