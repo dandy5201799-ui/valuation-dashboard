@@ -1,0 +1,96 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论教学 · 画折线看出方向</title><style>
+*{box-sizing:border-box}body{font-family:-apple-system,'PingFang SC',sans-serif;background:#eef1f5;margin:0;padding:18px;color:#1a2233}
+.wrap{max-width:980px;margin:0 auto}h1{font-size:20px;margin:0 0 4px}.sub{color:#667085;font-size:13px;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;box-shadow:0 8px 22px rgba(30,41,59,.08);padding:16px;margin-bottom:14px}
+canvas{width:100%;height:auto;display:block;background:#fafbfc;border:1px solid #e2e7ee;border-radius:10px}
+.controls{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+button{border:none;border-radius:9px;padding:11px 16px;font-size:14px;cursor:pointer;font-family:inherit}
+.btn-main{background:#2563eb;color:#fff}.btn-gray{background:#e9edf3;color:#334155}
+.tip{font-size:14px;line-height:1.85;color:#344054;padding:13px 16px;background:#f6f9fd;border-left:4px solid #2563eb;border-radius:8px;margin-top:12px;display:none}
+.tip.show{display:block}.stepbar{display:flex;gap:8px;margin:12px 0}
+.stepbar span{font-size:12px;padding:4px 12px;border-radius:20px;background:#e7ebf2;color:#667085}
+.stepbar span.on{background:#2563eb;color:#fff}
+.legend{display:flex;gap:18px;font-size:13px;color:#555;margin-top:8px;flex-wrap:wrap}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+mark{background:#fff0a3;padding:0 4px;border-radius:3px}
+.state{font-size:13px;color:#2563eb;font-weight:600;margin-top:8px}
+</style></head><body><div class="wrap">
+<h1>✏️ 缠论教学 · 第1步：画折线，看出方向</h1>
+<div class="sub">用招商银行的<b>真实周线</b>（2024-08 → 2026-08）练。跟着按钮一步一步走，先自己看，再对照缠论怎么画。</div>
+<div class="stepbar"><span id="s1">① 看原图</span><span id="s2">② 画折线</span><span id="s3">③ 看方向</span></div>
+<div class="card">
+<canvas id="cv"></canvas>
+<div class="legend">
+<span><i class="dot" style="background:#c0392b"></i>阳K</span><span><i class="dot" style="background:#1a7a4c"></i>阴K</span>
+<span><i class="dot" style="background:#22a06b"></i>上涨连线</span><span><i class="dot" style="background:#d64045"></i>下跌连线</span>
+</div>
+<div class="controls">
+<button class="btn-main" id="btnNext">第1步 → 只看原图，试着在心里画</button>
+<button class="btn-gray" id="btnReset">重置</button>
+</div>
+<div class="state" id="state"></div>
+<div class="tip" id="t1"><b>① 现在看着上图，不要想着看"答案"</b>。这是招商银行过去两年的周K线（每一根竖蜡烛=一周，红涨绿跌）。<br>自己心里判断两个问题：<br>① 这段整体是<b>往上、往下，还是来回磨？</b><br>② 从哪一周开始，<mark>高点不再一个比一个高、反而开始往下</mark>了？<br>想好了，点下面的按钮。</div>
+<div class="tip" id="t2"><b>② 黄色连成的就是缠论"画出来的干净折线"</b>。它把一轮轮<b>高点和低点</b>接了起来，绕过中间的杂音。<br>注意看：有了这条线，方向是不是<b>一眼就清楚</b>了？——不用再盯着乱蜡烛。<br>边上灰色小点是每个波段的高低点。看够了点下一步。</div>
+<div class="tip" id="t3"><b>③ 结论</b>：判断方向 = 把一堆<b>高点连线、低点连线</b>，看它们<b>一起往上还是往下</b>。<br><span class="tag">涨</span> 左侧绿色：高点 34.4→41.1→44.5 一路抬，低点也抬 → <b>上涨趋势</b>。<br><span class="tag">跌</span> 右侧红色：从最高44.5一路走低，高点低点一起下移，最低到34.3 → <b>下跌趋势</b>。<br>这就是缠论判断趋势的全部方法，就这一件事。</div>
+</div></div>
+<script>
+const DATA=[{"d": "2024-08-02", "o": 28.364, "c": 28.264, "h": 28.984, "l": 28.134}, {"d": "2024-08-09", "o": 28.184, "c": 28.314, "h": 28.564, "l": 27.364}, {"d": "2024-08-16", "o": 28.284, "c": 29.134, "h": 29.234, "l": 27.634}, {"d": "2024-08-23", "o": 29.234, "c": 29.684, "h": 29.834, "l": 28.804}, {"d": "2024-08-30", "o": 29.684, "c": 28.134, "h": 29.964, "l": 28.104}, {"d": "2024-09-06", "o": 27.984, "c": 27.234, "h": 28.364, "l": 26.884}, {"d": "2024-09-13", "o": 26.964, "c": 26.584, "h": 26.974, "l": 25.914}, {"d": "2024-09-20", "o": 26.594, "c": 26.924, "h": 27.214, "l": 26.594}, {"d": "2024-09-27", "o": 26.834, "c": 31.614, "h": 32.484, "l": 26.824}, {"d": "2024-09-30", "o": 32.334, "c": 33.594, "h": 33.984, "l": 31.904}, {"d": "2024-10-11", "o": 37.354, "c": 34.414, "h": 37.354, "l": 32.994}, {"d": "2024-10-18", "o": 34.994, "c": 35.034, "h": 35.974, "l": 34.114}, {"d": "2024-10-25", "o": 35.134, "c": 35.084, "h": 35.924, "l": 34.484}, {"d": "2024-11-01", "o": 34.994, "c": 33.994, "h": 35.084, "l": 32.894}, {"d": "2024-11-08", "o": 34.084, "c": 34.784, "h": 35.834, "l": 33.394}, {"d": "2024-11-15", "o": 34.284, "c": 33.804, "h": 34.824, "l": 33.494}, {"d": "2024-11-22", "o": 34.034, "c": 32.434, "h": 34.644, "l": 32.344}, {"d": "2024-11-29", "o": 32.684, "c": 32.324, "h": 32.984, "l": 31.824}, {"d": "2024-12-06", "o": 32.434, "c": 33.684, "h": 33.804, "l": 32.184}, {"d": "2024-12-13", "o": 33.574, "c": 33.284, "h": 34.974, "l": 33.264}, {"d": "2024-12-20", "o": 33.334, "c": 33.894, "h": 34.644, "l": 33.304}, {"d": "2024-12-27", "o": 33.974, "c": 35.324, "h": 35.624, "l": 33.964}, {"d": "2025-01-03", "o": 35.324, "c": 34.644, "h": 35.884, "l": 34.324}, {"d": "2025-01-10", "o": 34.884, "c": 34.964, "h": 35.534, "l": 34.114}, {"d": "2025-01-17", "o": 34.914, "c": 36.694, "h": 37.144, "l": 34.524}, {"d": "2025-01-24", "o": 36.964, "c": 36.244, "h": 37.054, "l": 35.304}, {"d": "2025-01-27", "o": 36.564, "c": 36.634, "h": 36.954, "l": 36.534}, {"d": "2025-02-07", "o": 36.834, "c": 36.184, "h": 36.884, "l": 35.714}, {"d": "2025-02-14", "o": 36.184, "c": 38.014, "h": 38.014, "l": 35.944}, {"d": "2025-02-21", "o": 37.974, "c": 37.384, "h": 38.464, "l": 37.204}, {"d": "2025-02-28", "o": 37.374, "c": 38.034, "h": 38.644, "l": 36.894}, {"d": "2025-03-07", "o": 38.104, "c": 39.554, "h": 39.784, "l": 37.734}, {"d": "2025-03-14", "o": 39.474, "c": 41.144, "h": 41.454, "l": 38.694}, {"d": "2025-03-21", "o": 41.304, "c": 40.684, "h": 42.084, "l": 40.504}, {"d": "2025-03-28", "o": 40.534, "c": 39.204, "h": 41.484, "l": 38.594}, {"d": "2025-04-03", "o": 39.194, "c": 38.634, "h": 39.764, "l": 38.004}, {"d": "2025-04-11", "o": 36.924, "c": 37.494, "h": 37.984, "l": 35.374}, {"d": "2025-04-18", "o": 37.664, "c": 38.734, "h": 38.774, "l": 37.394}, {"d": "2025-04-25", "o": 38.644, "c": 38.064, "h": 39.064, "l": 37.754}, {"d": "2025-04-30", "o": 38.134, "c": 36.724, "h": 38.634, "l": 36.494}, {"d": "2025-05-09", "o": 36.884, "c": 39.464, "h": 39.584, "l": 36.494}, {"d": "2025-05-16", "o": 39.434, "c": 40.254, "h": 41.364, "l": 39.094}, {"d": "2025-05-23", "o": 40.184, "c": 40.034, "h": 40.664, "l": 39.734}, {"d": "2025-05-30", "o": 39.874, "c": 39.414, "h": 40.154, "l": 39.334}, {"d": "2025-06-06", "o": 39.484, "c": 40.454, "h": 40.694, "l": 39.484}, {"d": "2025-06-13", "o": 40.584, "c": 41.164, "h": 41.664, "l": 40.194}, {"d": "2025-06-20", "o": 41.064, "c": 41.974, "h": 42.164, "l": 40.934}, {"d": "2025-06-27", "o": 41.884, "c": 42.204, "h": 43.864, "l": 41.414}, {"d": "2025-07-04", "o": 42.114, "c": 43.054, "h": 43.484, "l": 41.754}, {"d": "2025-07-11", "o": 43.054, "c": 43.624, "h": 44.534, "l": 42.684}, {"d": "2025-07-18", "o": 43.634, "c": 43.034, "h": 44.074, "l": 42.724}, {"d": "2025-07-25", "o": 43.034, "c": 42.814, "h": 43.684, "l": 42.194}, {"d": "2025-08-01", "o": 42.784, "c": 42.404, "h": 43.144, "l": 41.834}, {"d": "2025-08-08", "o": 42.294, "c": 42.514, "h": 43.714, "l": 42.294}, {"d": "2025-08-15", "o": 42.514, "c": 41.284, "h": 42.614, "l": 41.284}, {"d": "2025-08-22", "o": 41.084, "c": 41.244, "h": 41.684, "l": 40.874}, {"d": "2025-08-29", "o": 41.304, "c": 40.874, "h": 42.004, "l": 40.584}, {"d": "2025-09-05", "o": 40.604, "c": 40.744, "h": 41.554, "l": 39.844}, {"d": "2025-09-12", "o": 40.684, "c": 40.524, "h": 41.454, "l": 40.354}, {"d": "2025-09-19", "o": 40.464, "c": 38.984, "h": 40.774, "l": 38.534}, {"d": "2025-09-26", "o": 39.134, "c": 38.784, "h": 39.874, "l": 38.284}, {"d": "2025-09-30", "o": 38.754, "c": 38.394, "h": 39.274, "l": 38.344}, {"d": "2025-10-10", "o": 38.194, "c": 38.164, "h": 38.634, "l": 37.804}, {"d": "2025-10-17", "o": 37.744, "c": 39.574, "h": 40.204, "l": 37.684}, {"d": "2025-10-24", "o": 39.594, "c": 39.934, "h": 40.474, "l": 39.084}, {"d": "2025-10-31", "o": 39.884, "c": 38.874, "h": 39.954, "l": 38.674}, {"d": "2025-11-07", "o": 39.124, "c": 40.494, "h": 41.454, "l": 39.044}, {"d": "2025-11-14", "o": 40.434, "c": 41.234, "h": 41.574, "l": 40.264}, {"d": "2025-11-21", "o": 41.084, "c": 40.984, "h": 41.774, "l": 40.424}, {"d": "2025-11-28", "o": 41.084, "c": 40.934, "h": 41.614, "l": 40.424}, {"d": "2025-12-05", "o": 41.064, "c": 41.434, "h": 41.634, "l": 40.894}, {"d": "2025-12-12", "o": 41.424, "c": 39.724, "h": 41.624, "l": 39.394}, {"d": "2025-12-19", "o": 39.724, "c": 39.974, "h": 40.464, "l": 39.214}, {"d": "2025-12-26", "o": 40.064, "c": 39.684, "h": 40.114, "l": 39.534}, {"d": "2025-12-31", "o": 39.644, "c": 40.084, "h": 40.464, "l": 39.404}, {"d": "2026-01-09", "o": 40.464, "c": 39.284, "h": 41.004, "l": 39.104}, {"d": "2026-01-16", "o": 39.284, "c": 37.717, "h": 39.414, "l": 37.647}, {"d": "2026-01-23", "o": 37.727, "c": 36.497, "h": 38.127, "l": 36.377}, {"d": "2026-01-30", "o": 36.497, "c": 37.667, "h": 38.167, "l": 36.307}, {"d": "2026-02-06", "o": 37.877, "c": 38.597, "h": 38.947, "l": 37.137}, {"d": "2026-02-13", "o": 38.597, "c": 37.707, "h": 38.737, "l": 37.627}, {"d": "2026-02-27", "o": 38.197, "c": 37.747, "h": 38.407, "l": 37.497}, {"d": "2026-03-06", "o": 37.597, "c": 38.197, "h": 38.547, "l": 37.007}, {"d": "2026-03-13", "o": 37.897, "c": 38.757, "h": 39.047, "l": 37.747}, {"d": "2026-03-20", "o": 38.767, "c": 38.747, "h": 39.357, "l": 38.637}, {"d": "2026-03-27", "o": 38.577, "c": 38.437, "h": 38.697, "l": 37.547}, {"d": "2026-04-03", "o": 38.237, "c": 38.397, "h": 39.037, "l": 38.127}, {"d": "2026-04-10", "o": 38.387, "c": 38.207, "h": 38.637, "l": 37.957}, {"d": "2026-04-17", "o": 38.127, "c": 38.517, "h": 39.147, "l": 37.917}, {"d": "2026-04-24", "o": 38.497, "c": 38.377, "h": 39.147, "l": 38.327}, {"d": "2026-04-30", "o": 38.517, "c": 37.267, "h": 38.987, "l": 37.117}, {"d": "2026-05-08", "o": 37.287, "c": 36.937, "h": 37.347, "l": 36.817}, {"d": "2026-05-15", "o": 36.947, "c": 36.647, "h": 37.137, "l": 36.607}, {"d": "2026-05-22", "o": 36.647, "c": 36.017, "h": 36.737, "l": 35.967}, {"d": "2026-05-29", "o": 36.007, "c": 37.007, "h": 37.037, "l": 35.777}, {"d": "2026-06-05", "o": 36.997, "c": 37.577, "h": 37.877, "l": 36.797}, {"d": "2026-06-12", "o": 37.397, "c": 38.337, "h": 38.347, "l": 37.337}, {"d": "2026-06-18", "o": 38.207, "c": 36.257, "h": 38.367, "l": 36.257}, {"d": "2026-06-26", "o": 36.007, "c": 34.997, "h": 37.187, "l": 34.877}, {"d": "2026-07-03", "o": 34.897, "c": 35.827, "h": 36.057, "l": 34.277}, {"d": "2026-07-10", "o": 35.697, "c": 36.88, "h": 36.967, "l": 35.517}, {"d": "2026-07-17", "o": 36.81, "c": 38.02, "h": 38.2, "l": 36.71}, {"d": "2026-07-24", "o": 37.95, "c": 39.2, "h": 39.4, "l": 37.63}, {"d": "2026-07-31", "o": 39.12, "c": 39.62, "h": 40.55, "l": 38.69}, {"d": "2026-08-07", "o": 39.88, "c": 38.8, "h": 40.42, "l": 38.47}, {"d": "2026-08-14", "o": 38.79, "c": 38.46, "h": 39.27, "l": 38.46}, {"d": "2026-08-21", "o": 38.35, "c": 38.9, "h": 39.15, "l": 38.03}], MARKS=[["2024-10-11", "高 34.4", "H", 34.4], ["2025-03-14", "高 41.1", "H", 41.1], ["2025-07-11", "两年最高 44.5", "H", 44.5], ["2025-09-26", "低 38.3", "D", 38.3], ["2026-01-09", "反弹高 41.0", "H", 41.0], ["2026-07-03", "两年最低 34.3", "D", 34.3], ["2026-08-21", "当前 38.9", "C", 38.9]];
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let step=1;
+function px(){cv.width=Math.max(680,cv.parentElement.clientWidth-6);cv.height=Math.max(380,cv.width*0.52)}
+const padL=54,padT=36,padB=46;
+function x(i){return padL+(cv.width-padL-26)*(i/(DATA.length-1))}
+function yv(v){
+  const mnm=Math.min(...DATA.map(d=>d.l)),mxm=Math.max(...DATA.map(d=>d.h));
+  const gap=mxm-mnm;
+  return padT+(cv.height-padT-padB)*(1-(v-(mnm-gap*0.06))/((mxm+gap*0.06)-(mnm-gap*0.06)));
+}
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#fafbfc';ctx.fillRect(0,0,cv.width,cv.height);
+  const mnm=Math.min(...DATA.map(d=>d.l)),mxm=Math.max(...DATA.map(d=>d.h));
+  ctx.strokeStyle='#edf1f6';ctx.lineWidth=1;
+  for(let k=0;k<=8;k++){const v=mnm+(mxm-mnm)*k/8,yy=yv(v);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(cv.width-26,yy);ctx.stroke();
+    ctx.fillStyle='#8894a6';ctx.font='11px sans-serif';ctx.textAlign='right';ctx.fillText(v.toFixed(1),padL-7,yy+4)}
+  ctx.textAlign='center';const labs=['24-08','24-11','25-02','25-05','25-08','25-11','26-02','26-05','26-07','26-08'];
+  [0,10,22,32,42,52,62,72,82,DATA.length-1].forEach((i,kk)=>{ctx.fillStyle='#99a4b4';ctx.font='11px sans-serif';ctx.fillText(labs[kk],x(i),cv.height-padB+22)});
+  ctx.font='bold 13px sans-serif';ctx.fillStyle='#223044';ctx.fillText('招商银行 600036 · 周线（真实前复权）',cv.width/2,18);
+  // 蜡烛
+  const bw=Math.max(1.5,cv.width/DATA.length*0.5);
+  for(let i=0;i<DATA.length;i++){const d=DATA[i];const up=d.c>=d.o;
+    ctx.strokeStyle=up?'#c0392b':'#1a7a4c';ctx.fillStyle=up?'rgba(192,57,43,.85)':'rgba(26,122,76,.85)';
+    ctx.beginPath();ctx.moveTo(x(i),yv(d.l));ctx.lineTo(x(i),yv(d.h));ctx.stroke();
+    const top=Math.min(yv(d.o),yv(d.c)),bot=Math.max(yv(d.o),yv(d.c));ctx.fillRect(x(i)-bw/2,top,bw,Math.max(1.5,bot-top));
+  }
+  // 画折线(step>=2)
+  if(step>=2){
+    const pts=MARKS.map(m=>({d:m[0],v:m[3]}));
+    for(let s=0;s<pts.length-1;s++){
+      const a=pts[s],b=pts[s+1];
+      const ia=DATA.findIndex(r=>r.d===a.d),ib=DATA.findIndex(r=>r.d===b.d);
+      if(ia<0||ib<0)continue;
+      ctx.strokeStyle=b.v>=a.v?'#22a06b':'#d64045';ctx.lineWidth=3;ctx.lineJoin='round';
+      ctx.beginPath();ctx.moveTo(x(ia),yv(a.v));ctx.lineTo(x(ib),yv(b.v));ctx.stroke();
+    }
+    for(const m of MARKS){
+      const i=DATA.findIndex(r=>r.d===m[0]);if(i<0)continue;const xx=x(i),yy=yv(m[3]);
+      ctx.beginPath();ctx.arc(xx,yy,6,0,Math.PI*2);ctx.fillStyle=m[2]==='H'?'#d64045':(m[2]==='D'?'#1a7a4c':'#333');ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+      ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText(m[1],xx,yy+(m[2]==='D'?25:-14));
+    }
+  }
+}
+function ui(){
+  ['t1','t2','t3'].forEach((id,i)=>{document.getElementById(id).classList.toggle('show',step===i+1)});
+  ['s1','s2','s3'].forEach((id,i)=>{document.getElementById(id).classList.toggle('on',i<step)});
+  const btn=document.getElementById('btnNext'),st=document.getElementById('state');
+  if(step===1){btn.textContent='第1步 → 看完原图，点这里揭示"干净折线"';st.textContent='状态：仍在看原始K线'}
+  else if(step===2){btn.textContent='第2步 → 看折线，点这里看趋势结论';st.textContent='状态：已显示干净折线'}
+  else if(step===3){btn.textContent='✔ 学完了，点重置可再看一遍';st.textContent='状态：完成——已看懂画折线看方向';}
+  draw();
+}
+document.getElementById('btnNext').addEventListener('click',()=>{if(step<3){step++;ui()} });
+document.getElementById('btnReset').addEventListener('click',()=>{step=1;ui()});
+window.addEventListener('resize',()=>{px();draw()});
+px();ui();
+</script></body></html>

@@ -1,0 +1,203 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论实战 · 拖动当前点 实时判断</title><style>
+*{box-sizing:border-box}body{font-family:-apple-system,'PingFang SC',sans-serif;background:#eef1f5;margin:0;padding:18px;color:#1a2233}
+.wrap{max-width:1080px;margin:0 auto}h1{font-size:20px;margin:0 0 4px}.sub{color:#667085;font-size:13px;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;box-shadow:0 8px 22px rgba(30,41,59,.08);padding:16px;margin-bottom:14px}
+canvas{width:100%;height:auto;display:block;background:#fafbfc;border:1px solid #e2e7ee;border-radius:10px}
+.controls{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;align-items:center}
+input[type=range]{flex:1;min-width:220px}label{font-size:13px;color:#344054}
+.cut-tag{font-size:15px;font-weight:700;color:#d64045}
+.cards{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn{flex:1;min-width:200px;border:none;border-radius:9px;padding:12px 14px;font-size:14px;cursor:pointer;color:#fff;font-family:inherit;text-align:center;font-weight:600}
+.b-red{background:#d64045}.b-green{background:#22a06b}.b-mid{background:#b7791f}.b-blue{background:#2563eb}
+.result{font-size:14px;line-height:1.85;color:#344054;padding:13px 16px;background:#f6f9fd;border:1px solid #d9e0ea;border-radius:9px;margin-top:14px;min-height:70px}
+.legend{display:flex;gap:16px;font-size:13px;color:#555;margin-top:8px;flex-wrap:wrap}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+mark{background:#fff0a3;padding:0 4px;border-radius:3px}
+</style></head><body><div class="wrap">
+<h1>🎯 缠论实战 · 拖动"当前点"，实时判断方向/高低/箱体/反转触发</h1>
+<div class="sub">用<b>招商银行真实日线</b>。拖动滑块把「当前点」停在任意一天——图上只显示<b>那一天及之前</b>的K线（没有未来）。再点下方四个按钮，它会<b>根据你停的那一天的真实数据</b>，实时算出并标记结果。</div>
+<div class="card">
+<canvas id="cv"></canvas>
+<div class="legend">
+<span><i class="dot" style="background:#c0392b"></i>阳K</span><span><i class="dot" style="background:#1a7a4c"></i>阴K</span>
+<span><i class="dot" style="background:#d64045"></i>近高</span><span><i class="dot" style="background:#1a7a4c"></i>近低</span>
+<span><i class="dot" style="background:#b7791f"></i>箱体上沿/下沿</span>
+</div>
+<div class="controls">
+<label><b>拖动当前点：</b></label>
+<input type="range" id="slider" min="10" max="0" step="1">
+</div>
+<div class="cut-tag" id="nowtag"></div>
+</div>
+<div class="cards">
+<button class="btn b-red" id="bDirection">● 当前走势方向</button>
+<button class="btn b-green" id="bHL">■ 近高 / 近低</button>
+<button class="btn b-mid" id="bBox">≡ 是不是箱体</button>
+<button class="btn b-blue" id="bTrigger">→ 反转触发价</button>
+</div>
+<div class="result" id="result"><b>先把滑块拖到你关心的日期</b>（默认最新一天），然后点上面任意一个按钮，看它在"没有未来"的真实数据里怎么判断。</div>
+<script>
+const DATA=[{"d": "2026-06-01", "o": 36.997, "c": 37.197, "h": 37.197, "l": 36.797}, {"d": "2026-06-02", "o": 37.157, "c": 37.797, "h": 37.877, "l": 37.047}, {"d": "2026-06-03", "o": 37.807, "c": 37.497, "h": 37.807, "l": 37.247}, {"d": "2026-06-04", "o": 37.397, "c": 37.097, "h": 37.647, "l": 36.987}, {"d": "2026-06-05", "o": 37.177, "c": 37.577, "h": 37.697, "l": 37.107}, {"d": "2026-06-08", "o": 37.397, "c": 37.497, "h": 37.757, "l": 37.357}, {"d": "2026-06-09", "o": 37.497, "c": 37.487, "h": 37.637, "l": 37.397}, {"d": "2026-06-10", "o": 37.447, "c": 37.897, "h": 38.077, "l": 37.377}, {"d": "2026-06-11", "o": 37.927, "c": 37.727, "h": 38.087, "l": 37.567}, {"d": "2026-06-12", "o": 37.587, "c": 38.337, "h": 38.347, "l": 37.337}, {"d": "2026-06-15", "o": 38.207, "c": 37.947, "h": 38.367, "l": 37.727}, {"d": "2026-06-16", "o": 37.807, "c": 37.567, "h": 37.887, "l": 37.407}, {"d": "2026-06-17", "o": 37.677, "c": 37.227, "h": 37.847, "l": 37.137}, {"d": "2026-06-18", "o": 37.147, "c": 36.257, "h": 37.197, "l": 36.257}, {"d": "2026-06-22", "o": 36.007, "c": 36.647, "h": 36.897, "l": 35.947}, {"d": "2026-06-23", "o": 36.647, "c": 36.397, "h": 37.187, "l": 36.347}, {"d": "2026-06-24", "o": 36.487, "c": 35.757, "h": 36.577, "l": 35.747}, {"d": "2026-06-25", "o": 35.727, "c": 35.227, "h": 35.987, "l": 35.197}, {"d": "2026-06-26", "o": 35.377, "c": 34.997, "h": 35.467, "l": 34.877}, {"d": "2026-06-29", "o": 34.897, "c": 35.417, "h": 35.717, "l": 34.397}, {"d": "2026-06-30", "o": 35.367, "c": 34.497, "h": 35.387, "l": 34.347}, {"d": "2026-07-01", "o": 34.517, "c": 34.907, "h": 35.117, "l": 34.277}, {"d": "2026-07-02", "o": 35.277, "c": 35.597, "h": 35.797, "l": 35.127}, {"d": "2026-07-03", "o": 35.667, "c": 35.827, "h": 36.057, "l": 35.347}, {"d": "2026-07-06", "o": 35.697, "c": 36.727, "h": 36.757, "l": 35.517}, {"d": "2026-07-07", "o": 36.717, "c": 36.547, "h": 36.857, "l": 36.297}, {"d": "2026-07-08", "o": 36.357, "c": 36.937, "h": 36.967, "l": 36.147}, {"d": "2026-07-09", "o": 36.697, "c": 36.547, "h": 36.807, "l": 36.367}, {"d": "2026-07-10", "o": 36.61, "c": 36.88, "h": 36.92, "l": 36.33}, {"d": "2026-07-13", "o": 36.81, "c": 37.25, "h": 37.4, "l": 36.71}, {"d": "2026-07-14", "o": 37.1, "c": 37.18, "h": 37.24, "l": 36.82}, {"d": "2026-07-15", "o": 37.0, "c": 37.76, "h": 37.96, "l": 36.75}, {"d": "2026-07-16", "o": 37.7, "c": 37.67, "h": 38.12, "l": 37.5}, {"d": "2026-07-17", "o": 37.76, "c": 38.02, "h": 38.2, "l": 37.68}, {"d": "2026-07-20", "o": 37.95, "c": 38.91, "h": 38.91, "l": 37.89}, {"d": "2026-07-21", "o": 39.18, "c": 37.99, "h": 39.4, "l": 37.9}, {"d": "2026-07-22", "o": 37.85, "c": 38.71, "h": 38.71, "l": 37.63}, {"d": "2026-07-23", "o": 38.68, "c": 38.91, "h": 38.99, "l": 38.45}, {"d": "2026-07-24", "o": 39.18, "c": 39.2, "h": 39.25, "l": 38.9}, {"d": "2026-07-27", "o": 39.12, "c": 39.0, "h": 39.24, "l": 38.69}, {"d": "2026-07-28", "o": 39.17, "c": 39.59, "h": 39.59, "l": 38.95}, {"d": "2026-07-29", "o": 39.98, "c": 39.66, "h": 40.07, "l": 39.49}, {"d": "2026-07-30", "o": 39.66, "c": 40.55, "h": 40.55, "l": 39.55}, {"d": "2026-07-31", "o": 39.85, "c": 39.62, "h": 40.17, "l": 39.04}, {"d": "2026-08-03", "o": 39.88, "c": 40.36, "h": 40.42, "l": 39.8}, {"d": "2026-08-04", "o": 40.16, "c": 39.28, "h": 40.16, "l": 39.21}, {"d": "2026-08-05", "o": 39.18, "c": 38.94, "h": 39.48, "l": 38.72}, {"d": "2026-08-06", "o": 39.0, "c": 38.97, "h": 39.15, "l": 38.47}, {"d": "2026-08-07", "o": 38.9, "c": 38.8, "h": 39.1, "l": 38.48}, {"d": "2026-08-10", "o": 38.79, "c": 38.91, "h": 39.27, "l": 38.7}, {"d": "2026-08-11", "o": 39.0, "c": 38.95, "h": 39.2, "l": 38.77}, {"d": "2026-08-12", "o": 38.95, "c": 38.7, "h": 38.97, "l": 38.56}, {"d": "2026-08-13", "o": 38.59, "c": 38.77, "h": 38.81, "l": 38.5}, {"d": "2026-08-14", "o": 38.65, "c": 38.46, "h": 38.75, "l": 38.46}, {"d": "2026-08-17", "o": 38.35, "c": 38.2, "h": 38.46, "l": 38.06}, {"d": "2026-08-18", "o": 38.15, "c": 38.29, "h": 38.36, "l": 38.03}, {"d": "2026-08-19", "o": 38.55, "c": 39.15, "h": 39.15, "l": 38.4}, {"d": "2026-08-20", "o": 38.8, "c": 38.86, "h": 39.07, "l": 38.47}, {"d": "2026-08-21", "o": 38.8, "c": 38.9, "h": 39.1, "l": 38.76}];
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let cut=DATA.length-1;
+function px(){cv.width=Math.max(860,cv.parentElement.clientWidth-6);cv.height=Math.max(520,cv.width*0.62);document.getElementById('slider').max=DATA.length-1;document.getElementById('slider').value=cut}
+const padL=54,padT=40,padB=46;
+function sub(){return DATA.slice(0,cut+1)}
+function xRaw(i){return padL+(cv.width-padL-30)*(i/(Math.max(1,cut)-pad0()))}
+function pad0(){return cut<15?0:0}
+function xs(i){const s=sub();return padL+(cv.width-padL-30)*(i/Math.max(1,s.length-1))}
+function yv(v){const s=sub();const mnm=Math.min(...s.map(d=>d.l)),mxm=Math.max(...s.map(d=>d.h));const g=mxm-mnm||1;return padT+(cv.height-padT-padB)*(1-(v-(mnm-g*0.07))/((mxm+g*0.06)-(mnm-g*0.07)))}
+function draw(hl){ // hl = {type:'H'/'L', idx} 可选
+  ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#fafbfc';ctx.fillRect(0,0,cv.width,cv.height);
+  const s=sub();const mn=Math.min(...s.map(d=>d.l)),mx=Math.max(...s.map(d=>d.h));
+  ctx.strokeStyle='#edf1f6';ctx.lineWidth=1;
+  for(let k=0;k<=6;k++){const v=mn+(mx-mn)*k/6,yy=yv(v);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(cv.width-30,yy);ctx.stroke();ctx.fillStyle='#8894a6';ctx.font='11px sans-serif';ctx.textAlign='right';ctx.fillText(v.toFixed(1),padL-7,yy+4)}
+  ctx.textAlign='center';ctx.font='10px sans-serif';ctx.fillStyle='#99a4b4';
+  s.forEach((d,i)=>{if(i%7===0||i===s.length-1)ctx.fillText(d.d.slice(5),xs(i),cv.height-padB+18)});
+  // 当前点竖线
+  ctx.save();ctx.strokeStyle='#d64045';ctx.lineWidth=2;ctx.setLineDash([5,3]);
+  ctx.beginPath();ctx.moveTo(xs(cut),padT);ctx.lineTo(xs(cut),cv.height-padB);ctx.stroke();ctx.restore();
+  ctx.font='bold 12px sans-serif';ctx.fillStyle='#d64045';ctx.fillText('▮ 当前点 '+s[cut].d, xs(cut), padT+14);
+  // K线
+  const bw=Math.max(1.6,cv.width/s.length*0.48);
+  s.forEach((d,i)=>{const up=d.c>=d.o;ctx.strokeStyle=up?'#c0392b':'#1a7a4c';ctx.fillStyle=up?'rgba(192,57,43,.92)':'rgba(26,122,76,.92)';ctx.beginPath();ctx.moveTo(xs(i),yv(d.l));ctx.lineTo(xs(i),yv(d.h));ctx.stroke();const t=Math.min(yv(d.o),yv(d.c)),b=Math.max(yv(d.o),yv(d.c));ctx.fillRect(xs(i)-bw/2,t,bw,Math.max(1.5,b-t));});
+  // 箱体(可选, 已单独画) - 由外面调用标记
+  document.getElementById('nowtag').textContent='当前停在：'+s[cut].d+'　收盘 '+s[cut].c+'　（此后没有数据，= 实战无未来）';
+}
+// ---------- 计算工具 ----------
+function windowLen(){return Math.min(40,cut+1)} // 最多往前40根
+function hl(){ // 当前点之前的近高/近低(用20根内极值)
+  const s=sub();const w=Math.min(18,cut+1);const seg=s.slice(Math.max(0,cut-w+1));
+  let lo=seg[0],hi=seg[0];
+  seg.forEach(d=>{if(d.h>hi.h)hi=d;if(d.l<lo.l)lo=d});
+  return {hiIdx:DATA.indexOf(hi),loIdx:DATA.indexOf(lo),hi:hi,lo:lo};
+}
+function direction(){ // 最近一段收盘趋势: 分3小段比
+  const s=sub();const n=s.length;if(n<5)return{dir:'数据不足'};
+  const a=s[n-1].c, b=s[Math.max(0,n-3)].c, c0=s[Math.max(0,n-5)].c;
+  // 方向: 跟前几根比
+  const up = a>b && b>=c0;
+  const down=a<b && b<=c0;
+  return {dir: up?'上升(近高在抬升)':down?'下降(近高在走低)':'横盘/整理', a,b,c0};
+}
+function boxDetect(){ // 在当前点往前找箱体: 找收盘价密集带(上下沿)
+  const s=sub();const w=Math.min(24,cut+1);const seg=s.slice(Math.max(0,cut-w+1));
+  const top=Math.min(...seg.map(d=>d.h)); // 压力(最矮高's)
+  const bot=Math.max(...seg.map(d=>d.l)); // 支撑(最高低点)
+  const inside=seg.filter(d=>d.c>=bot&&d.c<=top);
+  const ratio=inside.length/seg.length;
+  const range=top-bot;
+  return {top, bot, ratio, range};
+}
+// ---------- 四个按钮 ----------
+// 用"高低点连线"判断方向: 在当前点附近各取两三段波峰/波谷, 看高点线抬升还是走低, 低点线抬升还是走低
+function swingPivots(win){ // 在当前点往前 win 根里，找出波峰高点和波谷低点(index)
+  const s=sub();const start=Math.max(0,cut-win+1);
+  const hi=[],lo=[];
+  for(let i=start+1;i<cut;i++){
+    if(s[i].h>=s[i-1].h&&s[i].h>=s[i+1].h && (i+1<=cut)) hi.push(i);
+    if(s[i].l<=s[i-1].l&&s[i].l<=s[i+1].l && (i+1<=cut)) lo.push(i);
+  }
+  return {hi,lo};
+}
+function markDirection(){
+  const {hi,lo}=swingPivots(30);
+  // 取最近2个高点、2个低点
+  const H=hi.slice(-2), L=lo.slice(-2);
+  ctx.save();
+  ctx.lineWidth=2.2;
+  // 高点连线
+  if(H.length>=2){
+    const a=DATA[H[H.length-2]],b2=DATA[H[H.length-1]];
+    ctx.strokeStyle='#d64045';ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(xs(H[H.length-2]),yv(a.h));ctx.lineTo(xs(H[H.length-1]),yv(b2.h));ctx.stroke();
+    H.forEach(i=>{ctx.beginPath();ctx.arc(xs(i),yv(DATA[i].h),5,0,7);ctx.stroke();});
+  }
+  // 低点连线
+  if(L.length>=2){
+    const a=DATA[L[L.length-2]],b2=DATA[L[L.length-1]];
+    ctx.strokeStyle='#1a7a4c';ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(xs(L[L.length-2]),yv(a.l));ctx.lineTo(xs(L[L.length-1]),yv(b2.l));ctx.stroke();
+    L.forEach(i=>{ctx.beginPath();ctx.arc(xs(i),yv(DATA[i].l),5,0,7);ctx.stroke();});
+  }
+  ctx.setLineDash([]);
+  // 标注方向
+  ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+  if(H.length>=2){
+    const dHi=DATA[H[H.length-1]].h-DATA[H[H.length-2]].h;
+    ctx.fillStyle='#d64045';
+    ctx.fillText('高点'+(dHi>=0?'在抬升 ↑':'在走低 ↓'), xs(cut)-40, yv(DATA[H[H.length-1]].h)-14);
+  }
+  if(L.length>=2){
+    const dLo=DATA[L[L.length-1]].l-DATA[L[L.length-2]].l;
+    ctx.fillStyle='#1a7a4c';
+    ctx.fillText('低点'+(dLo>=0?'在抬升 ↑':'在走低 ↓'), xs(cut)-40, yv(DATA[L[L.length-1]].l)+24);
+  }
+  ctx.restore();
+  let conclusion;
+  if(H.length<2||L.length<2){conclusion='数据太少，方向还不明朗。';}
+  else{
+    const hp=DATA[H[1]].h>=DATA[H[0]].h, lw=DATA[L[1]].l>=DATA[L[0]].l;
+    if(hp&&lw) conclusion='<b>高点在抬升、低点也在抬升 → 上涨趋势</b>';
+    else if(!hp&&!lw) conclusion='<b>高点在走低、低点也在走低 → 下跌趋势</b>';
+    else conclusion='<b>高点低点方向不一 / 或大体平行 → 横盘整理（箱体）</b>';
+  }
+  return conclusion;
+}
+document.getElementById('bDirection').addEventListener('click',()=>{
+  draw();
+  const conclusion=markDirection();
+  const res=document.getElementById('result');
+  res.innerHTML='<b>● 当前走势方向（基于你停的 '+DATA[cut].d+'，只看此前）</b><br>'
+  +'方法：把当前点之前的<b>高点和低点分别连线</b>，看方向。<br>'
+  +'图上已画出：<b style="color:#d64045">红线=高点连线</b>，<b style="color:#1a7a4c">绿线=低点连线</b>。<br>'
+  +'结论：'+conclusion+'<br><span style="color:#667085">（"高低点分别连线"正是缠论判断方向的根本方法）</span>';
+});
+document.getElementById('bHL').addEventListener('click',()=>{
+  const h=hl();
+  const res=document.getElementById('result');
+  res.innerHTML='<b>■ 近高 / 近低（当前点前的真实极值）</b><br>'
+  +'近高：<b>'+h.hi.c.toFixed(2)+'</b>（'+h.hi.d+'）　近低：<b>'+h.lo.c.toFixed(2)+'</b>（'+h.lo.d+'）<br>'
+  +'这两个就是这段的关键<b>压力位</b>和<b>支撑位</b>，突破/跌破看它们。';
+  draw();markHL(h.hiIdx,h.loIdx);
+});
+function markHL(iHi,iLo){
+  const s=sub();
+  ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#d64045';ctx.fillText('近高 '+DATA[iHi].c.toFixed(2), xs(iHi), yv(DATA[iHi].h)-12);
+  ctx.fillStyle='#1a7a4c';ctx.fillText('近低 '+DATA[iLo].c.toFixed(2), xs(iLo), yv(DATA[iLo].l)+20);
+  ctx.strokeStyle='#d64045';ctx.beginPath();ctx.arc(xs(iHi),yv(DATA[iHi].h),6,0,7);ctx.stroke();
+  ctx.strokeStyle='#1a7a4c';ctx.beginPath();ctx.arc(xs(iLo),yv(DATA[iLo].l),6,0,7);ctx.stroke();
+}
+document.getElementById('bBox').addEventListener('click',()=>{
+  const b=boxDetect();
+  const res=document.getElementById('result');
+  res.innerHTML='<b>≡ 当前是不是箱体？</b><br>最近这~24根：上沿(压力)<b>'+b.top.toFixed(2)+'</b>，下沿(支撑)<b>'+b.bot.toFixed(2)+'</b>，区间宽度 '+b.range.toFixed(2)+'。<br>'
+  +'收盘落在这区间内天数占比 <b>'+Math.round(b.ratio*100)+'%</b>'+(b.ratio>0.6?'——<b>像箱体</b>（多数时间在区间内来回）':'——偏趋势，箱体特征弱')+'。<br>在箱体里：高抛低吸，不谈反转。';
+  draw();markBox(b.top,b.bot);
+});
+function markBox(top,bot){
+  const s=sub();const w=Math.min(24,cut+1);
+  const x0=xs(Math.max(0,cut-w+1)), x1=xs(cut);
+  ctx.save();ctx.fillStyle='rgba(183,121,31,0.12)';ctx.fillRect(x0,yv(top),x1-x0,yv(bot)-yv(top));
+  ctx.strokeStyle='#b7791f';ctx.lineWidth=2;ctx.setLineDash([7,4]);
+  ctx.strokeRect(x0,yv(top),x1-x0,yv(bot)-yv(top));
+  ctx.setLineDash([]);ctx.font='bold 11px sans-serif';ctx.fillStyle='#b7791f';ctx.textAlign='left';
+  ctx.fillText('箱体上沿/压力 '+top.toFixed(2), x0+4, yv(top)-8);
+  ctx.fillText('箱体下沿/支撑 '+bot.toFixed(2), x0+4, yv(bot)+16);
+  ctx.restore();
+}
+document.getElementById('bTrigger').addEventListener('click',()=>{
+  const h=hl();const b=boxDetect();
+  const res=document.getElementById('result');
+  res.innerHTML='<b>→ 反转/转折触发价（当前点设好，等未来信号）</b><br>'
+  +'向上：<b>收盘站上 '+b.top.toFixed(2)+'</b> 且回抽不回箱体 → 看多，可能向上突破。<br>'
+  +'向下：<b>收盘跌破 '+b.bot.toFixed(2)+'</b> 且回抽不回箱体 → 看空，可能向下破位。<br>'
+  +'两者之间：不动，仍箱体整理。<br><mark>关键：你没有预测，只设触发价 + 等确认 + 设失效（和你估值体系一致）。</mark>';
+  draw();markBox(b.top,b.bot);markHL(h.hiIdx,h.loIdx);
+});
+document.getElementById('slider').addEventListener('input',(e)=>{cut=+e.target.value;draw();document.getElementById('result').innerHTML='滑块已移到 <b>'+DATA[cut].d+'</b>。再点上面按钮，基于这一天重新计算。'});
+window.addEventListener('resize',()=>{px();draw()});
+px();draw();
+</script></body></html>

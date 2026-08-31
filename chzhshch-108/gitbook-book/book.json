@@ -1,0 +1,18 @@
+{
+  "title": "缠中说禅教你炒股票108课（加强版）",
+  "description": "读缠论之书",
+  "language": "zh-cn",
+  "plugins": [
+    "-search",
+    "-lunr",
+    "-fontsettings",
+    "-sharing"
+  ],
+  "structure": {
+    "readme": "README.md",
+    "summary": "SUMMARY.md"
+  },
+  "styles": {
+    "website": "styles/website.css"
+  }
+}

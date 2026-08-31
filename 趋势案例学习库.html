@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>趋势案例学习库</title>
+<style>
+:root {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --ink: #172033;
+  --muted: #667085;
+  --line: #d9e0ea;
+  --red: #d83b4a;
+  --green: #138a5b;
+  --blue: #2563eb;
+  --amber: #b7791f;
+  --violet: #6b5bd6;
+  --shadow: 0 14px 30px rgba(30, 41, 59, 0.10);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+button { font: inherit; cursor: pointer; }
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+}
+.nav {
+  background: #101827;
+  color: #f8fafc;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.nav h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+.nav p {
+  margin: 8px 0 0;
+  color: #aeb8c8;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.filters {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding-top: 15px;
+}
+.filters button, .case-button {
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.07);
+  color: #dbe4ef;
+  border-radius: 8px;
+}
+.filters button {
+  padding: 9px 10px;
+  text-align: left;
+}
+.filters button.active, .case-button.active {
+  background: #f8fafc;
+  color: #111827;
+}
+.case-list {
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 2px;
+}
+.case-button {
+  padding: 12px;
+  text-align: left;
+}
+.case-button strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+.case-button span {
+  display: block;
+  color: inherit;
+  opacity: 0.78;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.main {
+  min-width: 0;
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+}
+.hero, .panel, .stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.hero {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+}
+.hero h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 0;
+}
+.hero p {
+  margin: 9px 0 0;
+  color: #38465a;
+  line-height: 1.65;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #174a34;
+  background: #e8f7ef;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.stat {
+  min-height: 88px;
+  padding: 13px;
+  display: grid;
+  align-content: space-between;
+}
+.stat span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.stat strong {
+  font-size: 18px;
+}
+.chart-panel {
+  padding: 14px;
+}
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.chart-head h3, .panel h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.legend i {
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 560px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.panel {
+  padding: 16px;
+}
+.mark-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.mark {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px;
+  background: #fbfcfe;
+}
+.mark b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--blue);
+  margin-right: 8px;
+}
+.mark strong {
+  font-size: 14px;
+}
+.mark p {
+  margin: 8px 0 0;
+  color: #4b5a70;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.learn-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.learn-item {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+.learn-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.learn-item b {
+  color: #0f172a;
+  font-size: 13px;
+}
+.learn-item span {
+  color: #4b5a70;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.footer {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 1080px) {
+  .app { grid-template-columns: 1fr; }
+  .stats, .grid, .mark-list { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .nav, .main { padding: 14px; }
+  .hero { grid-template-columns: 1fr; }
+  canvas { height: 430px; }
+  .learn-item { grid-template-columns: 1fr; gap: 4px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="nav">
+    <div>
+      <h1>趋势案例学习库</h1>
+      <p>每个案例都是一整段连续行情，用 A-F 标出趋势起点、延续、变弱、边界、确认和失效。</p>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="case-list" id="caseList"></div>
+  </aside>
+  <main class="main">
+    <section class="hero">
+      <div>
+        <h2 id="caseTitle">加载中</h2>
+        <p id="caseQuestion"></p>
+      </div>
+      <span class="tag" id="caseType"></span>
+    </section>
+    <section class="stats">
+      <div class="stat"><span>标的</span><strong id="caseName">--</strong></div>
+      <div class="stat"><span>案例区间</span><strong id="casePeriod">--</strong></div>
+      <div class="stat"><span>K线数量</span><strong id="caseBars">--</strong></div>
+      <div class="stat"><span>区间涨跌</span><strong id="caseReturn">--</strong></div>
+    </section>
+    <section class="panel chart-panel">
+      <div class="chart-head">
+        <h3>整段走势标记</h3>
+        <div class="legend">
+          <span><i style="background:#111827"></i>K线</span>
+          <span><i style="background:#2563eb"></i>收盘线</span>
+          <span><i style="background:#f59e0b"></i>边界/确认区</span>
+          <span><i style="background:#d83b4a"></i>A-F 标记</span>
+        </div>
+      </div>
+      <canvas id="chart"></canvas>
+    </section>
+    <section class="grid">
+      <div class="panel">
+        <h3>A-F 位置解释</h3>
+        <div class="mark-list" id="markList"></div>
+      </div>
+      <div class="panel">
+        <h3>这段走势要学什么</h3>
+        <div class="learn-list" id="learnList"></div>
+      </div>
+    </section>
+    <p class="footer" id="sourceText"></p>
+  </main>
+</div>
+<script src="./data/trend_cases.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+let payload = null;
+let activeType = "全部";
+let activeCase = null;
+
+function price(v) {
+  return Number(v).toFixed(Number(v) > 1000 ? 1 : 2);
+}
+
+function pct(v) {
+  return `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
+}
+
+async function loadCases() {
+  payload = window.TREND_CASES;
+  if (!payload || !Array.isArray(payload.cases)) throw new Error("没有找到趋势案例数据");
+  activeCase = payload.cases[0];
+  renderFilters();
+  renderCaseList();
+  renderCase(activeCase);
+}
+
+function renderFilters() {
+  const types = ["全部", ...Array.from(new Set(payload.cases.map((c) => c.type)))];
+  $("filters").innerHTML = types.map((type) => `<button class="${type === activeType ? "active" : ""}" data-type="${type}">${type}</button>`).join("");
+  $("filters").onclick = (event) => {
+    if (!event.target.matches("button")) return;
+    activeType = event.target.dataset.type;
+    const visible = visibleCases();
+    activeCase = visible[0] || payload.cases[0];
+    renderFilters();
+    renderCaseList();
+    renderCase(activeCase);
+  };
+}
+
+function visibleCases() {
+  return activeType === "全部" ? payload.cases : payload.cases.filter((c) => c.type === activeType);
+}
+
+function renderCaseList() {
+  $("caseList").innerHTML = visibleCases().map((c) => `
+    <button class="case-button ${c.id === activeCase.id ? "active" : ""}" data-id="${c.id}">
+      <strong>${c.name} · ${c.type}</strong>
+      <span>${c.title}</span>
+      <span>${c.period}</span>
+    </button>
+  `).join("");
+  $("caseList").onclick = (event) => {
+    const btn = event.target.closest("button");
+    if (!btn) return;
+    activeCase = payload.cases.find((c) => c.id === btn.dataset.id);
+    renderCaseList();
+    renderCase(activeCase);
+  };
+}
+
+function renderCase(c) {
+  const first = c.bars[0];
+  const last = c.bars[c.bars.length - 1];
+  $("caseTitle").textContent = c.title;
+  $("caseQuestion").textContent = c.question;
+  $("caseType").textContent = c.type;
+  $("caseName").textContent = `${c.name} ${c.symbol}`;
+  $("casePeriod").textContent = c.period.replace(" 至 ", " - ");
+  $("caseBars").textContent = `${c.bars.length} 根`;
+  $("caseReturn").textContent = pct((last.close / first.close - 1) * 100);
+  $("markList").innerHTML = c.marks.map((m) => `
+    <div class="mark">
+      <div><b>${m.label}</b><strong>${m.title} · ${m.date} · ${price(m.price)}</strong></div>
+      <p>${m.text}</p>
+    </div>
+  `).join("");
+  $("learnList").innerHTML = [
+    ["原趋势", c.trendBefore],
+    ["趋势边界", c.boundary],
+    ["确认条件", c.confirmation],
+    ["失效条件", c.failure],
+    ["学习重点", c.lesson],
+  ].map(([k, v]) => `<div class="learn-item"><b>${k}</b><span>${v}</span></div>`).join("");
+  $("sourceText").textContent = `${payload.caseUnit}。数据来源：${payload.source}。生成时间：${payload.builtAt}`;
+  draw(c);
+}
+
+function draw(c) {
+  const canvas = $("chart");
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+  const pad = { left: 58, right: 20, top: 24, bottom: 88 };
+  const bars = c.bars;
+  const maxP = Math.max(...bars.map((b) => b.high)) * 1.015;
+  const minP = Math.min(...bars.map((b) => b.low)) * 0.985;
+  const maxVol = Math.max(...bars.map((b) => b.volume));
+  const chartH = h - pad.top - pad.bottom;
+  const volTop = h - 64;
+  const volH = 38;
+  const x = (i) => pad.left + (i / Math.max(1, bars.length - 1)) * (w - pad.left - pad.right);
+  const y = (p) => pad.top + (maxP - p) / (maxP - minP) * chartH;
+  const dateIndex = new Map(bars.map((b, i) => [b.date, i]));
+  const candleW = Math.max(3, Math.min(9, (w - pad.left - pad.right) / bars.length * 0.55));
+
+  ctx.strokeStyle = "#e6ebf2";
+  ctx.fillStyle = "#667085";
+  ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+  for (let i = 0; i <= 4; i += 1) {
+    const py = pad.top + chartH * i / 4;
+    const pv = maxP - (maxP - minP) * i / 4;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, py);
+    ctx.lineTo(w - pad.right, py);
+    ctx.stroke();
+    ctx.fillText(price(pv), 8, py + 4);
+  }
+
+  if (c.marks.length >= 4) {
+    const d = c.marks[3];
+    const e = c.marks[4] || d;
+    const dx = x(dateIndex.get(d.date));
+    const ex = x(dateIndex.get(e.date));
+    const top = y(Math.max(d.price, e.price));
+    const bottom = y(Math.min(d.price, e.price));
+    ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
+    ctx.fillRect(Math.min(dx, ex), top - 10, Math.max(18, Math.abs(ex - dx)), Math.max(20, bottom - top + 20));
+  }
+
+  bars.forEach((b, i) => {
+    const rising = b.close >= b.open;
+    const cx = x(i);
+    ctx.strokeStyle = rising ? "rgba(216, 59, 74, 0.86)" : "rgba(19, 138, 91, 0.86)";
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.beginPath();
+    ctx.moveTo(cx, y(b.high));
+    ctx.lineTo(cx, y(b.low));
+    ctx.stroke();
+    const top = y(Math.max(b.open, b.close));
+    const bottom = y(Math.min(b.open, b.close));
+    ctx.fillRect(cx - candleW / 2, top, candleW, Math.max(2, bottom - top));
+    ctx.globalAlpha = 0.34;
+    const vh = b.volume / maxVol * volH;
+    ctx.fillRect(cx - candleW / 2, volTop + volH - vh, candleW, vh);
+    ctx.globalAlpha = 1;
+  });
+
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  bars.forEach((b, i) => {
+    if (i === 0) ctx.moveTo(x(i), y(b.close));
+    else ctx.lineTo(x(i), y(b.close));
+  });
+  ctx.stroke();
+
+  ctx.strokeStyle = "#9aa6b7";
+  ctx.lineWidth = 1;
+  c.marks.forEach((m, i) => {
+    if (i === 0) return;
+    const prev = c.marks[i - 1];
+    ctx.beginPath();
+    ctx.moveTo(x(dateIndex.get(prev.date)), y(prev.price));
+    ctx.lineTo(x(dateIndex.get(m.date)), y(m.price));
+    ctx.stroke();
+  });
+
+  c.marks.forEach((m) => {
+    const i = dateIndex.get(m.date);
+    if (i === undefined) return;
+    const mx = x(i);
+    const my = y(m.price);
+    ctx.fillStyle = "#d83b4a";
+    ctx.beginPath();
+    ctx.arc(mx, my, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.font = "700 12px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(m.label, mx, my + 4);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#172033";
+    ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+    const labelX = Math.min(w - 135, mx + 12);
+    const labelY = Math.max(18, my - 12);
+    ctx.fillText(`${m.title} ${price(m.price)}`, labelX, labelY);
+  });
+
+  ctx.fillStyle = "#667085";
+  ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+  const step = Math.max(1, Math.floor(bars.length / 5));
+  for (let i = 0; i < bars.length; i += step) {
+    ctx.fillText(bars[i].date.slice(5), x(i) - 14, h - 14);
+  }
+}
+
+window.addEventListener("resize", () => activeCase && draw(activeCase));
+loadCases().catch((error) => {
+  $("caseTitle").textContent = "案例数据加载失败";
+  $("caseQuestion").textContent = error.message;
+});
+</script>
+</body>
+</html>

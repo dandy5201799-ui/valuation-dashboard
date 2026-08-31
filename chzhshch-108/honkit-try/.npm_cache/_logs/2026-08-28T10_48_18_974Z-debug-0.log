@@ -1,0 +1,19 @@
+0 verbose cli /opt/homebrew/Cellar/node/25.9.0_2/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.12.1
+2 info using node@v25.9.0
+3 silly config load:file:/opt/homebrew/Cellar/node/25.9.0_2/libexec/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/wps/Documents/Codex/2026-07-26/referenced-chatgpt-conversation-this-is-untrusted/.npmrc
+5 silly config load:file:/Users/wps/.npmrc
+6 silly config load:file:/opt/homebrew/Cellar/node/25.9.0_2/etc/npmrc
+7 verbose title npm view honkit version
+8 verbose argv "view" "honkit" "version" "--cache" "/Users/wps/Documents/Codex/2026-07-26/referenced-chatgpt-conversation-this-is-untrusted/投资研究体系_定稿_2026-07-31/chzhshch-108/honkit-try/.npm_cache" "--fetch-retries" "1"
+9 verbose logfile logs-max:10 dir:/Users/wps/Documents/Codex/2026-07-26/referenced-chatgpt-conversation-this-is-untrusted/投资研究体系_定稿_2026-07-31/chzhshch-108/honkit-try/.npm_cache/_logs/2026-08-28T10_48_18_974Z-
+10 verbose logfile /Users/wps/Documents/Codex/2026-07-26/referenced-chatgpt-conversation-this-is-untrusted/投资研究体系_定稿_2026-07-31/chzhshch-108/honkit-try/.npm_cache/_logs/2026-08-28T10_48_18_974Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET 200 https://registry.npmjs.org/honkit 589ms (cache miss)
+13 verbose cwd /Users/wps/Documents/Codex/2026-07-26/referenced-chatgpt-conversation-this-is-untrusted/投资研究体系_定稿_2026-07-31/chzhshch-108/honkit-try
+14 verbose os Darwin 25.4.0
+15 verbose node v25.9.0
+16 verbose npm  v11.12.1
+17 verbose exit 0
+18 info ok
