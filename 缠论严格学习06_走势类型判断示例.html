@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论严格学习06：走势类型判断示例</title>
+<style>
+:root{--bg:#f6f8fb;--panel:#fff;--ink:#172033;--muted:#64748b;--line:#d8e2ef;--blue:#2563eb;--red:#dc2626;--green:#16a34a;--orange:#f59e0b;--purple:#7c3aed;--slate:#334155}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.wrap{width:min(1240px,calc(100vw - 32px));margin:22px auto 44px}.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 34px rgba(15,23,42,.07)}.hero{padding:18px 20px;margin-bottom:14px}.badge{display:inline-flex;border-radius:999px;background:#eff6ff;color:var(--blue);font-size:13px;font-weight:900;padding:5px 10px;margin-bottom:8px}h1{font-size:30px;line-height:1.15;margin:0 0 8px}p{margin:0;color:var(--muted);line-height:1.75}.layout{display:grid;grid-template-columns:1.35fr .65fr;gap:14px}.card{padding:16px}.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}button{font:inherit;min-height:40px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;color:var(--ink);padding:0 14px;font-weight:850;cursor:pointer}button.on{background:var(--blue);border-color:var(--blue);color:#fff}.chart{border:1px solid var(--line);border-radius:12px;background:linear-gradient(#fff,#fbfdff);overflow:hidden}canvas{display:block;width:100%;height:570px}.side h2{font-size:20px;margin:0 0 10px}.rule{border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;padding:11px 12px;margin:10px 0;line-height:1.7}.rule b{color:#334155}.result{border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px;line-height:1.75;font-weight:760}.check{display:grid;gap:8px;margin-top:12px}.check div{border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:10px 11px;line-height:1.65}.check b{display:block;margin-bottom:4px}.note{margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:14px;color:var(--muted);line-height:1.75}.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:13px}.dot{display:inline-flex;align-items:center;gap:5px}.dot:before{content:"";width:10px;height:10px;border-radius:50%;background:var(--blue)}.dot.zs:before{background:var(--orange)}.dot.bad:before{background:var(--purple)}.dot.line:before{background:#334155}@media(max-width:940px){.layout{grid-template-columns:1fr}canvas{height:520px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <span class="badge">严格学习 06</span>
+    <h1>走势类型：盘整、上涨、下跌怎么用中枢判断</h1>
+    <p>前一页学的是“中枢怎么形成”。这一页学“形成中枢以后怎么给走势定性”：一个中枢通常先按盘整处理；两个以上同向、互不重叠的中枢，才进入严格趋势判断。</p>
+  </section>
+
+  <section class="layout">
+    <div class="card">
+      <div class="controls">
+        <button id="pan" class="on">盘整：一个中枢</button>
+        <button id="up">上涨：两个上移中枢</button>
+        <button id="down">下跌：两个下移中枢</button>
+        <button id="fake">不算趋势：中枢仍重叠</button>
+      </div>
+      <div class="chart"><canvas id="cv"></canvas></div>
+      <div class="legend">
+        <span class="dot line">黑点：走势端点</span>
+        <span class="dot">蓝线：走势连接</span>
+        <span class="dot zs">橙框：中枢</span>
+        <span class="dot bad">紫色：判断提醒</span>
+      </div>
+    </div>
+
+    <aside class="card side">
+      <h2 id="title">盘整：只有一个中枢</h2>
+      <p id="intro">价格围绕同一个中枢上下离开、又回到中枢。</p>
+      <div class="rule"><b>严格分类：</b><span>走势类型分为盘整、上涨、下跌。关键不是“像不像涨”，而是中枢数量和中枢位置。</span></div>
+      <div class="rule"><b>盘整：</b><span>一个完成走势类型里只有一个中枢，通常先按盘整看。</span></div>
+      <div class="rule"><b>趋势：</b><span>至少两个同级别、同向、互不重叠的中枢。后一中枢整体高于前一中枢是上涨；整体低于前一中枢是下跌。</span></div>
+      <div class="result" id="result">当前只有一个中枢，不要因为中枢内来回波动就说它是趋势。</div>
+      <div class="check">
+        <div><b>第一问</b><span id="q1">这里形成了几个中枢？</span></div>
+        <div><b>第二问</b><span id="q2">这些中枢有没有互不重叠？</span></div>
+        <div><b>第三问</b><span id="q3">后一个中枢相对前一个中枢是上移、下移，还是仍然重叠？</span></div>
+      </div>
+      <p class="note">这一步仍然只是在“结构命名”，不是直接给买卖点。买卖点要等后面结合背驰、离开中枢、回抽不回中枢等条件。</p>
+    </aside>
+  </section>
+</main>
+
+<script>
+const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+let mode="pan";
+const cases={
+  pan:{
+    title:"盘整：只有一个中枢",
+    intro:"价格围绕同一个中枢上下离开、又回到中枢。",
+    result:"这里只有一个中枢 8-10。上下波动再多，也先按盘整理解，不要提前叫上涨趋势或下跌趋势。",
+    pts:[[0,7],[1,11],[2,8.2],[3,12],[4,7.8],[5,10.6],[6,8.5],[7,11.2]],
+    zones:[[8,10]], warn:"一个中枢 = 盘整", q1:"一个。", q2:"没有第二个中枢可比较。", q3:"没有上移或下移，只是在原中枢附近反复。"
+  },
+  up:{
+    title:"上涨：两个上移且不重叠的中枢",
+    intro:"第一个中枢完成后，价格离开并在更高位置形成第二个中枢。",
+    result:"第一中枢约 6.8-8.7，第二中枢约 11.4-13.2；两个中枢不重叠，且第二个整体在上方，所以可以判断为上涨走势类型。",
+    pts:[[0,5.8],[1,8.7],[2,6.8],[3,9.3],[4,6.5],[5,8.9],[6,10.6],[7,13.2],[8,11.4],[9,14.1],[10,11.2],[11,13.5],[12,15.4]],
+    zones:[[6.8,8.7],[11.4,13.2]], warn:"中枢上移且不重叠 = 上涨", q1:"两个。", q2:"有，第二个中枢下沿高于第一个中枢上沿。", q3:"后一个中枢整体上移。"
+  },
+  down:{
+    title:"下跌：两个下移且不重叠的中枢",
+    intro:"第一个中枢完成后，价格离开并在更低位置形成第二个中枢。",
+    result:"第一中枢约 11.3-13.2，第二中枢约 6.9-8.8；两个中枢不重叠，且第二个整体在下方，所以可以判断为下跌走势类型。",
+    pts:[[0,14.8],[1,11.3],[2,13.2],[3,10.8],[4,13.5],[5,11.6],[6,9.8],[7,6.9],[8,8.8],[9,6.2],[10,9.1],[11,7.4],[12,5.5]],
+    zones:[[11.3,13.2],[6.9,8.8]], warn:"中枢下移且不重叠 = 下跌", q1:"两个。", q2:"有，第二个中枢上沿低于第一个中枢下沿。", q3:"后一个中枢整体下移。"
+  },
+  fake:{
+    title:"不算趋势：第二个中枢仍与前一个重叠",
+    intro:"走势看起来在往上抬，但两个中枢还有价格重叠。",
+    result:"第一中枢约 7.5-10.2，第二中枢约 9.2-11.7；两个中枢在 9.2-10.2 仍有重叠，所以不能按严格上涨趋势处理，更像中枢扩张或复杂盘整。",
+    pts:[[0,6.4],[1,10.2],[2,7.5],[3,11.0],[4,7.8],[5,10.4],[6,9.0],[7,11.7],[8,9.2],[9,12.4],[10,9.6],[11,11.8]],
+    zones:[[7.5,10.2],[9.2,11.7]], overlap:[9.2,10.2], warn:"有重叠，不急着叫趋势", q1:"两个候选中枢。", q2:"没有完全分离，两个中枢仍有重叠。", q3:"虽然位置偏上，但严格上更像复杂盘整/扩张。"
+  }
+};
+function setup(){const r=cv.getBoundingClientRect(),dpr=devicePixelRatio||1;cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);return r}
+function x(i,g,n){return g.l+56+i*((g.w-g.l-g.rr-112)/(n-1))}
+function y(v,g){return g.t+(g.max-v)*(g.h-g.t-g.b)/(g.max-g.min)}
+function draw(){const r=setup(),g={w:r.width,h:r.height,t:54,b:62,l:68,rr:38,min:4.5,max:16};const c=cases[mode];ctx.clearRect(0,0,r.width,r.height);grid(g);caption(g,c);drawZones(g,c);drawPath(g,c);drawPoints(g,c);drawWarn(g,c)}
+function grid(g){ctx.save();ctx.strokeStyle="#e8eef7";ctx.fillStyle="#7c8798";ctx.font="12px sans-serif";ctx.textAlign="right";ctx.textBaseline="middle";for(let v=5;v<=16;v++){const yy=y(v,g);ctx.beginPath();ctx.moveTo(g.l,yy);ctx.lineTo(g.w-g.rr,yy);ctx.stroke();ctx.fillText(String(v),g.l-10,yy)}ctx.strokeStyle="#d8e2ef";ctx.strokeRect(g.l,g.t,g.w-g.l-g.rr,g.h-g.t-g.b);ctx.restore()}
+function caption(g,c){ctx.save();ctx.fillStyle="#172033";ctx.font="900 16px sans-serif";ctx.textAlign="left";ctx.fillText("走势类型判断顺序：先数中枢 → 再看是否互不重叠 → 最后看中枢上移还是下移",g.l,32);ctx.restore()}
+function drawZones(g,c){ctx.save();c.zones.forEach((z,i)=>{const top=y(z[1],g),bottom=y(z[0],g);ctx.fillStyle="rgba(245,158,11,.18)";ctx.fillRect(g.l,top,g.w-g.l-g.rr,bottom-top);ctx.strokeStyle="#f59e0b";ctx.lineWidth=2.5;ctx.setLineDash([9,5]);ctx.strokeRect(g.l,top,g.w-g.l-g.rr,bottom-top);ctx.setLineDash([]);bubble(g.w-g.rr-132,top+9,`${i+1}号中枢 ${z[0]}-${z[1]}`,"#b45309","#fff7ed")});if(c.overlap){const top=y(c.overlap[1],g),bottom=y(c.overlap[0],g);ctx.fillStyle="rgba(124,58,237,.18)";ctx.fillRect(g.l,top,g.w-g.l-g.rr,bottom-top);bubble(g.l+170,top+8,`仍重叠 ${c.overlap[0]}-${c.overlap[1]}`,"#7c3aed","#f5f3ff")}ctx.restore()}
+function drawPath(g,c){ctx.save();ctx.strokeStyle="#2563eb";ctx.lineWidth=3;ctx.beginPath();c.pts.forEach(([i,v],j)=>{const xx=x(j,g,c.pts.length),yy=y(v,g);if(j===0)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy)});ctx.stroke();ctx.restore()}
+function drawPoints(g,c){ctx.save();c.pts.forEach(([i,v],j)=>{const xx=x(j,g,c.pts.length),yy=y(v,g);ctx.fillStyle="#334155";ctx.beginPath();ctx.arc(xx,yy,5.8,0,Math.PI*2);ctx.fill();if(j===0||j===c.pts.length-1||j===5||j===6){ctx.fillStyle="#64748b";ctx.font="12px sans-serif";ctx.textAlign="center";ctx.fillText(`P${j+1}`,xx,yy-12)}});ctx.restore()}
+function drawWarn(g,c){ctx.save();const color=mode==="fake"?"#7c3aed":mode==="down"?"#dc2626":mode==="up"?"#16a34a":"#b45309";bubble(g.w/2,g.h-42,c.warn,color,mode==="fake"?"#f5f3ff":"#fff7ed");ctx.restore()}
+function bubble(x0,y0,text,color,bg){ctx.save();ctx.font="900 12px sans-serif";const w=ctx.measureText(text).width+18,h=26;ctx.fillStyle=bg;ctx.strokeStyle=color;round(x0-w/2,y0,w,h,8);ctx.fill();ctx.stroke();ctx.fillStyle=color;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(text,x0,y0+h/2);ctx.restore()}
+function round(x0,y0,w,h,r){ctx.beginPath();ctx.moveTo(x0+r,y0);ctx.arcTo(x0+w,y0,x0+w,y0+h,r);ctx.arcTo(x0+w,y0+h,x0,y0+h,r);ctx.arcTo(x0,y0+h,x0,y0,r);ctx.arcTo(x0,y0,x0+w,y0,r);ctx.closePath()}
+function render(){const c=cases[mode];document.getElementById("title").textContent=c.title;document.getElementById("intro").textContent=c.intro;document.getElementById("result").textContent=c.result;document.getElementById("q1").textContent=c.q1;document.getElementById("q2").textContent=c.q2;document.getElementById("q3").textContent=c.q3;Object.keys(cases).forEach(id=>document.getElementById(id).classList.toggle("on",id===mode));draw()}
+Object.keys(cases).forEach(id=>document.getElementById(id).onclick=()=>{mode=id;render()});
+window.addEventListener("resize",draw);
+render();
+</script>
+</body>
+</html>

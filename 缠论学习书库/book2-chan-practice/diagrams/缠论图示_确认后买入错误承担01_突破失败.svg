@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="940" viewBox="0 0 1440 940">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .bg{fill:#f8fafc}
+      .panel{fill:#ffffff;stroke:#dbe3ef;stroke-width:1.5}
+      .title{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:34px;font-weight:800;fill:#0f172a}
+      .sub{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:18px;font-weight:500;fill:#64748b}
+      .h{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:20px;font-weight:800;fill:#0f172a}
+      .txt{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:17px;font-weight:600;fill:#334155}
+      .small{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;font-weight:600;fill:#64748b}
+      .tiny{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:13px;font-weight:700;fill:#64748b}
+      .grid{stroke:#e5eaf2;stroke-width:1}
+      .axis{stroke:#cbd5e1;stroke-width:1}
+      .k-red{fill:#ef4444;stroke:#dc2626;stroke-width:2}
+      .k-green{fill:#22c55e;stroke:#16a34a;stroke-width:2}
+      .wick-red{stroke:#dc2626;stroke-width:3;stroke-linecap:round}
+      .wick-green{stroke:#16a34a;stroke-width:3;stroke-linecap:round}
+      .swing{fill:none;stroke:#475569;stroke-width:4;stroke-dasharray:10 8;stroke-linecap:round;stroke-linejoin:round}
+      .confirm{stroke:#2563eb;stroke-width:4}
+      .retest{stroke:#16a34a;stroke-width:4;stroke-dasharray:9 7}
+      .fail{stroke:#dc2626;stroke-width:4;stroke-dasharray:9 7}
+      .zone-confirm{fill:#dbeafe;stroke:#3b82f6;stroke-width:1.5}
+      .zone-risk{fill:#fee2e2;stroke:#ef4444;stroke-width:1.5}
+      .zone-watch{fill:#dcfce7;stroke:#22c55e;stroke-width:1.5}
+      .tag{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;font-weight:800}
+      .tagbox{fill:#fff;stroke-width:2}
+      .node-focus{fill:#fff7ed;stroke:#f97316;stroke-width:2}
+      .node-bad{fill:#fef2f2;stroke:#ef4444;stroke-width:2}
+      .node-blue{fill:#eff6ff;stroke:#3b82f6;stroke-width:2}
+      .node-green{fill:#f0fdf4;stroke:#22c55e;stroke-width:2}
+    </style>
+  </defs>
+
+  <rect class="bg" width="1440" height="940"/>
+  <text class="title" x="64" y="64">确认后买入错误承担 01：突破确认后，结果又跌回去</text>
+  <text class="sub" x="64" y="100">确认点买入不是“保证正确”，只是胜率更好的试错；跌回确认线、跌破回踩低点，就要承认确认失败。</text>
+
+  <rect class="panel" x="64" y="136" width="1312" height="516" rx="18"/>
+
+  <g transform="translate(104,176)">
+    <rect x="0" y="0" width="860" height="400" rx="10" fill="#ffffff" stroke="#dbe3ef"/>
+    <line class="grid" x1="0" y1="80" x2="860" y2="80"/>
+    <line class="grid" x1="0" y1="160" x2="860" y2="160"/>
+    <line class="grid" x1="0" y1="240" x2="860" y2="240"/>
+    <line class="grid" x1="0" y1="320" x2="860" y2="320"/>
+    <line class="axis" x1="0" y1="400" x2="860" y2="400"/>
+    <line class="axis" x1="0" y1="0" x2="0" y2="400"/>
+
+    <rect class="zone-confirm" x="268" y="132" width="348" height="52" rx="8" opacity="0.62"/>
+    <rect class="zone-watch" x="456" y="184" width="160" height="56" rx="8" opacity="0.58"/>
+    <rect class="zone-risk" x="548" y="240" width="260" height="96" rx="8" opacity="0.78"/>
+
+    <line class="confirm" x1="0" y1="160" x2="860" y2="160"/>
+    <line class="retest" x1="0" y1="224" x2="860" y2="224"/>
+    <line class="fail" x1="0" y1="268" x2="860" y2="268"/>
+
+    <!-- K bars: range/pressure -> breakout -> failed retest -> breakdown -->
+    <g>
+      <line class="wick-green" x1="52" y1="252" x2="52" y2="324"/><rect class="k-green" x="40" y="276" width="24" height="28"/>
+      <line class="wick-red" x1="124" y1="168" x2="124" y2="244"/><rect class="k-red" x="112" y="188" width="24" height="40"/>
+      <line class="wick-green" x1="196" y1="224" x2="196" y2="300"/><rect class="k-green" x="184" y="248" width="24" height="32"/>
+      <line class="wick-red" x1="268" y1="148" x2="268" y2="232"/><rect class="k-red" x="256" y="172" width="24" height="44"/>
+      <line class="wick-green" x1="340" y1="120" x2="340" y2="212"/><rect class="k-green" x="328" y="144" width="24" height="48"/>
+      <line class="wick-green" x1="412" y1="88" x2="412" y2="172"/><rect class="k-green" x="400" y="112" width="24" height="44"/>
+      <line class="wick-red" x1="484" y1="136" x2="484" y2="224"/><rect class="k-red" x="472" y="160" width="24" height="48"/>
+      <line class="wick-green" x1="556" y1="188" x2="556" y2="248"/><rect class="k-green" x="544" y="204" width="24" height="28"/>
+      <line class="wick-red" x1="628" y1="184" x2="628" y2="292"/><rect class="k-red" x="616" y="212" width="24" height="56"/>
+      <line class="wick-red" x1="700" y1="248" x2="700" y2="340"/><rect class="k-red" x="688" y="272" width="24" height="48"/>
+      <line class="wick-green" x1="772" y1="292" x2="772" y2="356"/><rect class="k-green" x="760" y="312" width="24" height="28"/>
+    </g>
+
+    <path class="swing" d="M52 304 L124 188 L196 276 L268 172 L340 144 L412 112 L484 208 L556 204 L628 268 L700 320 L772 312"/>
+
+    <circle cx="268" cy="172" r="9" fill="#fff" stroke="#2563eb" stroke-width="4"/>
+    <circle cx="412" cy="112" r="9" fill="#fff" stroke="#2563eb" stroke-width="4"/>
+    <circle cx="556" cy="204" r="9" fill="#fff" stroke="#16a34a" stroke-width="4"/>
+    <circle cx="628" cy="268" r="9" fill="#fff" stroke="#dc2626" stroke-width="4"/>
+    <circle cx="700" cy="320" r="9" fill="#fff" stroke="#dc2626" stroke-width="4"/>
+
+    <rect class="tagbox" x="244" y="116" width="224" height="40" rx="8" stroke="#2563eb"/>
+    <text class="tag" x="260" y="142" fill="#2563eb">收盘突破：普通确认买入</text>
+
+    <rect class="tagbox" x="436" y="196" width="204" height="40" rx="8" stroke="#16a34a"/>
+    <text class="tag" x="452" y="222" fill="#15803d">回踩低点：新防守</text>
+
+    <rect class="tagbox" x="548" y="252" width="224" height="40" rx="8" stroke="#dc2626"/>
+    <text class="tag" x="564" y="278" fill="#dc2626">跌破回踩低点：确认失败</text>
+
+    <rect class="tagbox" x="632" y="320" width="188" height="40" rx="8" stroke="#dc2626"/>
+    <text class="tag" x="648" y="346" fill="#dc2626">再向下：不能硬扛</text>
+
+    <text class="tiny" x="36" y="156" fill="#2563eb">原确认线</text>
+    <text class="tiny" x="36" y="220" fill="#15803d">回踩防守线</text>
+    <text class="tiny" x="36" y="264" fill="#dc2626">失败线</text>
+  </g>
+
+  <g transform="translate(1000,176)">
+    <rect class="node-focus" x="0" y="0" width="328" height="84" rx="12"/>
+    <text class="h" x="24" y="34">这次不是乱买</text>
+    <text class="small" x="24" y="62">它确实出现过“普通确认”</text>
+
+    <path d="M164 96 L164 128" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <polygon points="164,132 292,204 164,276 36,204" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <text class="h" x="164" y="192" text-anchor="middle">回踩是否守住</text>
+    <text class="h" x="164" y="220" text-anchor="middle">突破后的低点？</text>
+
+    <path d="M292 204 L324 204 L324 324" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+    <rect x="292" y="184" width="44" height="24" rx="4" fill="#fff"/>
+    <text class="tiny" x="300" y="200" fill="#2563eb">是</text>
+
+    <path d="M164 276 L164 324" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+    <rect x="172" y="288" width="44" height="24" rx="4" fill="#fff"/>
+    <text class="tiny" x="180" y="304" fill="#dc2626">否</text>
+
+    <rect class="node-bad" x="0" y="324" width="220" height="80" rx="12"/>
+    <text class="h" x="24" y="356">确认失败</text>
+    <text class="small" x="24" y="384">退出/减仓；不能把</text>
+    <text class="small" x="24" y="404">失败解释成洗盘</text>
+
+    <rect class="node-blue" x="244" y="324" width="220" height="80" rx="12"/>
+    <text class="h" x="268" y="356">确认升级</text>
+    <text class="small" x="268" y="384">回踩守住再上，</text>
+    <text class="small" x="268" y="404">才接近稳健确认</text>
+  </g>
+
+  <g transform="translate(64,684)">
+    <rect class="panel" x="0" y="0" width="408" height="176" rx="16"/>
+    <text class="h" x="28" y="40">1. 这类错和前面不同</text>
+    <text class="txt" x="28" y="78">前面是观察区买早。</text>
+    <text class="txt" x="28" y="108">这里是确认后试错，</text>
+    <text class="txt" x="28" y="138">但市场后面证明确认失败。</text>
+
+    <rect class="panel" x="452" y="0" width="408" height="176" rx="16"/>
+    <text class="h" x="480" y="40">2. 买入后失败线在哪里？</text>
+    <text class="txt" x="480" y="78">普通确认买入后，</text>
+    <text class="txt" x="480" y="108">先看是否跌回确认线，</text>
+    <text class="txt" x="480" y="138">再看是否跌破回踩低点。</text>
+
+    <rect class="panel" x="904" y="0" width="408" height="176" rx="16"/>
+    <text class="h" x="932" y="40">3. 怎么承担？</text>
+    <text class="txt" x="932" y="78">跌回确认线：警惕，减弱。</text>
+    <text class="txt" x="932" y="108">跌破回踩低点：确认失败。</text>
+    <text class="txt" x="932" y="138">动作：退出或减到试错仓。</text>
+  </g>
+
+  <line x1="64" y1="900" x2="1376" y2="900" stroke="#dbe3ef"/>
+  <text class="tiny" x="64" y="924">学习用途：这张图只讲结构识别与风险承担，不构成任何投资建议。</text>
+</svg>

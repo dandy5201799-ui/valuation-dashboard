@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="940" viewBox="0 0 1400 940">
+  <defs>
+    <style>
+      .bg{fill:#f5f5f5}
+      .title{font:400 34px "Times New Roman","Songti SC",serif;fill:#2d3142}
+      .sub{font:500 15px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .panel{fill:#fff;stroke:rgba(45,49,66,.16);stroke-width:1.2}
+      .txt{font:800 18px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#172033}
+      .small{font:500 14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .tiny{font:600 12px "SF Mono","Menlo",monospace;fill:#7a8399}
+      .label{font:800 13px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+      .grid{stroke:#e8eef7;stroke-width:1}
+      .price{fill:none;stroke:#64748b;stroke-width:3;stroke-dasharray:8 7}
+      .future{fill:none;stroke:#94a3b8;stroke-width:3;stroke-dasharray:6 6}
+      .upper{stroke:#2563eb;stroke-width:3}
+      .upperBand{fill:rgba(37,99,235,.09);stroke:#2563eb;stroke-width:1.5;stroke-dasharray:6 6}
+      .lower{stroke:#16a34a;stroke-width:2.3}
+      .fail{stroke:#dc2626;stroke-width:2.6}
+      .up{fill:#dc2626;stroke:#dc2626}
+      .down{fill:#16a34a;stroke:#16a34a}
+      .dotH{fill:#fee2e2;stroke:#dc2626;stroke-width:3}
+      .dotL{fill:#dcfce7;stroke:#16a34a;stroke-width:3}
+      .dotO{fill:#fff7ed;stroke:#f59e0b;stroke-width:3}
+      .dotB{fill:#eff6ff;stroke:#2563eb;stroke-width:3}
+      .dotG{fill:#f0fdf4;stroke:#16a34a;stroke-width:3}
+      .dotR{fill:#fef2f2;stroke:#dc2626;stroke-width:3}
+      .tagG{fill:#f0fdf4;stroke:#16a34a}
+      .tagB{fill:#eff6ff;stroke:#2563eb}
+      .tagO{fill:#fff7ed;stroke:#f59e0b}
+      .tagR{fill:#fef2f2;stroke:#dc2626}
+    </style>
+  </defs>
+
+  <rect class="bg" width="1400" height="940"/>
+  <text class="title" x="64" y="70">观察区关键线 04：震荡上沿突破回踩怎么画？</text>
+  <text class="sub" x="64" y="102">震荡上沿由多次相近高点受阻形成。第一根收盘站上上沿只是普通确认；突破后回踩不跌回区间，再次向上，才是稳健确认。</text>
+
+  <rect class="panel" x="64" y="136" width="1272" height="548" rx="10"/>
+  <text class="txt" x="96" y="176">一、先画上沿区域，再区分普通突破和稳健回踩确认</text>
+  <text class="small" x="96" y="204">这里最容易犯错：把第一次突破当成稳健买点，或者把回踩上沿误判成失败。</text>
+
+  <!-- grid -->
+  <g>
+    <line class="grid" x1="112" y1="564" x2="1288" y2="564"/>
+    <line class="grid" x1="112" y1="508" x2="1288" y2="508"/>
+    <line class="grid" x1="112" y1="452" x2="1288" y2="452"/>
+    <line class="grid" x1="112" y1="396" x2="1288" y2="396"/>
+    <line class="grid" x1="112" y1="340" x2="1288" y2="340"/>
+    <line class="grid" x1="112" y1="284" x2="1288" y2="284"/>
+  </g>
+
+  <!-- range lines -->
+  <rect class="upperBand" x="112" y="276" width="1176" height="52" rx="8"/>
+  <line class="upper" x1="112" y1="304" x2="1288" y2="304"/>
+  <text class="tiny" x="1120" y="296">震荡上沿区域</text>
+  <text class="tiny" x="1120" y="324">突破后回踩观察区</text>
+  <line class="lower" x1="112" y1="536" x2="1288" y2="536"/>
+  <text class="tiny" x="1120" y="556">震荡下沿</text>
+  <line class="fail" x1="916" y1="340" x2="1288" y2="340"/>
+  <text class="tiny" x="1048" y="360">失败线：回踩后有效跌回区间</text>
+
+  <!-- candles -->
+  <g>
+    <line class="up" x1="132" y1="424" x2="132" y2="532"/><rect class="up" x="120" y="456" width="24" height="48"/>
+    <line class="up" x1="188" y1="324" x2="188" y2="456"/><rect class="up" x="176" y="368" width="24" height="58"/>
+    <line class="down" x1="244" y1="292" x2="244" y2="424"/><rect class="down" x="232" y="332" width="24" height="60"/>
+    <line class="down" x1="300" y1="380" x2="300" y2="548"/><rect class="down" x="288" y="424" width="24" height="88"/>
+    <line class="up" x1="356" y1="508" x2="356" y2="560"/><rect class="up" x="344" y="524" width="24" height="20"/>
+    <line class="up" x1="412" y1="424" x2="412" y2="536"/><rect class="up" x="400" y="460" width="24" height="48"/>
+    <line class="up" x1="468" y1="324" x2="468" y2="452"/><rect class="up" x="456" y="368" width="24" height="56"/>
+    <line class="down" x1="524" y1="284" x2="524" y2="420"/><rect class="down" x="512" y="324" width="24" height="60"/>
+    <line class="down" x1="580" y1="380" x2="580" y2="536"/><rect class="down" x="568" y="424" width="24" height="82"/>
+    <line class="up" x1="636" y1="508" x2="636" y2="560"/><rect class="up" x="624" y="524" width="24" height="18"/>
+    <line class="up" x1="692" y1="424" x2="692" y2="536"/><rect class="up" x="680" y="460" width="24" height="48"/>
+    <line class="up" x1="748" y1="320" x2="748" y2="452"/><rect class="up" x="736" y="364" width="24" height="60"/>
+    <line class="down" x1="804" y1="288" x2="804" y2="420"/><rect class="down" x="792" y="328" width="24" height="58"/>
+    <line class="up" x1="860" y1="308" x2="860" y2="432"/><rect class="up" x="848" y="348" width="24" height="54"/>
+    <line class="up" x1="916" y1="252" x2="916" y2="372"/><rect class="up" x="904" y="288" width="24" height="54"/>
+    <line class="up" x1="972" y1="220" x2="972" y2="344"/><rect class="up" x="960" y="260" width="24" height="56"/>
+    <line class="down" x1="1028" y1="248" x2="1028" y2="368"/><rect class="down" x="1016" y="288" width="24" height="54"/>
+    <line class="down" x1="1084" y1="296" x2="1084" y2="372"/><rect class="down" x="1072" y="320" width="24" height="28"/>
+    <line class="up" x1="1140" y1="292" x2="1140" y2="380"/><rect class="up" x="1128" y="320" width="24" height="34"/>
+    <line class="up" x1="1196" y1="232" x2="1196" y2="348"/><rect class="up" x="1184" y="268" width="24" height="54"/>
+    <line class="up" x1="1252" y1="188" x2="1252" y2="316"/><rect class="up" x="1240" y="228" width="24" height="60"/>
+  </g>
+
+  <!-- swing line -->
+  <path class="price" d="M132 504 L244 292 L356 524 L524 284 L636 524 L804 288 L860 348 L972 220 L1084 348 L1140 320 L1196 232 L1252 188"/>
+
+  <!-- dots -->
+  <circle class="dotH" cx="244" cy="292" r="10"/>
+  <text class="tiny" x="216" y="272">上沿1</text>
+  <circle class="dotL" cx="356" cy="524" r="9"/>
+  <text class="tiny" x="328" y="560">下沿1</text>
+  <circle class="dotH" cx="524" cy="284" r="10"/>
+  <text class="tiny" x="496" y="264">上沿2</text>
+  <circle class="dotL" cx="636" cy="524" r="9"/>
+  <text class="tiny" x="608" y="560">下沿2</text>
+  <circle class="dotH" cx="804" cy="288" r="10"/>
+  <text class="tiny" x="776" y="268">上沿3</text>
+  <circle class="dotO" cx="860" cy="348" r="9"/>
+  <text class="tiny" x="824" y="388">还在区间内</text>
+  <circle class="dotB" cx="972" cy="220" r="11"/>
+  <text class="tiny" x="924" y="200">普通确认：收盘突破上沿</text>
+  <circle class="dotO" cx="1084" cy="348" r="11"/>
+  <text class="tiny" x="1028" y="392">回踩上沿区，不跌回区间</text>
+  <circle class="dotG" cx="1196" cy="232" r="11"/>
+  <text class="tiny" x="1148" y="212">稳健确认：再次向上</text>
+  <circle class="dotG" cx="1252" cy="188" r="10"/>
+  <text class="tiny" x="1212" y="168">后续延续</text>
+
+  <!-- callouts -->
+  <rect class="tagB" x="140" y="568" width="328" height="72" rx="8"/>
+  <text class="label" x="160" y="596" fill="#1d4ed8">上沿怎么画？</text>
+  <text class="small" x="160" y="622">上沿1、2、3 都在相近区域受阻，画成一个带宽度的区域。</text>
+
+  <rect class="tagO" x="548" y="568" width="328" height="72" rx="8"/>
+  <text class="label" x="568" y="596" fill="#b45309">普通确认不是稳健确认</text>
+  <text class="small" x="568" y="622">第一根收盘站上上沿，只说明区间压力被初步打破。</text>
+
+  <rect class="tagG" x="948" y="568" width="328" height="72" rx="8"/>
+  <text class="label" x="968" y="596" fill="#15803d">稳健确认在哪里？</text>
+  <text class="small" x="968" y="622">突破后回踩不跌回区间，再次向上，才更稳。</text>
+
+  <!-- bottom explanation cards -->
+  <g transform="translate(64 724)">
+    <rect class="panel" x="0" y="0" width="396" height="148" rx="10"/>
+    <text class="txt" x="24" y="36">第一步：确认上沿</text>
+    <text class="small" x="24" y="68">至少两次相近高点受阻，最好三次更清楚。</text>
+    <text class="tiny" x="24" y="100">上沿不是单根最高价，而是卖压区域。</text>
+    <text class="tiny" x="24" y="124">用高点区域画水平带，而不是斜线。</text>
+  </g>
+
+  <g transform="translate(502 724)">
+    <rect class="panel" x="0" y="0" width="396" height="148" rx="10"/>
+    <text class="txt" x="24" y="36">第二步：普通确认</text>
+    <text class="small" x="24" y="68">第一根收盘站上上沿区域。</text>
+    <text class="tiny" x="24" y="100">盘中刺破不算；收盘站不上也不算。</text>
+    <text class="tiny" x="24" y="124">这里可观察/小仓试错，但不是稳健加仓。</text>
+  </g>
+
+  <g transform="translate(940 724)">
+    <rect class="panel" x="0" y="0" width="396" height="148" rx="10"/>
+    <text class="txt" x="24" y="36">第三步：稳健确认</text>
+    <text class="small" x="24" y="68">突破后回踩上沿区，没有有效跌回区间。</text>
+    <text class="tiny" x="24" y="100">再次向上突破回踩小高点/转强，才更稳。</text>
+    <text class="tiny" x="24" y="124">失败线：有效跌回上沿区域下方。</text>
+  </g>
+
+  <text class="tiny" x="64" y="908">学习用途，不构成投资建议。本图只讲结构识别：真实操作还要结合级别、波动、仓位和个人风险承受能力。</text>
+</svg>

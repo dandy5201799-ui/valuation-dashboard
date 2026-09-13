@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="940" viewBox="0 0 1440 940">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .bg{fill:#f8fafc}
+      .panel{fill:#ffffff;stroke:#dbe3ef;stroke-width:1.5}
+      .title{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:34px;font-weight:800;fill:#0f172a}
+      .sub{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:18px;font-weight:500;fill:#64748b}
+      .h{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:20px;font-weight:800;fill:#0f172a}
+      .txt{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:17px;font-weight:600;fill:#334155}
+      .small{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;font-weight:600;fill:#64748b}
+      .tiny{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:13px;font-weight:700;fill:#64748b}
+      .axis{stroke:#cbd5e1;stroke-width:1}
+      .grid{stroke:#e5eaf2;stroke-width:1}
+      .k-red{fill:#ef4444;stroke:#dc2626;stroke-width:2}
+      .k-green{fill:#22c55e;stroke:#16a34a;stroke-width:2}
+      .wick-red{stroke:#dc2626;stroke-width:3;stroke-linecap:round}
+      .wick-green{stroke:#16a34a;stroke-width:3;stroke-linecap:round}
+      .swing{fill:none;stroke:#475569;stroke-width:4;stroke-dasharray:10 8;stroke-linecap:round;stroke-linejoin:round}
+      .old-defense{stroke:#f59e0b;stroke-width:4}
+      .new-pressure{stroke:#dc2626;stroke-width:4;stroke-dasharray:9 7}
+      .repair{stroke:#2563eb;stroke-width:4;stroke-dasharray:9 7}
+      .fail{stroke:#991b1b;stroke-width:4;stroke-dasharray:7 7}
+      .zone-old{fill:#fef3c7;stroke:#f59e0b;stroke-width:1.5}
+      .zone-pressure{fill:#fee2e2;stroke:#ef4444;stroke-width:1.5}
+      .zone-repair{fill:#dbeafe;stroke:#3b82f6;stroke-width:1.5}
+      .tag{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;font-weight:800}
+      .tagbox{fill:#fff;stroke-width:2}
+      .node{fill:#fff;stroke:#cbd5e1;stroke-width:1.5}
+      .node-focus{fill:#fff7ed;stroke:#f97316;stroke-width:2}
+      .node-bad{fill:#fef2f2;stroke:#ef4444;stroke-width:2}
+      .node-blue{fill:#eff6ff;stroke:#3b82f6;stroke-width:2}
+    </style>
+  </defs>
+
+  <rect class="bg" width="1440" height="940"/>
+  <text class="title" x="64" y="64">趋势判断错误承担 02：把“破防后的反弹”误判成趋势恢复</text>
+  <text class="sub" x="64" y="100">破防后第一波反弹常常只是修复/反抽；没有收盘站上新压力位，不能说旧上升趋势恢复。</text>
+
+  <rect class="panel" x="64" y="136" width="1312" height="516" rx="18"/>
+
+  <g transform="translate(104,176)">
+    <rect x="0" y="0" width="860" height="400" rx="10" fill="#ffffff" stroke="#dbe3ef"/>
+    <line class="grid" x1="0" y1="80" x2="860" y2="80"/>
+    <line class="grid" x1="0" y1="160" x2="860" y2="160"/>
+    <line class="grid" x1="0" y1="240" x2="860" y2="240"/>
+    <line class="grid" x1="0" y1="320" x2="860" y2="320"/>
+    <line class="axis" x1="0" y1="400" x2="860" y2="400"/>
+    <line class="axis" x1="0" y1="0" x2="0" y2="400"/>
+
+    <rect class="zone-old" x="0" y="200" width="860" height="44" rx="8" opacity="0.6"/>
+    <rect class="zone-pressure" x="488" y="152" width="256" height="56" rx="8" opacity="0.55"/>
+    <rect class="zone-repair" x="596" y="100" width="220" height="52" rx="8" opacity="0.5"/>
+
+    <line class="old-defense" x1="0" y1="220" x2="860" y2="220"/>
+    <line class="new-pressure" x1="0" y1="176" x2="860" y2="176"/>
+    <line class="repair" x1="0" y1="120" x2="860" y2="120"/>
+    <line class="fail" x1="0" y1="304" x2="860" y2="304"/>
+
+    <!-- K bars -->
+    <g>
+      <line class="wick-green" x1="52" y1="304" x2="52" y2="352"/><rect class="k-green" x="40" y="316" width="24" height="24"/>
+      <line class="wick-red" x1="124" y1="212" x2="124" y2="268"/><rect class="k-red" x="112" y="224" width="24" height="36"/>
+      <line class="wick-green" x1="196" y1="240" x2="196" y2="292"/><rect class="k-green" x="184" y="252" width="24" height="28"/>
+      <line class="wick-red" x1="268" y1="128" x2="268" y2="196"/><rect class="k-red" x="256" y="140" width="24" height="44"/>
+      <line class="wick-green" x1="340" y1="184" x2="340" y2="232"/><rect class="k-green" x="328" y="196" width="24" height="24"/>
+      <line class="wick-red" x1="412" y1="188" x2="412" y2="292"/><rect class="k-red" x="400" y="212" width="24" height="64"/>
+      <line class="wick-red" x1="484" y1="228" x2="484" y2="332"/><rect class="k-red" x="472" y="252" width="24" height="64"/>
+      <line class="wick-green" x1="556" y1="192" x2="556" y2="276"/><rect class="k-green" x="544" y="216" width="24" height="44"/>
+      <line class="wick-red" x1="628" y1="152" x2="628" y2="228"/><rect class="k-red" x="616" y="168" width="24" height="40"/>
+      <line class="wick-green" x1="700" y1="188" x2="700" y2="268"/><rect class="k-green" x="688" y="208" width="24" height="48"/>
+      <line class="wick-red" x1="772" y1="260" x2="772" y2="344"/><rect class="k-red" x="760" y="284" width="24" height="44"/>
+      <line class="wick-red" x1="828" y1="308" x2="828" y2="376"/><rect class="k-red" x="816" y="328" width="24" height="32"/>
+    </g>
+
+    <path class="swing" d="M52 336 L124 224 L196 276 L268 140 L340 208 L412 276 L484 316 L556 216 L628 168 L700 252 L772 328 L828 360"/>
+
+    <circle cx="340" cy="208" r="9" fill="#fff" stroke="#f59e0b" stroke-width="4"/>
+    <circle cx="484" cy="316" r="9" fill="#fff" stroke="#dc2626" stroke-width="4"/>
+    <circle cx="628" cy="168" r="9" fill="#fff" stroke="#dc2626" stroke-width="4"/>
+    <circle cx="772" cy="328" r="9" fill="#fff" stroke="#991b1b" stroke-width="4"/>
+
+    <rect class="tagbox" x="88" y="184" width="176" height="40" rx="8" stroke="#f59e0b"/>
+    <text class="tag" x="104" y="210" fill="#b45309">旧防守位</text>
+
+    <rect class="tagbox" x="420" y="284" width="204" height="40" rx="8" stroke="#dc2626"/>
+    <text class="tag" x="436" y="310" fill="#dc2626">已经破防：旧趋势坏了</text>
+
+    <rect class="tagbox" x="548" y="136" width="220" height="40" rx="8" stroke="#dc2626"/>
+    <text class="tag" x="564" y="162" fill="#dc2626">反弹失败小高点 = 新压力</text>
+
+    <rect class="tagbox" x="616" y="84" width="220" height="40" rx="8" stroke="#2563eb"/>
+    <text class="tag" x="632" y="110" fill="#2563eb">站上这里才叫修复确认</text>
+
+    <rect class="tagbox" x="652" y="304" width="184" height="40" rx="8" stroke="#991b1b"/>
+    <text class="tag" x="668" y="330" fill="#991b1b">反弹失败再新低</text>
+
+    <text class="tiny" x="36" y="216" fill="#b45309">旧支撑</text>
+    <text class="tiny" x="36" y="172" fill="#dc2626">新压力</text>
+    <text class="tiny" x="36" y="116" fill="#2563eb">修复确认线</text>
+    <text class="tiny" x="36" y="300" fill="#991b1b">修复失败线</text>
+  </g>
+
+  <g transform="translate(1000,176)">
+    <rect class="node-focus" x="0" y="0" width="328" height="84" rx="12"/>
+    <text class="h" x="24" y="34">错误假设</text>
+    <text class="small" x="24" y="62">“跌破后反弹 = 趋势恢复”</text>
+
+    <path d="M164 96 L164 128" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <polygon points="164,132 292,204 164,276 36,204" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <text class="h" x="164" y="192" text-anchor="middle">是否收盘站上</text>
+    <text class="h" x="164" y="220" text-anchor="middle">新压力位？</text>
+
+    <path d="M292 204 L324 204 L324 324" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+    <rect x="292" y="184" width="44" height="24" rx="4" fill="#fff"/>
+    <text class="tiny" x="300" y="200" fill="#2563eb">是</text>
+
+    <path d="M164 276 L164 324" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+    <rect x="172" y="288" width="44" height="24" rx="4" fill="#fff"/>
+    <text class="tiny" x="180" y="304" fill="#dc2626">否</text>
+
+    <rect class="node-bad" x="0" y="324" width="220" height="80" rx="12"/>
+    <text class="h" x="24" y="356">不能说恢复</text>
+    <text class="small" x="24" y="384">只是反抽；若再新低</text>
+    <text class="small" x="24" y="404">修复失败，继续防守</text>
+
+    <rect class="node-blue" x="244" y="324" width="220" height="80" rx="12"/>
+    <text class="h" x="268" y="356">普通修复</text>
+    <text class="small" x="268" y="384">可小仓试错；还需</text>
+    <text class="small" x="268" y="404">回踩守住才稳健</text>
+  </g>
+
+  <g transform="translate(64,684)">
+    <rect class="panel" x="0" y="0" width="408" height="176" rx="16"/>
+    <text class="h" x="28" y="40">1. 错在哪里？</text>
+    <text class="txt" x="28" y="78">错在把“反弹”直接当恢复。</text>
+    <text class="txt" x="28" y="108">破防后的第一波上涨，</text>
+    <text class="txt" x="28" y="138">常常只是对新压力的反抽。</text>
+
+    <rect class="panel" x="452" y="0" width="408" height="176" rx="16"/>
+    <text class="h" x="480" y="40">2. 关键线换身份</text>
+    <text class="txt" x="480" y="78">旧防守位被有效跌破后，</text>
+    <text class="txt" x="480" y="108">不能再当买点。</text>
+    <text class="txt" x="480" y="138">破防后的反弹高点变成新压力。</text>
+
+    <rect class="panel" x="904" y="0" width="408" height="176" rx="16"/>
+    <text class="h" x="932" y="40">3. 怎么承担？</text>
+    <text class="txt" x="932" y="78">没有站上新压力：继续防守。</text>
+    <text class="txt" x="932" y="108">站上新压力：只算普通修复。</text>
+    <text class="txt" x="932" y="138">回踩守住再上：才算稳健修复。</text>
+  </g>
+
+  <line x1="64" y1="900" x2="1376" y2="900" stroke="#dbe3ef"/>
+  <text class="tiny" x="64" y="924">学习用途：这张图只讲结构识别与风险承担，不构成任何投资建议。</text>
+</svg>

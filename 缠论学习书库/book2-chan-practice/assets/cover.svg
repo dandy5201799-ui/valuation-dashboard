@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#eef7ff"/>
+  <rect x="72" y="82" width="756" height="1036" rx="34" fill="#ffffff" stroke="#1e3a8a" stroke-width="5"/>
+  <text x="92" y="160" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="34" fill="#64748b">BOOK 2</text>
+  <text x="92" y="242" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="64" font-weight="800" fill="#0f172a">观察区、确认点</text>
+  <text x="92" y="315" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="64" font-weight="800" fill="#0f172a">与错误承担</text>
+  <text x="96" y="382" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="30" fill="#334155">观察不是买点，确认必须有失败线</text>
+  <g transform="translate(120 505)">
+    <rect x="0" y="0" width="660" height="300" rx="22" fill="#f8fafc" stroke="#cbd5e1"/>
+    <rect x="70" y="150" width="190" height="80" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="3"/>
+    <text x="100" y="202" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="700" fill="#b91c1c">观察区</text>
+    <line x1="70" y1="230" x2="590" y2="230" stroke="#ef4444" stroke-width="4" stroke-dasharray="10 10"/>
+    <polyline points="55,210 150,120 245,190 335,145 430,90 565,55" fill="none" stroke="#2563eb" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="430" cy="90" r="13" fill="#16a34a"/>
+    <line x1="430" y1="90" x2="430" y2="250" stroke="#16a34a" stroke-width="4" stroke-dasharray="8 8"/>
+    <text x="450" y="106" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="700" fill="#15803d">确认点</text>
+    <text x="380" y="262" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" fill="#b91c1c">失败线</text>
+  </g>
+  <text x="92" y="1010" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" fill="#475569">防守区 · 压力位 · 确认点 · 失败线</text>
+</svg>

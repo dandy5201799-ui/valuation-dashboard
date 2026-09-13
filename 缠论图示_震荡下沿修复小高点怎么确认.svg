@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="940" viewBox="0 0 1400 940">
+  <defs>
+    <style>
+      .bg{fill:#f5f5f5}
+      .title{font:400 34px "Times New Roman","Songti SC",serif;fill:#2d3142}
+      .sub{font:500 15px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .panel{fill:#fff;stroke:rgba(45,49,66,.16);stroke-width:1.2}
+      .txt{font:800 18px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#172033}
+      .small{font:500 14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .tiny{font:600 12px "SF Mono","Menlo",monospace;fill:#7a8399}
+      .label{font:800 13px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+      .grid{stroke:#e8eef7;stroke-width:1}
+      .price{fill:none;stroke:#64748b;stroke-width:3;stroke-dasharray:8 7}
+      .lower{stroke:#16a34a;stroke-width:3}
+      .lowerBand{fill:rgba(22,163,74,.10);stroke:#16a34a;stroke-width:1.5;stroke-dasharray:6 6}
+      .upper{stroke:#94a3b8;stroke-width:2;stroke-dasharray:6 6}
+      .repair{stroke:#2563eb;stroke-width:3}
+      .fail{stroke:#dc2626;stroke-width:2.6}
+      .up{fill:#dc2626;stroke:#dc2626}
+      .down{fill:#16a34a;stroke:#16a34a}
+      .dotL{fill:#dcfce7;stroke:#16a34a;stroke-width:3}
+      .dotO{fill:#fff7ed;stroke:#f59e0b;stroke-width:3}
+      .dotB{fill:#eff6ff;stroke:#2563eb;stroke-width:3}
+      .dotR{fill:#fef2f2;stroke:#dc2626;stroke-width:3}
+      .tagG{fill:#f0fdf4;stroke:#16a34a}
+      .tagB{fill:#eff6ff;stroke:#2563eb}
+      .tagO{fill:#fff7ed;stroke:#f59e0b}
+      .tagR{fill:#fef2f2;stroke:#dc2626}
+    </style>
+  </defs>
+
+  <rect class="bg" width="1400" height="940"/>
+  <text class="title" x="64" y="70">震荡下沿：修复小高点怎么确认、怎么画？</text>
+  <text class="sub" x="64" y="102">修复小高点不是第一根反弹阳线的最高价，而是“从下沿反弹后，第一次受阻并被后续回落验证”的局部高点。</text>
+
+  <rect class="panel" x="64" y="136" width="1272" height="548" rx="10"/>
+  <text class="txt" x="96" y="176">一、看清四步：到下沿 → 反弹受阻 → 回落验证 → 再次收盘突破</text>
+  <text class="small" x="96" y="204">只有完成第 3 步，那个高点才叫“修复小高点”；第 4 步收盘突破它，才是普通确认点。</text>
+
+  <!-- grid -->
+  <g>
+    <line class="grid" x1="112" y1="564" x2="1288" y2="564"/>
+    <line class="grid" x1="112" y1="508" x2="1288" y2="508"/>
+    <line class="grid" x1="112" y1="452" x2="1288" y2="452"/>
+    <line class="grid" x1="112" y1="396" x2="1288" y2="396"/>
+    <line class="grid" x1="112" y1="340" x2="1288" y2="340"/>
+    <line class="grid" x1="112" y1="284" x2="1288" y2="284"/>
+  </g>
+
+  <!-- bands and lines -->
+  <line class="upper" x1="112" y1="276" x2="1288" y2="276"/>
+  <text class="tiny" x="1120" y="268">震荡上沿</text>
+  <rect class="lowerBand" x="112" y="504" width="1176" height="52" rx="8"/>
+  <line class="lower" x1="112" y1="528" x2="1288" y2="528"/>
+  <text class="tiny" x="1120" y="520">震荡下沿区域</text>
+  <line class="fail" x1="820" y1="568" x2="1288" y2="568"/>
+  <text class="tiny" x="1052" y="588">有效跌破这里：观察失效</text>
+  <line class="repair" x1="848" y1="408" x2="1288" y2="408"/>
+  <text class="tiny" x="1040" y="400">修复小高点水平线</text>
+
+  <!-- candles -->
+  <g>
+    <!-- left range -->
+    <line class="up" x1="132" y1="384" x2="132" y2="492"/><rect class="up" x="120" y="416" width="24" height="48"/>
+    <line class="up" x1="188" y1="288" x2="188" y2="424"/><rect class="up" x="176" y="332" width="24" height="60"/>
+    <line class="down" x1="244" y1="276" x2="244" y2="396"/><rect class="down" x="232" y="312" width="24" height="56"/>
+    <line class="down" x1="300" y1="360" x2="300" y2="536"/><rect class="down" x="288" y="404" width="24" height="92"/>
+    <line class="up" x1="356" y1="508" x2="356" y2="560"/><rect class="up" x="344" y="524" width="24" height="20"/>
+    <line class="up" x1="412" y1="404" x2="412" y2="532"/><rect class="up" x="400" y="444" width="24" height="58"/>
+    <line class="up" x1="468" y1="304" x2="468" y2="432"/><rect class="up" x="456" y="348" width="24" height="54"/>
+    <line class="down" x1="524" y1="276" x2="524" y2="396"/><rect class="down" x="512" y="316" width="24" height="52"/>
+    <line class="down" x1="580" y1="360" x2="580" y2="536"/><rect class="down" x="568" y="404" width="24" height="92"/>
+    <line class="up" x1="636" y1="508" x2="636" y2="556"/><rect class="up" x="624" y="524" width="24" height="18"/>
+    <line class="up" x1="692" y1="420" x2="692" y2="528"/><rect class="up" x="680" y="456" width="24" height="46"/>
+    <line class="down" x1="748" y1="392" x2="748" y2="540"/><rect class="down" x="736" y="436" width="24" height="76"/>
+    <!-- third lower and repair -->
+    <line class="down" x1="804" y1="468" x2="804" y2="560"/><rect class="down" x="792" y="496" width="24" height="38"/>
+    <line class="up" x1="860" y1="500" x2="860" y2="560"/><rect class="up" x="848" y="520" width="24" height="20"/>
+    <line class="up" x1="916" y1="444" x2="916" y2="536"/><rect class="up" x="904" y="476" width="24" height="38"/>
+    <line class="up" x1="972" y1="408" x2="972" y2="500"/><rect class="up" x="960" y="440" width="24" height="36"/>
+    <line class="down" x1="1028" y1="428" x2="1028" y2="512"/><rect class="down" x="1016" y="456" width="24" height="34"/>
+    <line class="up" x1="1084" y1="456" x2="1084" y2="520"/><rect class="up" x="1072" y="480" width="24" height="24"/>
+    <line class="up" x1="1140" y1="384" x2="1140" y2="488"/><rect class="up" x="1128" y="420" width="24" height="48"/>
+    <line class="up" x1="1196" y1="324" x2="1196" y2="432"/><rect class="up" x="1184" y="360" width="24" height="52"/>
+  </g>
+
+  <!-- swing line -->
+  <path class="price" d="M132 464 L244 276 L356 524 L524 276 L636 524 L748 392 L860 520 L972 408 L1028 456 L1084 480 L1140 384 L1196 324"/>
+
+  <!-- key dots -->
+  <circle class="dotL" cx="356" cy="524" r="10"/>
+  <text class="tiny" x="328" y="596">下沿1</text>
+  <circle class="dotL" cx="636" cy="524" r="10"/>
+  <text class="tiny" x="608" y="596">下沿2</text>
+  <circle class="dotO" cx="860" cy="520" r="11"/>
+  <text class="tiny" x="808" y="600">① 第三次到下沿：观察</text>
+  <circle class="dotB" cx="972" cy="408" r="11"/>
+  <text class="tiny" x="916" y="388">② 第一次反弹受阻</text>
+  <circle class="dotO" cx="1084" cy="480" r="10"/>
+  <text class="tiny" x="1032" y="532">③ 回落验证：确认它是小高点</text>
+  <circle class="dotB" cx="1140" cy="384" r="11"/>
+  <text class="tiny" x="1092" y="364">④ 收盘突破：普通确认</text>
+  <circle class="dotB" cx="1196" cy="324" r="10"/>
+  <text class="tiny" x="1152" y="304">后续延续</text>
+
+  <!-- four step callouts -->
+  <rect class="tagO" x="120" y="604" width="260" height="52" rx="8"/>
+  <text class="label" x="140" y="626" fill="#b45309">1 到下沿</text>
+  <text class="small" x="140" y="648">只是观察，不是确认</text>
+
+  <rect class="tagB" x="400" y="604" width="260" height="52" rx="8"/>
+  <text class="label" x="420" y="626" fill="#1d4ed8">2 反弹受阻</text>
+  <text class="small" x="420" y="648">先出现候选小高点</text>
+
+  <rect class="tagO" x="680" y="604" width="260" height="52" rx="8"/>
+  <text class="label" x="700" y="626" fill="#b45309">3 回落验证</text>
+  <text class="small" x="700" y="648">有回落，才确认压力</text>
+
+  <rect class="tagB" x="960" y="604" width="260" height="52" rx="8"/>
+  <text class="label" x="980" y="626" fill="#1d4ed8">4 收盘突破</text>
+  <text class="small" x="980" y="648">这里才是普通确认</text>
+
+  <!-- bottom cards -->
+  <g transform="translate(64 724)">
+    <rect class="panel" x="0" y="0" width="396" height="148" rx="10"/>
+    <text class="txt" x="24" y="36">修复小高点的定义</text>
+    <text class="small" x="24" y="68">从下沿反弹后，第一次上冲受阻的局部高点。</text>
+    <text class="tiny" x="24" y="100">但它一开始只是候选；必须等后面回落，</text>
+    <text class="tiny" x="24" y="124">证明这里确实压住过价格。</text>
+  </g>
+
+  <g transform="translate(502 724)">
+    <rect class="panel" x="0" y="0" width="396" height="148" rx="10"/>
+    <text class="txt" x="24" y="36">怎么画这条线？</text>
+    <text class="small" x="24" y="68">用这个被验证的小高点最高价，画水平线。</text>
+    <text class="tiny" x="24" y="100">不要画斜线；不要用收盘价画压力线。</text>
+    <text class="tiny" x="24" y="124">确认时再看后续 K 线收盘能否站上。</text>
+  </g>
+
+  <g transform="translate(940 724)">
+    <rect class="panel" x="0" y="0" width="396" height="148" rx="10"/>
+    <text class="txt" x="24" y="36">确认点在哪里？</text>
+    <text class="small" x="24" y="68">第一根收盘站上修复小高点水平线的 K 线。</text>
+    <text class="tiny" x="24" y="100">最高价刺破不算；碰到压力线也不算。</text>
+    <text class="tiny" x="24" y="124">收盘站上，才是普通确认。</text>
+  </g>
+
+  <text class="tiny" x="64" y="908">学习用途，不构成投资建议。本图只讲结构识别：真实操作还要结合级别、波动、仓位和个人风险承受能力。</text>
+</svg>

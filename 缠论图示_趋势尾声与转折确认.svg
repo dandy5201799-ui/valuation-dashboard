@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="860" viewBox="0 0 1380 860">
+  <defs>
+    <style>
+      .bg { fill: #f6f8fc; }
+      .panel { fill: #ffffff; stroke: #d9e2ef; stroke-width: 2; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 34px; font-weight: 850; fill: #172033; }
+      .sub { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 18px; fill: #667085; }
+      .h2 { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 22px; font-weight: 850; fill: #172033; }
+      .txt { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 17px; font-weight: 750; fill: #334155; }
+      .small { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 15px; font-weight: 700; fill: #64748b; }
+      .tiny { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 13px; font-weight: 700; fill: #64748b; }
+      .path { fill: none; stroke: #64748b; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 10; }
+      .path-green { fill: none; stroke: #16a34a; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .path-red { fill: none; stroke: #dc2626; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .guard { stroke: #f59e0b; stroke-width: 4; }
+      .prev-high { stroke: #2563eb; stroke-width: 3; stroke-dasharray: 8 8; }
+      .danger-line { stroke: #dc2626; stroke-width: 4; stroke-dasharray: 8 8; }
+      .weak-zone { fill: #fff7ed; stroke: #f59e0b; stroke-width: 2; opacity: .75; }
+      .confirm-zone { fill: #fef2f2; stroke: #dc2626; stroke-width: 2; opacity: .78; }
+      .healthy-zone { fill: #f0fdf4; stroke: #16a34a; stroke-width: 2; opacity: .72; }
+      .callout { stroke-width: 2; }
+      .green-box { fill: #f0fdf4; stroke: #16a34a; }
+      .orange-box { fill: #fff7ed; stroke: #f59e0b; }
+      .red-box { fill: #fef2f2; stroke: #dc2626; }
+      .blue-box { fill: #eff6ff; stroke: #2563eb; }
+      .dot-low { fill: #16a34a; stroke: #ffffff; stroke-width: 4; }
+      .dot-high { fill: #dc2626; stroke: #ffffff; stroke-width: 4; }
+      .dot-risk { fill: #f59e0b; stroke: #ffffff; stroke-width: 4; }
+      .dot-confirm { fill: #dc2626; stroke: #ffffff; stroke-width: 4; }
+      .arrow { stroke: #94a3b8; stroke-width: 2.4; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1380" height="860"/>
+
+  <text class="title" x="58" y="64">趋势尾声信号 vs 真正转折确认</text>
+  <text class="sub" x="58" y="98">尾声信号只是“风险变大”；转折确认必须看到结构被破坏，并且右侧形成新的方向证据。</text>
+
+  <rect class="panel" x="48" y="132" width="400" height="575" rx="22"/>
+  <rect class="panel" x="490" y="132" width="400" height="575" rx="22"/>
+  <rect class="panel" x="932" y="132" width="400" height="575" rx="22"/>
+
+  <!-- Panel 1 title -->
+  <text class="h2" x="84" y="178">① 健康上涨</text>
+  <text class="small" x="84" y="207">高点抬高，低点也抬高</text>
+  <rect class="healthy-zone" x="84" y="240" width="328" height="285" rx="10"/>
+  <line class="guard" x1="84" y1="438" x2="412" y2="438"/>
+  <text class="tiny" x="94" y="426">最新防守位：守住</text>
+  <path class="path-green" d="M98 482 L150 420 L196 448 L250 360 L302 390 L365 282"/>
+  <circle class="dot-low" cx="98" cy="482" r="10"/>
+  <circle class="dot-high" cx="150" cy="420" r="10"/>
+  <circle class="dot-low" cx="196" cy="448" r="10"/>
+  <circle class="dot-high" cx="250" cy="360" r="10"/>
+  <circle class="dot-low" cx="302" cy="390" r="10"/>
+  <circle class="dot-high" cx="365" cy="282" r="10"/>
+  <text class="small" x="90" y="552">判断：</text>
+  <rect class="callout green-box" x="140" y="530" width="240" height="76" rx="12"/>
+  <text class="txt" x="158" y="558">趋势没有坏</text>
+  <text class="small" x="158" y="584">继续按上升趋势处理</text>
+
+  <!-- Panel 2 title -->
+  <text class="h2" x="526" y="178">② 可能到尾声</text>
+  <text class="small" x="526" y="207">有风险信号，但结构还没确认反转</text>
+  <rect class="weak-zone" x="526" y="240" width="328" height="285" rx="10"/>
+  <line class="guard" x1="526" y1="448" x2="854" y2="448"/>
+  <text class="tiny" x="536" y="436">防守位：尚未有效跌破</text>
+  <line class="prev-high" x1="526" y1="294" x2="854" y2="294"/>
+  <text class="tiny" x="696" y="283">前高附近</text>
+  <path class="path" d="M540 482 L590 420 L640 448 L692 360 L744 392 L808 286 L838 382"/>
+  <circle class="dot-low" cx="540" cy="482" r="10"/>
+  <circle class="dot-high" cx="590" cy="420" r="10"/>
+  <circle class="dot-low" cx="640" cy="448" r="10"/>
+  <circle class="dot-high" cx="692" cy="360" r="10"/>
+  <circle class="dot-low" cx="744" cy="392" r="10"/>
+  <circle class="dot-risk" cx="808" cy="286" r="12"/>
+  <circle class="dot-risk" cx="838" cy="382" r="10"/>
+  <path class="arrow" d="M809 312 C810 334 820 354 834 374"/>
+  <rect class="callout orange-box" x="545" y="536" width="290" height="102" rx="12"/>
+  <text class="txt" x="563" y="565">可能到尾声</text>
+  <text class="small" x="563" y="591">创新高后快速回落</text>
+  <text class="small" x="563" y="616">但还没跌破防守位</text>
+
+  <!-- Panel 3 title -->
+  <text class="h2" x="968" y="178">③ 转折确认</text>
+  <text class="small" x="968" y="207">旧结构坏了，右侧出现下降证据</text>
+  <rect class="confirm-zone" x="968" y="240" width="328" height="285" rx="10"/>
+  <line class="guard" x1="968" y1="425" x2="1296" y2="425"/>
+  <text class="tiny" x="978" y="413">防守位：有效跌破</text>
+  <line class="prev-high" x1="968" y1="300" x2="1296" y2="300"/>
+  <text class="tiny" x="1138" y="289">前高</text>
+  <path class="path-red" d="M982 480 L1035 420 L1085 448 L1138 360 L1192 392 L1248 304 L1275 455 L1302 382 L1318 520"/>
+  <circle class="dot-low" cx="982" cy="480" r="10"/>
+  <circle class="dot-high" cx="1035" cy="420" r="10"/>
+  <circle class="dot-low" cx="1085" cy="448" r="10"/>
+  <circle class="dot-high" cx="1138" cy="360" r="10"/>
+  <circle class="dot-low" cx="1192" cy="392" r="10"/>
+  <circle class="dot-high" cx="1248" cy="304" r="10"/>
+  <circle class="dot-confirm" cx="1275" cy="455" r="12"/>
+  <circle class="dot-confirm" cx="1302" cy="382" r="10"/>
+  <circle class="dot-confirm" cx="1318" cy="520" r="12"/>
+  <line class="danger-line" x1="965" y1="455" x2="1300" y2="455"/>
+  <text class="tiny" x="1090" y="477">有效跌破 / 再创新低</text>
+  <rect class="callout red-box" x="978" y="545" width="306" height="108" rx="12"/>
+  <text class="txt" x="996" y="574">确认转折</text>
+  <text class="small" x="996" y="600">跌破防守位</text>
+  <text class="small" x="996" y="625">反弹不过前高，再创新低</text>
+
+  <!-- Connector labels -->
+  <path class="arrow" d="M432 414 C455 414 462 414 484 414"/>
+  <rect x="438" y="392" width="44" height="24" rx="6" fill="#f6f8fc"/>
+  <text class="tiny" x="460" y="409" text-anchor="middle">风险</text>
+  <path class="arrow" d="M874 414 C897 414 904 414 926 414"/>
+  <rect x="880" y="392" width="44" height="24" rx="6" fill="#f6f8fc"/>
+  <text class="tiny" x="902" y="409" text-anchor="middle">确认</text>
+
+  <!-- Bottom summary -->
+  <rect x="80" y="735" width="1220" height="72" rx="20" fill="#ffffff" stroke="#d9e2ef" stroke-width="2"/>
+  <text class="txt" x="114" y="778">一句话：</text>
+  <text class="txt" x="196" y="778">大涨、新高、快速回落都只能提示“可能到尾声”；只有跌破防守位，并走出更低高点/更低低点，才叫转折确认。</text>
+</svg>

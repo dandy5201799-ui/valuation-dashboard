@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script>
+(function (global) {
+  'use strict';
+// 缠论自动标记工具 SPEC v0.4 双级别中枢引擎
+// 已按 SPEC 落地: R0 包含、R1 分型、R2 笔、R3 线段(特征序列分型)、
+// R4 笔中枢(操作级)+线段中枢(背景级)双级别并存、R5 走势、R6 背驰(MACD面积比)、R7-R9 买卖点。
+// v0.4 变更: 删除临时兜底状态机制；线段划分改为完整不重叠的窗口扫描算法；
+// 中枢延伸与"假突破再进入 vs 真离开"互斥判定；力度 A/C 口径统一为 enterObj/leaveObj 的 MACD 面积比。
+
+const RULE_VERSION = 'chan_spec_v0.4_dual_level';
+
+const STRENGTH_WEAK = 0.8;
+const STRENGTH_STRONG = 1.2;
+const STRENGTH_MIN_AREA_RATIO = 0.5;
+const ZS_MEMBER_MIN_OVERLAP = 0.3; // 成员与中枢区间的重叠占自身幅度的最小比例
+const ZS_FALSEBREAK_MAX_SPAN = 1.5; // 可被判为"假突破"而降级为成员的最大幅度（相对中枢宽度 zg-zd）
+const ZS_SEED_MIN_OVERLAP = 0.15; // 种子三笔各自与区间重叠占自身幅度的最小比例（比成员门槛宽松）
+
+function contains(a, b) {
+  return (a.low <= b.low && a.high >= b.high) || (b.low <= a.low && b.high >= a.high);
+}
+
+function rawToMergedBar(c) {
+  return {
+    high: c.high,
+    low: c.low,
+    idxs: [c.i],
+    source_ids: [c.i],
+    date: c.date,
+    dateEnd: c.date,
+    stable: true,
+    rule_ids: ['R0', 'O-K01', 'E-K02'],
+  };
+}
+
+function mergedDirection(prev, last) {
+  if (!prev) return null;
+  if (last.high > prev.high && last.low > prev.low) return 'up';
+  if (last.high < prev.high && last.low < prev.low) return 'down';
+  if (last.high > prev.high) return 'up';
+  if (last.low < prev.low) return 'down';
+  return null;
+}
+
+function uniq(arr) {
+  return [...new Set(arr.filter(Boolean))];
+}
+
+function penLow(b) {
+  return Math.min(b.start.price, b.end.price);
+}
+
+function penHigh(b) {
+  return Math.max(b.start.price, b.end.price);
+}
+
+function intervalOverlap(intervals) {
+  const low = Math.max(...intervals.map((x) => x.low));
+  const high = Math.min(...intervals.map((x) => x.high));
+  return high > low ? { low, high } : null;
+}
+
+function objectLow(o) {
+  return o.range_low ?? o.low ?? Math.min(o.startPrice ?? o.start?.price ?? 0, o.endPrice ?? o.end?.price ?? 0);
+}
+
+function objectHigh(o) {
+  return o.range_high ?? o.high ?? Math.max(o.startPrice ?? o.start?.price ?? 0, o.endPrice ?? o.end?.price ?? 0);
+}
+
+function objectStartIdx(o) {
+  return o.startIdx ?? o.start?.idx ?? 0;
+}
+
+function objectEndIdx(o) {
+  return o.endIdx ?? o.end?.idx ?? 0;
+}
+
+function objectStartDate(o) {
+  return o.startDate ?? o.start?.date ?? '';
+}
+
+function objectEndDate(o) {
+  return o.endDate ?? o.end?.date ?? '';
+}
+
+// 统一取对象“终点价”：笔用 end.price，线段用 endPrice。
+function objectEndPrice(o) {
+  return o.endPrice ?? o.end?.price ?? 0;
+}
+
+// H2: 对象自身幅度，以及它与 [zd, zg] 中枢区间的重叠占自身幅度的比例。
+// 用于把"幅度数倍于区宽、直接穿越中枢"的笔/段排除在"中枢内震荡成员"之外，
+// 防止大口袋——一根远超区宽的穿越段不该被算作中枢内成员。
+function objSpan(o) {
+  return Math.abs(objectHigh(o) - objectLow(o));
+}
+
+function overlapRatio(o, zd, zg) {
+  const ov = Math.min(objectHigh(o), zg) - Math.max(objectLow(o), zd);
+  const sp = objSpan(o);
+  return sp > 0 ? Math.max(0, ov) / sp : 0;
+}
+
+function hasFeatureGap(a, b) {
+  return Math.min(a.high, b.high) < Math.max(a.low, b.low);
+}
+
+function normalizeFeatureSequence(features, segDir) {
+  const out = [];
+  for (const f of features) {
+    const next = { ...f };
+    if (!out.length) {
+      out.push(next);
+      continue;
+    }
+    const last = out[out.length - 1];
+    const inclusive = (last.low <= next.low && last.high >= next.high) || (next.low <= last.low && next.high >= last.high);
+    if (!inclusive) {
+      out.push(next);
+      continue;
+    }
+    // 特征序列内部的包含处理采用当前线段方向的保守工程约定。
+    if (segDir === 'up') {
+      last.high = Math.max(last.high, next.high);
+      last.low = Math.max(last.low, next.low);
+    } else {
+      last.high = Math.min(last.high, next.high);
+      last.low = Math.min(last.low, next.low);
+    }
+    last.sourcePenIds = uniq([...(last.sourcePenIds || []), next.penId]);
+    last.sourcePenIndexes = uniq([...(last.sourcePenIndexes || []), next.penIndex]);
+    last.endIdx = next.endIdx;
+    last.endDate = next.endDate;
+  }
+  return out;
+}
+
+function featureFractal(features, segDir) {
+  // 上线段看向下笔特征序列的顶分型；下线段看向上笔特征序列的底分型。
+  const target = segDir === 'up' ? 'top' : 'bottom';
+  for (let i = 1; i < features.length - 1; i++) {
+    const a = features[i - 1], b = features[i], c = features[i + 1];
+    const top = b.high > a.high && b.high > c.high && b.low > a.low && b.low > c.low;
+    const bottom = b.high < a.high && b.high < c.high && b.low < a.low && b.low < c.low;
+    if ((target === 'top' && top) || (target === 'bottom' && bottom)) {
+      const firstSecondGap = hasFeatureGap(a, b);
+      return {
+        type: target,
+        featureIndex: i,
+        centerFeature: b,
+        firstFeature: a,
+        secondFeature: b,
+        thirdFeature: c,
+        firstSecondGap,
+      };
+    }
+  }
+  return null;
+}
+
+function mergeInclusion(candles) {
+  const merged = [];
+  for (const c of candles) {
+    if (!(c.low <= Math.min(c.open, c.close) && Math.max(c.open, c.close) <= c.high)) {
+      throw new Error(`Invalid OHLC at ${c.date || c.i}`);
+    }
+    const next = rawToMergedBar(c);
+    if (!merged.length) {
+      merged.push(next);
+      continue;
+    }
+    const last = merged[merged.length - 1];
+    if (contains(last, next)) {
+      const dir = mergedDirection(merged[merged.length - 2], last);
+      if (!dir) {
+        last.status = 'candidate';
+        last.rejection_reasons = ['startup_direction_insufficient'];
+        last.high = Math.max(last.high, next.high);
+        last.low = Math.min(last.low, next.low);
+      } else if (dir === 'up') {
+        last.high = Math.max(last.high, next.high);
+        last.low = Math.max(last.low, next.low);
+      } else {
+        last.high = Math.min(last.high, next.high);
+        last.low = Math.min(last.low, next.low);
+      }
+      last.direction = dir || 'unknown';
+      last.idxs.push(c.i);
+      last.source_ids.push(c.i);
+      last.dateEnd = c.date;
+      last.rule_ids = [...new Set([...(last.rule_ids || []), 'O-K03', 'O-K04'])];
+    } else {
+      merged.push(next);
+    }
+  }
+  merged.forEach((m, i) => {
+    m.mi = i;
+    if (!m.id) m.id = `mk${i}`;
+    if (!m.status) m.status = 'confirmed';
+  });
+  return merged;
+}
+
+function findFenxing(merged) {
+  const raw = [];
+  for (let i = 1; i < merged.length - 1; i++) {
+    const a = merged[i - 1], b = merged[i], c = merged[i + 1];
+    const normalized = !contains(a, b) && !contains(b, c);
+    const top = b.high > a.high && b.high > c.high && b.low > a.low && b.low > c.low;
+    const bottom = b.high < a.high && b.high < c.high && b.low < a.low && b.low < c.low;
+    if ((top || bottom) && normalized) {
+      const isTop = top;
+      raw.push({
+        id: `fx_raw_${raw.length}`,
+        mi: i,
+        type: isTop ? 'top' : 'bottom',
+        price: isTop ? b.high : b.low,
+        centerHigh: b.high,
+        centerLow: b.low,
+        idx: b.idxs[b.idxs.length - 1],
+        sourceIdx: b.idxs[b.idxs.length - 1],
+        source_ids: [a.id, b.id, c.id],
+        idxs: [...b.idxs],
+        date: b.dateEnd,
+        status: 'confirmed',
+        rule_ids: ['R1', 'O-F01', 'E-F02', 'E-F03'],
+      });
+    }
+  }
+  const cleaned = [];
+  for (const f of raw) {
+    if (!cleaned.length) { cleaned.push(f); continue; }
+    const last = cleaned[cleaned.length - 1];
+    if (last.type === f.type) {
+      const better = (f.type === 'top' && f.price >= last.price) || (f.type === 'bottom' && f.price <= last.price);
+      if (better) cleaned[cleaned.length - 1] = { ...f, supersedes: last.id, rule_ids: [...f.rule_ids, 'O-B03'] };
+      continue;
+    }
+    if (f.mi - last.mi < 4) {
+      f.status = 'withdrawn';
+      f.rejection_reasons = ['pen_distance_insufficient'];
+      continue;
+    }
+    cleaned.push(f);
+  }
+  cleaned.forEach((f, i) => {
+    f.id = 'fx' + i;
+    // I3: 最后一个分型右侧还没有足够的后续K线验证，随时可能被后面的走势延伸/取代。
+    f.provisional = i === cleaned.length - 1;
+  });
+  return cleaned;
+}
+
+function buildBi(fenxingList) {
+  const bi = [];
+  let i = 0;
+  while (i < fenxingList.length - 1) {
+    const start = fenxingList[i];
+    let end = fenxingList[i + 1];
+    if (start.type === end.type) { i++; continue; }
+    const centerDistance = end.mi - start.mi;
+    const independentCount = centerDistance - 3;
+    const top = start.type === 'top' ? start : end;
+    const bottom = start.type === 'bottom' ? start : end;
+    const priceEligible = top.centerHigh > bottom.centerHigh;
+    if (centerDistance < 4 || independentCount < 1 || !priceEligible) {
+      i++;
+      continue;
+    }
+    bi.push({
+      id: 'bi' + i,
+      start, end,
+      dir: start.type === 'bottom' ? 'up' : 'down',
+      bars: Math.abs(end.idx - start.idx),
+      independent_count: independentCount,
+      range: Math.abs(end.price - start.price),
+      momentum: Math.abs(end.price - start.price) / Math.max(1, end.idx - start.idx),
+      status: 'confirmed',
+      provisional: false, // 末尾统一按位置覆盖最后一根笔
+      rule_ids: ['R2', 'O-B01', 'O-B02', 'O-B03', 'E-B04'],
+      evidence: {
+        centerDistance,
+        independentCount,
+        topCenterHigh: top.centerHigh,
+        bottomCenterHigh: bottom.centerHigh,
+      },
+    });
+    i++;
+  }
+  // I3: 最后一根笔的右侧端点(分型)还没有被后续走势充分验证，随时可能被延伸/取代，
+  // 不能在它身上冒充"结构已完成"，所以标 provisional=true；其余笔显式 false，避免 undefined。
+  if (bi.length) bi[bi.length - 1].provisional = true;
+  return bi;
+}
+
+// 在 biList[i..] 中寻找线段结束位置。见 SPEC v0.4 §2 + 第二轮修复 F3。
+function findSegmentEnd(biList, i, dir) {
+  const startPrice = biList[i].start.price;
+  for (let k = i + 2; k <= biList.length - 1; k++) {
+    const rawFeatures = [];
+    for (let idx = i; idx <= k; idx++) {
+      const b = biList[idx];
+      if (b.dir === dir) continue;
+      rawFeatures.push({
+        id: `ft_${i}_${idx}`,
+        penId: b.id,
+        penIndex: idx,
+        low: penLow(b),
+        high: penHigh(b),
+        startIdx: b.start.idx,
+        endIdx: b.end.idx,
+        startDate: b.start.date,
+        endDate: b.end.date,
+        sourcePenIds: [b.id],
+        sourcePenIndexes: [idx],
+      });
+    }
+    const features = normalizeFeatureSequence(rawFeatures, dir);
+    if (features.length >= 3) {
+      const ff = featureFractal(features, dir);
+      if (ff) {
+        const centerPenIndex = Math.min(...ff.centerFeature.sourcePenIndexes);
+        const end = centerPenIndex - 1;
+        if (end >= i + 2 && (end - i) % 2 === 0) {
+          const endPrice = biList[end].end.price;
+          const directionOk = dir === 'up' ? endPrice > startPrice : endPrice < startPrice;
+          if (directionOk) {
+            const featurePenIds = uniq([
+              ...(ff.firstFeature.sourcePenIds || []),
+              ...(ff.secondFeature.sourcePenIds || []),
+              ...(ff.thirdFeature.sourcePenIds || []),
+            ]);
+            return {
+              end,
+              featureCase: ff.firstSecondGap ? 'case2_gap' : 'case1_no_gap',
+              featurePenIds,
+            };
+          }
+          // 方向自洽门禁未通过：不接受这个分型，继续增大 k 往后找。
+        }
+        // 分型位置不合法，忽略本次，继续找。
+      }
+    }
+  }
+  // 整轮扫描都找不到方向自洽的 end。
+  if (i === 0) {
+    // 数据起点残段：只含 bi[0] 的 1 笔段，交由后处理标记为 leading_fragment。
+    return { end: i, featureCase: 'leading_fragment', featurePenIds: [] };
+  }
+  // 末段兜底：在所有满足 (idx-i) 为偶数 且 idx<=biList.length-1 的下标中，
+  // 选使 biList[idx].end.price 达到极值的那个（天然方向自洽）。
+  const candidates = [];
+  for (let idx = i + 2; idx <= biList.length - 1; idx++) {
+    if ((idx - i) % 2 === 0) candidates.push(idx);
+  }
+  let end;
+  if (candidates.length) {
+    end = candidates.reduce((best, idx) => {
+      const better = dir === 'up'
+        ? biList[idx].end.price > biList[best].end.price
+        : biList[idx].end.price < biList[best].end.price;
+      return better ? idx : best;
+    }, candidates[0]);
+  } else {
+    end = i;
+  }
+  return { end, featureCase: 'trailing_extreme', featurePenIds: [] };
+}
+
+// R3 线段: buildXianduan —— 完整不重叠划分 + 特征序列分型判定，见 SPEC v0.4 §2。
+function buildXianduan(biList) {
+  if (!biList || !biList.length) return [];
+  const segs = [];
+  let i = 0;
+  while (i < biList.length) {
+    const dir = biList[i].dir;
+    const { end, featureCase, featurePenIds } = findSegmentEnd(biList, i, dir);
+    const member = biList.slice(i, end + 1);
+    const start = biList[i].start;
+    const last = biList[end].end;
+    const highs = member.flatMap((b) => [b.start.price, b.end.price]);
+    const lows = member.flatMap((b) => [b.start.price, b.end.price]);
+    segs.push({
+      id: 'xd' + segs.length,
+      dir,
+      biRange: [i, end],
+      startIdx: start.idx,
+      endIdx: last.idx,
+      startPrice: start.price,
+      endPrice: last.price,
+      startDate: start.date,
+      endDate: last.date,
+      range_low: Math.min(...lows),
+      range_high: Math.max(...highs),
+      status: 'candidate',
+      provisional: true,
+      structural_level: 'xianduan',
+      rejection_reasons: [],
+      evidence: {
+        featureCase,
+        featurePenIds,
+        penCount: end - i + 1,
+        ruleVersion: RULE_VERSION,
+      },
+    });
+    i = end + 1;
+  }
+
+  // 后处理：status 判定。
+  segs.forEach((seg, n) => {
+    const isLast = n === segs.length - 1;
+    const { featureCase } = seg.evidence;
+    if (featureCase === 'leading_fragment') {
+      // F3: 数据起点残段——无法判定方向自洽的完整第一段，单笔占位，不冒充 confirmed。
+      seg.status = 'candidate';
+      seg.provisional = false;
+      seg.rejection_reasons = ['leading_fragment'];
+      return;
+    }
+    if (isLast) {
+      seg.status = 'candidate';
+      seg.provisional = true;
+      seg.rejection_reasons = ['segment_still_forming'];
+      return;
+    }
+    const reasons = [];
+    let status;
+    if (featureCase === 'case1_no_gap') {
+      status = 'confirmed';
+    } else if (featureCase === 'case2_gap') {
+      const nextSeg = segs[n + 1];
+      const nextPenCount = nextSeg.biRange[1] - nextSeg.biRange[0] + 1;
+      if (nextPenCount >= 3) {
+        status = 'confirmed';
+      } else {
+        status = 'candidate';
+        reasons.push('gap_case_next_segment_too_short');
+      }
+    } else {
+      // trailing_extreme
+      status = 'candidate';
+      reasons.push('no_feature_fractal_found');
+    }
+    const directionOk = seg.dir === 'up' ? seg.endPrice > seg.startPrice : seg.endPrice < seg.startPrice;
+    if (!directionOk) {
+      status = 'candidate';
+      reasons.push('direction_inconsistent');
+    }
+    seg.status = status;
+    seg.provisional = false;
+    seg.rejection_reasons = reasons;
+  });
+
+  return segs;
+}
+
+// R4 中枢: buildZhongshuFromObjects —— 笔中枢(操作级)与线段中枢(背景级)公用的双级别构建器。
+// 见 SPEC v0.4 §3：完整走完扫描窗口，区分"中枢内波动"与"真离开"，假突破可继续延伸中枢。
+function buildZhongshuFromObjects(objects, level) {
+  const centers = [];
+  let i = 0;
+  while (i + 2 < objects.length) {
+    const three = [objects[i], objects[i + 1], objects[i + 2]];
+    const zg = Math.min(...three.map(objectHigh));
+    const zd = Math.max(...three.map(objectLow));
+    if (zg <= zd) { i++; continue; }
+    // I2: 种子三笔都必须与区间有起码的重叠，否则即使字面满足"三段重叠"，
+    // 也可能混进一根幅度数倍于区宽、直接穿越的笔，让中枢的教学含义失真。
+    // 门槛比成员的 ZS_MEMBER_MIN_OVERLAP(0.3) 宽松，因为种子本来就负责定义区间，
+    // 天然会有一根笔跨度较大（贴着 zg 或 zd 的那根本身重叠比例就低）。
+    if (three.some((o) => overlapRatio(o, zd, zg) < ZS_SEED_MIN_OVERLAP)) { i++; continue; }
+
+    let endMember = i + 2;
+    let leaveIndex = null;
+    let j = i + 3;
+    while (j < objects.length) {
+      const o = objects[j];
+      const oHigh = objectHigh(o);
+      const oLow = objectLow(o);
+      const endP = objectEndPrice(o);
+      const overlaps = oHigh >= zd && oLow <= zg;
+      // F1: 离开与否只看终点是否落在区外，不要求整根笔/段的起点也在中枢内
+      // （否则"穿越型"笔——从中枢下方直接冲到中枢上方——会被误当成中枢内成员吞掉）。
+      const isLeaving = (o.dir === 'up' && endP > zg) || (o.dir === 'down' && endP < zd);
+      // H2: 中枢是震荡区间，成员应大体在区间内运行——重叠占自身幅度不足
+      // ZS_MEMBER_MIN_OVERLAP 的笔/段（哪怕终点或区间跟中枢有交集）也不配算作"中枢内成员"，
+      // 必须被当成候选离开，防止"幅度数倍于区宽、直接穿越"的段被吸收成大口袋。
+      const memberEligible = overlapRatio(o, zd, zg) >= ZS_MEMBER_MIN_OVERLAP;
+      // 候选离开：要么成员资格不够格，要么按终点口径判定为离开，要么区间干脆整体不再与中枢重叠。
+      // 三种触发路径共用同一套"是否被否定"的判定，否则任一分支会绕开修复，
+      // 重新产生"小幅越界段被当真离开、真正的大幅反向段被当失败回抽"的同类问题。
+      const candidateLeave = !memberEligible || isLeaving || !overlaps;
+      if (candidateLeave) {
+        const nxt = objects[j + 1];
+        const nxtEnd = nxt ? objectEndPrice(nxt) : null;
+        // G1: 候选离开段被"否定"不止"回到中枢区间内"一种情形，
+        // 还包括"假突破后被下一段反向击穿另一侧"——此时这根小幅假突破段不是真正的离开段，
+        // 应降级为中枢成员，让循环在下一段重新判定真正的离开段，而不是把这根假突破当成离开、
+        // 把真正的大幅反向段错误地当成"回抽"。
+        const negated = nxt && (
+          (nxtEnd >= zd && nxtEnd <= zg) ||        // ① 回到中枢区间内
+          (o.dir === 'up' && nxtEnd < zd) ||       // ② 向上假突破后反向击穿下沿
+          (o.dir === 'down' && nxtEnd > zg)        // ③ 向下假突破后反向击穿上沿
+        );
+        // H1+H2: 只有"小幅假突破"（自身幅度不超过 ZS_FALSEBREAK_MAX_SPAN 倍区宽）才允许被否定
+        // 并降级为成员；幅度数倍于区宽的穿越段，即使后面被反向打回，也不该被吸收进中枢，
+        // 而应确认为真离开——否则"能被否定的离开段"和"能被吸收的大口袋段"重合，
+        // 幸存的离开段必然方向确认，三买/三卖会退化成永真命题。
+        const smallEnough = objSpan(o) <= ZS_FALSEBREAK_MAX_SPAN * (zg - zd);
+        // I1: 真正的假突破必然是"从区内探出去再回来"，必须与区间本身有起码的接触；
+        // 单看幅度足够小不够——一根整体都在区间之外、幅度又恰好不大的笔（overlapRatio=0）
+        // 不该被凭空吸收成成员，那只会平白拉长中枢的时间跨度。
+        if (smallEnough && negated && overlapRatio(o, zd, zg) >= 0.1) {
+          endMember = j;
+          j++;
+          continue;
+        }
+        leaveIndex = j;
+        break;
+      }
+      endMember = j;
+      j++;
+    }
+
+    const member = objects.slice(i, endMember + 1);
+    const leaveObj = leaveIndex != null ? objects[leaveIndex] : null;
+    const enterObj = objects[i - 1] || null;
+    const pullbackObj = leaveIndex != null ? (objects[leaveIndex + 1] || null) : null;
+    const postPullbackObj = leaveIndex != null ? (objects[leaveIndex + 2] || null) : null;
+
+    const allConfirmed = member.every((o) => o.status === 'confirmed');
+    const status = allConfirmed ? 'confirmed' : 'candidate';
+    const rejection_reasons = allConfirmed ? [] : [`member_${level}_not_confirmed`];
+    const provisional = member.some((o) => o.provisional === true) || (leaveObj ? leaveObj.provisional === true : false);
+
+    centers.push({
+      id: (level === 'bi' ? 'zsb' : 'zsx') + centers.length,
+      level,
+      zd,
+      zg,
+      gg: Math.max(...member.map(objectHigh)),
+      dd: Math.min(...member.map(objectLow)),
+      memberIds: member.map((o) => o.id),
+      memberCount: member.length,
+      startIdx: objectStartIdx(objects[i]),
+      endIdx: objectEndIdx(objects[endMember]),
+      startDate: objectStartDate(objects[i]),
+      endDate: objectEndDate(objects[endMember]),
+      enterObj,
+      leaveObj,
+      leaveDir: leaveObj ? leaveObj.dir : null,
+      pullbackObj,
+      postPullbackObj,
+      status,
+      provisional,
+      structural_level: level === 'bi' ? 'bi_zhongshu' : 'xianduan_zhongshu',
+      source_kind: level,
+      rejection_reasons,
+      evidence: {
+        zdFormula: 'max(member lows)',
+        zgFormula: 'min(member highs)',
+        ruleVersion: RULE_VERSION,
+      },
+    });
+
+    i = leaveIndex != null ? leaveIndex : endMember + 1;
+  }
+  return centers;
+}
+
+function buildAllZhongshu(xianduanList, biList) {
+  return {
+    bi: buildZhongshuFromObjects(biList || [], 'bi'),
+    xianduan: buildZhongshuFromObjects((xianduanList || []).filter((x) => x.status === 'confirmed'), 'xianduan'),
+  };
+}
+
+// 薄兼容层：旧调用方只取笔中枢。
+function buildZhongshu(xianduanList, biList) {
+  return buildAllZhongshu(xianduanList, biList).bi;
+}
+
+// R5 走势: computeTrendSegments —— 首个中枢 trend='pending'，不得继承第二个的方向。
+function computeTrendSegments(centers) {
+  if (!centers || !centers.length) return [];
+  const out = [];
+  for (let i = 0; i < centers.length; i++) {
+    const cur = centers[i];
+    const leaveObj = cur.leaveObj;
+    const base = {
+      centerId: cur.id,
+      status: cur.status,
+      zoneStartIdx: cur.startIdx,
+      zoneEndIdx: cur.endIdx,
+      leaveStartIdx: leaveObj ? objectStartIdx(leaveObj) : null,
+      leaveEndIdx: leaveObj ? objectEndIdx(leaveObj) : null,
+      startDate: cur.startDate,
+      endDate: cur.endDate,
+    };
+    if (i === 0) {
+      out.push({ ...cur, ...base, trend: 'pending' });
+      continue;
+    }
+    const prev = centers[i - 1];
+    let trend;
+    if (cur.zd > prev.zg) trend = 'up';
+    else if (cur.zg < prev.zd) trend = 'down';
+    else trend = 'range';
+    const status = prev.status === 'confirmed' && cur.status === 'confirmed' && trend !== 'range' ? 'confirmed' : cur.status;
+    out.push({ ...cur, ...base, trend, status });
+  }
+  return out;
+}
+
+function computeMacd(candles, shortN = 12, longN = 26, signalN = 9) {
+  const out = [];
+  let emaShort = null, emaLong = null, dea = null;
+  const aS = 2 / (shortN + 1), aL = 2 / (longN + 1), aD = 2 / (signalN + 1);
+  for (const c of candles || []) {
+    const close = c.close;
+    emaShort = emaShort == null ? close : emaShort * (1 - aS) + close * aS;
+    emaLong = emaLong == null ? close : emaLong * (1 - aL) + close * aL;
+    const dif = emaShort - emaLong;
+    dea = dea == null ? dif : dea * (1 - aD) + dif * aD;
+    const hist = 2 * (dif - dea);
+    out.push({ idx: c.i, date: c.date, close, dif, dea, hist });
+  }
+  return out;
+}
+
+function macdArea(macd, startIdx, endIdx, dir) {
+  const from = Math.min(startIdx, endIdx);
+  const to = Math.max(startIdx, endIdx);
+  const items = (macd || []).filter((m) => m.idx > from && m.idx <= to);
+  if (!items.length) return { area: null, bars: 0, reason: 'no_macd_points' };
+  const area = items.reduce((sum, m) => sum + (dir === 'up' ? Math.max(m.hist, 0) : Math.max(-m.hist, 0)), 0);
+  return { area, bars: items.length };
+}
+
+function computeStrength(biList, candles) {
+  const macd = computeMacd(candles || []);
+  const byPen = {};
+  for (const b of biList) {
+    const priceMove = Math.abs(b.end.price - b.start.price);
+    const bars = Math.max(1, Math.abs(b.end.idx - b.start.idx));
+    const macdInfo = macdArea(macd, b.start.idx, b.end.idx, b.dir);
+    byPen[b.id] = {
+      biId: b.id,
+      dir: b.dir,
+      priceMove,
+      bars,
+      speed: priceMove / bars,
+      macdArea: macdInfo.area,
+      macdBars: macdInfo.bars,
+      status: macdInfo.area == null ? 'insufficient' : 'computed',
+      rule_ids: ['R10', 'R12', 'E-DV02'],
+    };
+  }
+  return { macd, byPen };
+}
+
+// R12 力度: computeTrendStrength —— 取代逐笔力度，用同向的"进入段/前一中枢离开段" vs 本中枢
+// leaveObj(C) 做 MACD 面积比。
+// F2: 新增 objects（该级别的全量对象数组，笔中枢传 biList，线段中枢传 xianduanList）用于计算
+// MACD 面积中位数基准，防止用一个几乎无动能的段做分母，产出虚假的"力度增强/减弱"结论。
+// H3: 参照段三级选取——A/C 方向相反时(中枢往往起于反向的一笔)，enterObj 恒不可比，
+// 改为回溯前一个中枢的 leaveObj（连续两个同向推动段才是"趋势力度"的本意）。
+function computeTrendStrength(centers, candles, objects) {
+  const macd = computeMacd(candles || []);
+  const areasAll = (objects || [])
+    .map((o) => macdArea(macd, objectStartIdx(o), objectEndIdx(o), o.dir).area)
+    .filter((a) => a != null && a > 0)
+    .sort((a, b) => a - b);
+  const medianArea = areasAll.length ? areasAll[Math.floor(areasAll.length / 2)] : 0;
+  const byCenter = {};
+  const list = centers || [];
+  for (let ci = 0; ci < list.length; ci++) {
+    const center = list[ci];
+    const C = center.leaveObj;
+    if (!C) {
+      byCenter[center.id] = {
+        status: 'insufficient',
+        reason: '缺少离开段',
+        label: '力度不可比（结构未完成）',
+      };
+      continue;
+    }
+    const A = center.enterObj;
+    let ref = null, basis = null;
+    if (A && A.dir === C.dir) {
+      ref = A;
+      basis = 'enter_vs_leave';
+    } else {
+      // 次选：按 centers 数组顺序回溯，跳过没有 leaveObj 的中枢，取第一个有 leaveObj 的中枢；
+      // 只有当它的方向与 C 一致时才采用，否则视为无同向参照段。
+      for (let pi = ci - 1; pi >= 0; pi--) {
+        const prevLeave = list[pi].leaveObj;
+        if (!prevLeave) continue;
+        if (prevLeave.dir === C.dir) {
+          ref = prevLeave;
+          basis = 'prev_leave_vs_leave';
+        }
+        break;
+      }
+    }
+    if (!ref) {
+      byCenter[center.id] = {
+        status: 'incomparable',
+        reason: '无同向参照段',
+        label: '趋势力度不可比（无同向参照段，只能作盘整背驰观察）',
+      };
+      continue;
+    }
+    const infoRef = macdArea(macd, objectStartIdx(ref), objectEndIdx(ref), ref.dir);
+    const infoC = macdArea(macd, objectStartIdx(C), objectEndIdx(C), C.dir);
+    const areaA = infoRef.area, areaC = infoC.area;
+    const barsA = infoRef.bars, barsC = infoC.bars;
+    if (areaA == null || areaA <= 0 || barsA < 3 || areaC == null || areaC <= 0 || barsC < 3) {
+      byCenter[center.id] = {
+        status: 'insufficient',
+        reason: 'MACD样本不足',
+        label: '力度不可比（样本不足）',
+        basis,
+      };
+      continue;
+    }
+    // F2: 分母/分子面积不能小到失去参考意义——用同级别全量对象的 MACD 面积中位数做基准门槛。
+    if (areaA < STRENGTH_MIN_AREA_RATIO * medianArea || areaC < STRENGTH_MIN_AREA_RATIO * medianArea) {
+      byCenter[center.id] = {
+        status: 'insufficient',
+        reason: '进入段或离开段MACD动能过小，比值不具参考意义',
+        label: '力度不可比（动能样本过弱）',
+        basis,
+      };
+      continue;
+    }
+    const ratio = areaC / areaA;
+    let verdict;
+    if (ratio < STRENGTH_WEAK) verdict = 'weak';
+    else if (ratio > STRENGTH_STRONG) verdict = 'strong';
+    else verdict = 'flat';
+    const labels = C.dir === 'up'
+      ? { weak: '上涨力度减弱', strong: '上涨力度增强', flat: '上涨力度持平' }
+      : { weak: '下跌力度减弱', strong: '下跌力度增强', flat: '下跌力度持平' };
+    const detail = basis === 'prev_leave_vs_leave'
+      ? `对比上一个中枢的同向离开段（${objectStartDate(ref)}~${objectEndDate(ref)}）`
+      : `对比本中枢的进入段（${objectStartDate(ref)}~${objectEndDate(ref)}）`;
+    byCenter[center.id] = {
+      status: 'comparable',
+      dir: C.dir,
+      basis,
+      ratio,
+      verdict,
+      label: labels[verdict],
+      detail,
+      areaA,
+      areaC,
+      barsA,
+      barsC,
+      A: { id: ref.id, startDate: objectStartDate(ref), endDate: objectEndDate(ref) },
+      C: { id: C.id, startDate: objectStartDate(C), endDate: objectEndDate(C) },
+      refObj: ref, // 内部使用：computeBeichi 判定 priceExtends 需要完整对象（basis 可能不是 enterObj）
+      leaveStartIdx: objectStartIdx(C),
+      leaveEndIdx: objectEndIdx(C),
+    };
+  }
+  return { byCenter, macd };
+}
+
+// R6 背驰: computeBeichi —— 仅在 comparable 且 ratio < STRENGTH_WEAK 且价格确实创出新极值时产出。
+// F2: objects 透传给 computeTrendStrength 用于动能中位数基准门槛。
+function computeBeichi(centers, candles, objects) {
+  const { byCenter } = computeTrendStrength(centers, candles, objects);
+  const flags = [];
+  for (const center of centers || []) {
+    const info = byCenter[center.id];
+    if (!info || info.status !== 'comparable' || info.ratio >= STRENGTH_WEAK) continue;
+    // H3: 参照段可能是 enterObj，也可能是前一中枢的 leaveObj（basis='prev_leave_vs_leave'），
+    // priceExtends 必须用实际参照对象的极值，不能再假设一定是 center.enterObj。
+    const A = info.refObj;
+    const C = center.leaveObj;
+    const priceExtends = C.dir === 'up'
+      ? objectHigh(C) > Math.max(center.zg, objectHigh(A))
+      : objectLow(C) < Math.min(center.zd, objectLow(A));
+    if (!priceExtends) continue;
+    const status = (center.status === 'confirmed' && !center.provisional) ? 'confirmed' : 'candidate';
+    flags.push({
+      id: 'bc' + flags.length,
+      zsId: center.id,
+      level: center.level,
+      dir: C.dir,
+      basis: info.basis,
+      idx: objectEndIdx(C),
+      date: objectEndDate(C),
+      price: objectEndPrice(C),
+      ratio: info.ratio.toFixed(2),
+      areaA: info.areaA,
+      areaC: info.areaC,
+      status,
+      rejection_reasons: status === 'confirmed' ? [] : ['leave_segment_or_center_still_forming'],
+      evidence: {
+        proxy: 'macd_area_ratio',
+        basis: info.basis,
+        enterObjId: A.id,
+        exitObjId: C.id,
+        areaA: info.areaA,
+        areaC: info.areaC,
+        ratio: info.ratio,
+        priceExtends: true,
+      },
+      rule_ids: ['R6', 'O-DV01', 'E-DV02'],
+    });
+  }
+  return flags;
+}
+
+// R7-R9 买卖点: deriveSignals —— 完全基于中枢自带的 enterObj/leaveObj/pullbackObj/postPullbackObj，不用数组下标。
+function deriveSignals(centers, beichiFlags) {
+  const signals = [];
+  const beichiByZs = {};
+  for (const f of beichiFlags || []) {
+    if (!beichiByZs[f.zsId]) beichiByZs[f.zsId] = f;
+  }
+
+  for (const center of centers || []) {
+    const C = center.leaveObj;
+    const flag = beichiByZs[center.id];
+    let sig1 = null;
+
+    // 1B/1S
+    if (flag && C) {
+      const isBuy = C.dir === 'down';
+      sig1 = {
+        id: 'sig-1' + (isBuy ? 'B' : 'S') + center.id,
+        type: isBuy ? '1B' : '1S',
+        dir: isBuy ? 'buy' : 'sell',
+        zsId: center.id,
+        level: center.level,
+        idx: objectEndIdx(C),
+        date: objectEndDate(C),
+        price: objectEndPrice(C),
+        status: flag.status,
+        stage: 'leave',
+        // 一买/一卖的失效位是背驰离开段自身的极值：跌破该低点则底背驰被证伪，涨破该高点则顶背驰被证伪。
+        // 不能用中枢边界——背驰点往往离中枢很远，用边界会让信号一产生就"已失效"。
+        boundary: isBuy ? objectLow(C) : objectHigh(C),
+        rejection_reasons: flag.status === 'confirmed' ? [] : ['divergence_still_forming'],
+        evidence: { beichiId: flag.id, exitObjId: C.id },
+      };
+      signals.push(sig1);
+    }
+
+    // 2B/2S
+    if (sig1 && center.pullbackObj) {
+      const postPullbackObj = center.postPullbackObj;
+      if (postPullbackObj && postPullbackObj.dir === C.dir) {
+        const isBuy = sig1.dir === 'buy';
+        const holds = isBuy
+          ? objectEndPrice(postPullbackObj) > objectEndPrice(C)
+          : objectEndPrice(postPullbackObj) < objectEndPrice(C);
+        if (holds) {
+          const status = center.status === 'confirmed' && !postPullbackObj.provisional ? 'confirmed' : 'candidate';
+          signals.push({
+            id: 'sig-2' + (isBuy ? 'B' : 'S') + center.id,
+            type: isBuy ? '2B' : '2S',
+            dir: isBuy ? 'buy' : 'sell',
+            zsId: center.id,
+            level: center.level,
+            idx: objectEndIdx(postPullbackObj),
+            date: objectEndDate(postPullbackObj),
+            price: objectEndPrice(postPullbackObj),
+            status,
+            stage: 'pullback',
+            boundary: isBuy ? center.zd : center.zg,
+            rejection_reasons: status === 'confirmed' ? [] : ['first_point_or_pullback_not_confirmed'],
+            evidence: { firstSignalId: sig1.id, postPullbackObjId: postPullbackObj.id, refPrice: objectEndPrice(C) },
+          });
+        }
+      }
+    }
+
+    // 3B/3S
+    if (center.leaveObj) {
+      const dirC = C.dir;
+      if (!center.pullbackObj) {
+        // 突破观察点：已离开但尚未出现回踩段。
+        const isUp = dirC === 'up';
+        signals.push({
+          id: 'sig-3' + (isUp ? 'B' : 'S') + center.id + '-leave',
+          type: isUp ? '3B' : '3S',
+          dir: isUp ? 'buy' : 'sell',
+          zsId: center.id,
+          level: center.level,
+          idx: objectEndIdx(C),
+          date: objectEndDate(C),
+          price: objectEndPrice(C),
+          status: 'candidate',
+          stage: 'leave',
+          displayType: isUp ? '突破' : '破位',
+          boundary: isUp ? center.zg : center.zd,
+          needsCondition: '已向' + (isUp ? '上' : '下') + '离开中枢；需下一段回踩不' + (isUp ? '跌回' : '站回') + '中枢' + (isUp ? '上沿' : '下沿') + ' ' + (isUp ? center.zg : center.zd).toFixed(2) + ' 内，' + (isUp ? '三买' : '三卖') + '才确认',
+          rejection_reasons: ['pullback_segment_not_yet_formed'],
+          evidence: { leaveObjId: C.id },
+        });
+      } else {
+        const pullbackObj = center.pullbackObj;
+        const isUp = dirC === 'up';
+        const boundary = isUp ? center.zg : center.zd;
+        const success = isUp
+          ? objectLow(pullbackObj) > center.zg
+          : objectHigh(pullbackObj) < center.zd;
+        if (success) {
+          const status = center.status === 'confirmed' && !pullbackObj.provisional ? 'confirmed' : 'candidate';
+          signals.push({
+            id: 'sig-3' + (isUp ? 'B' : 'S') + center.id,
+            type: isUp ? '3B' : '3S',
+            dir: isUp ? 'buy' : 'sell',
+            zsId: center.id,
+            level: center.level,
+            idx: objectEndIdx(pullbackObj),
+            date: objectEndDate(pullbackObj),
+            price: objectEndPrice(pullbackObj),
+            status,
+            stage: 'pullback',
+            boundary,
+            rejection_reasons: status === 'confirmed' ? [] : ['center_or_pullback_not_confirmed'],
+            evidence: { leaveObjId: C.id, pullbackObjId: pullbackObj.id, condition: isUp ? 'pullback_low_strictly_above_ZG' : 'pullback_high_strictly_below_ZD' },
+          });
+        } else {
+          signals.push({
+            id: 'sig-3' + (isUp ? 'B' : 'S') + center.id + '-failed',
+            type: isUp ? '3B' : '3S',
+            dir: isUp ? 'buy' : 'sell',
+            zsId: center.id,
+            level: center.level,
+            idx: objectEndIdx(pullbackObj),
+            date: objectEndDate(pullbackObj),
+            price: objectEndPrice(pullbackObj),
+            status: 'failed',
+            stage: 'pullback',
+            boundary,
+            failReason: '回踩重回中枢区间',
+            rejection_reasons: ['pullback_reentered_center_range'],
+            evidence: { leaveObjId: C.id, pullbackObjId: pullbackObj.id },
+          });
+        }
+      }
+    }
+  }
+
+  // F4: 同一中枢上背驰(1B/1S)与三买/三卖(3B/3S)是互斥解读，不能并列以 confirmed 姿态摆给用户。
+  // 出现背驰信号时，把该中枢非 failed 的 3B/3S 降级为 candidate，保留可见性但不与背驰并列采信。
+  const byZs = {};
+  for (const s of signals) {
+    if (!byZs[s.zsId]) byZs[s.zsId] = [];
+    byZs[s.zsId].push(s);
+  }
+  for (const zsId in byZs) {
+    const group = byZs[zsId];
+    const hasDivergence = group.some((s) => s.type === '1B' || s.type === '1S');
+    if (!hasDivergence) continue;
+    for (const s of group) {
+      if ((s.type === '3B' || s.type === '3S') && s.status !== 'failed') {
+        s.status = 'candidate';
+        s.conflictNote = '同一中枢的离开段已出现背驰信号，三买/三卖仅作观察，不与背驰并列采信';
+        s.rejection_reasons = uniq([...(s.rejection_reasons || []), 'conflicts_with_divergence_on_same_center']);
+      }
+    }
+  }
+
+  signals.sort((a, b) => a.idx - b.idx);
+  return signals;
+}
+
+function supportResistance(centers) {
+  const lines = [];
+  const lastCenters = (centers || []).slice(-2);
+  for (const zs of lastCenters) {
+    lines.push({ id: 'sr-zg-' + zs.id, price: zs.zg, type: 'resistance', label: '中枢上沿 ZG' });
+    lines.push({ id: 'sr-zd-' + zs.id, price: zs.zd, type: 'support', label: '中枢下沿 ZD' });
+  }
+  return lines;
+}
+
+function failureLine(signals, objects) {
+  if (!signals || !signals.length) return null;
+  const last = signals[signals.length - 1];
+  if (last.boundary != null) {
+    return {
+      signalId: last.id,
+      price: last.boundary,
+      dir: last.dir,
+      label: (last.dir === 'buy' ? '防守位(跌破失效)' : '防守位(涨破失效)'),
+    };
+  }
+  const list = objects || [];
+  const obj = list.find((o) => o.id === last.biId || o.id === last.zsId);
+  if (!obj) return null;
+  const price = last.dir === 'buy' ? objectLow(obj) : objectHigh(obj);
+  return {
+    signalId: last.id,
+    price,
+    dir: last.dir,
+    label: (last.dir === 'buy' ? '防守位(跌破失效)' : '防守位(涨破失效)'),
+  };
+}
+
+  const API = {
+    RULE_VERSION,
+    STRENGTH_WEAK, STRENGTH_STRONG, STRENGTH_MIN_AREA_RATIO,
+    ZS_MEMBER_MIN_OVERLAP, ZS_FALSEBREAK_MAX_SPAN, ZS_SEED_MIN_OVERLAP,
+    mergeInclusion, findFenxing, buildBi, buildXianduan,
+    buildZhongshuFromObjects, buildAllZhongshu, buildZhongshu,
+    computeTrendSegments, computeMacd, computeStrength, computeTrendStrength,
+    computeBeichi, deriveSignals, supportResistance, failureLine,
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  global.ChanAlgo = API;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+(function (global) {
+  'use strict';
+// 招商银行(600036)最新真实历史日K数据
+// 来源: 腾讯证券 fqkline 接口, param=sh600036,day,,,900,qfq
+// 区间: 2024-01-19 至 2026-09-11; 生成时间: 2026-09-11T15:15:05.977Z
+// 用途: 缠论结构教学与算法验证; 非实时行情, 不构成交易建议。
+
+const dataMeta = {
+  "symbol": "600036",
+  "name": "招商银行",
+  "market": "SH",
+  "timeframe": "1d",
+  "source": "tencent.ifzq.fqkline",
+  "code": "sh600036",
+  "period": "day",
+  "adjustment": "qfq",
+  "begin": "2024-01-19",
+  "end": "2026-09-11",
+  "generatedAt": "2026-09-11T15:15:05.977Z",
+  "count": 641,
+  "sourceUrl": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sh600036,day,,,900,qfq",
+  "note": "真实历史前复权日K; 页面显示按该数据版本计算。非实时行情, 不构成交易建议。"
+};
+
+const dailyCandles = [{"i":0,"date":"2024-01-19","open":23.382,"close":23.742,"high":23.912,"low":23.152,"volume":968616},{"i":1,"date":"2024-01-22","open":23.772,"close":24.262,"high":24.512,"low":23.712,"volume":1549703},{"i":2,"date":"2024-01-23","open":24.022,"close":24.002,"high":24.362,"low":23.812,"volume":886056},{"i":3,"date":"2024-01-24","open":24.162,"close":24.102,"high":24.302,"low":23.392,"volume":974892},{"i":4,"date":"2024-01-25","open":24.322,"close":24.912,"high":25.012,"low":24.192,"volume":1234509},{"i":5,"date":"2024-01-26","open":24.932,"close":25.132,"high":25.362,"low":24.672,"volume":1009916},{"i":6,"date":"2024-01-29","open":25.212,"close":25.362,"high":25.612,"low":25.182,"volume":838824},{"i":7,"date":"2024-01-30","open":25.212,"close":25.012,"high":25.512,"low":24.792,"volume":743999},{"i":8,"date":"2024-01-31","open":24.932,"close":24.722,"high":25.202,"low":24.602,"volume":808949},{"i":9,"date":"2024-02-01","open":24.682,"close":24.432,"high":24.852,"low":24.212,"volume":859700},{"i":10,"date":"2024-02-02","open":24.462,"close":24.242,"high":24.672,"low":23.652,"volume":987292},{"i":11,"date":"2024-02-05","open":24.242,"close":24.722,"high":24.962,"low":24.072,"volume":1063979},{"i":12,"date":"2024-02-06","open":24.722,"close":25.342,"high":25.362,"low":24.612,"volume":1062158},{"i":13,"date":"2024-02-07","open":25.432,"close":25.322,"high":25.492,"low":24.822,"volume":1110511},{"i":14,"date":"2024-02-08","open":25.322,"close":25.412,"high":25.462,"low":25.032,"volume":873004},{"i":15,"date":"2024-02-19","open":26.002,"close":25.632,"high":26.002,"low":25.422,"volume":875490},{"i":16,"date":"2024-02-20","open":25.632,"close":25.412,"high":25.632,"low":25.302,"volume":606405},{"i":17,"date":"2024-02-21","open":25.412,"close":27.012,"high":27.402,"low":25.362,"volume":1528656},{"i":18,"date":"2024-02-22","open":26.822,"close":26.812,"high":26.962,"low":26.402,"volume":752760},{"i":19,"date":"2024-02-23","open":26.822,"close":26.962,"high":27.412,"low":26.632,"volume":639849},{"i":20,"date":"2024-02-26","open":26.872,"close":26.262,"high":27.072,"low":26.092,"volume":666390},{"i":21,"date":"2024-02-27","open":26.252,"close":26.192,"high":26.412,"low":26.002,"volume":543492},{"i":22,"date":"2024-02-28","open":26.302,"close":26.032,"high":26.302,"low":25.612,"volume":683708},{"i":23,"date":"2024-02-29","open":25.902,"close":26.052,"high":26.212,"low":25.862,"volume":498928},{"i":24,"date":"2024-03-01","open":25.932,"close":25.952,"high":26.092,"low":25.762,"volume":427174},{"i":25,"date":"2024-03-04","open":25.772,"close":25.532,"high":25.882,"low":25.482,"volume":591350},{"i":26,"date":"2024-03-05","open":25.432,"close":26.192,"high":26.222,"low":25.322,"volume":894029},{"i":27,"date":"2024-03-06","open":26.152,"close":25.882,"high":26.272,"low":25.882,"volume":516102},{"i":28,"date":"2024-03-07","open":25.882,"close":26.012,"high":26.142,"low":25.792,"volume":519492},{"i":29,"date":"2024-03-08","open":25.902,"close":25.682,"high":26.022,"low":25.562,"volume":441071},{"i":30,"date":"2024-03-11","open":25.562,"close":25.492,"high":25.762,"low":25.212,"volume":738538},{"i":31,"date":"2024-03-12","open":25.432,"close":25.962,"high":26.162,"low":25.292,"volume":769254},{"i":32,"date":"2024-03-13","open":25.972,"close":25.532,"high":26.002,"low":25.442,"volume":469387},{"i":33,"date":"2024-03-14","open":25.472,"close":25.262,"high":25.732,"low":25.172,"volume":508175},{"i":34,"date":"2024-03-15","open":25.252,"close":25.192,"high":25.432,"low":25.012,"volume":520781},{"i":35,"date":"2024-03-18","open":25.162,"close":25.142,"high":25.352,"low":25.012,"volume":461898},{"i":36,"date":"2024-03-19","open":25.112,"close":24.812,"high":25.122,"low":24.742,"volume":547025},{"i":37,"date":"2024-03-20","open":24.812,"close":25.192,"high":25.212,"low":24.672,"volume":498272},{"i":38,"date":"2024-03-21","open":25.182,"close":25.562,"high":25.772,"low":25.062,"volume":646761},{"i":39,"date":"2024-03-22","open":25.542,"close":25.212,"high":25.562,"low":24.912,"volume":552879},{"i":40,"date":"2024-03-25","open":25.122,"close":25.362,"high":25.522,"low":24.932,"volume":483759},{"i":41,"date":"2024-03-26","open":25.812,"close":26.412,"high":26.672,"low":25.742,"volume":1244308},{"i":42,"date":"2024-03-27","open":26.302,"close":26.312,"high":26.662,"low":26.222,"volume":782085},{"i":43,"date":"2024-03-28","open":26.352,"close":26.192,"high":26.512,"low":26.082,"volume":694745},{"i":44,"date":"2024-03-29","open":26.112,"close":26.212,"high":26.652,"low":26.082,"volume":514001},{"i":45,"date":"2024-04-01","open":26.192,"close":26.652,"high":26.862,"low":26.192,"volume":570152},{"i":46,"date":"2024-04-02","open":26.712,"close":26.562,"high":26.932,"low":26.452,"volume":536619},{"i":47,"date":"2024-04-03","open":26.552,"close":26.242,"high":26.642,"low":26.242,"volume":498082},{"i":48,"date":"2024-04-08","open":26.252,"close":26.412,"high":26.572,"low":26.042,"volume":477291},{"i":49,"date":"2024-04-09","open":26.512,"close":26.322,"high":26.642,"low":26.322,"volume":384772},{"i":50,"date":"2024-04-10","open":26.202,"close":26.502,"high":26.692,"low":26.202,"volume":504014},{"i":51,"date":"2024-04-11","open":26.322,"close":26.312,"high":26.432,"low":26.142,"volume":443748},{"i":52,"date":"2024-04-12","open":26.292,"close":26.132,"high":26.482,"low":26.072,"volume":478204},{"i":53,"date":"2024-04-15","open":26.112,"close":26.842,"high":27.012,"low":26.102,"volume":764645},{"i":54,"date":"2024-04-16","open":26.722,"close":26.762,"high":26.982,"low":26.462,"volume":741556},{"i":55,"date":"2024-04-17","open":26.702,"close":27.312,"high":27.502,"low":26.482,"volume":948212},{"i":56,"date":"2024-04-18","open":27.272,"close":27.662,"high":28.112,"low":27.202,"volume":1006574},{"i":57,"date":"2024-04-19","open":27.572,"close":27.632,"high":27.852,"low":27.432,"volume":540384},{"i":58,"date":"2024-04-22","open":27.792,"close":27.352,"high":28.202,"low":27.062,"volume":607535},{"i":59,"date":"2024-04-23","open":27.312,"close":27.392,"high":27.832,"low":27.242,"volume":512452},{"i":60,"date":"2024-04-24","open":27.392,"close":27.472,"high":27.562,"low":27.112,"volume":443384},{"i":61,"date":"2024-04-25","open":27.452,"close":28.412,"high":28.412,"low":27.392,"volume":919482},{"i":62,"date":"2024-04-26","open":28.412,"close":28.492,"high":28.882,"low":28.232,"volume":954899},{"i":63,"date":"2024-04-29","open":28.412,"close":28.892,"high":29.172,"low":28.212,"volume":818064},{"i":64,"date":"2024-04-30","open":28.412,"close":28.322,"high":28.592,"low":28.062,"volume":868042},{"i":65,"date":"2024-05-06","open":29.112,"close":28.892,"high":29.372,"low":28.732,"volume":1000705},{"i":66,"date":"2024-05-07","open":28.892,"close":28.882,"high":28.962,"low":28.642,"volume":473849},{"i":67,"date":"2024-05-08","open":28.832,"close":28.582,"high":28.972,"low":28.562,"volume":412862},{"i":68,"date":"2024-05-09","open":28.612,"close":28.852,"high":28.942,"low":28.612,"volume":512391},{"i":69,"date":"2024-05-10","open":28.852,"close":29.632,"high":29.862,"low":28.812,"volume":940366},{"i":70,"date":"2024-05-13","open":29.452,"close":29.922,"high":30.082,"low":29.342,"volume":747800},{"i":71,"date":"2024-05-14","open":29.902,"close":29.352,"high":30.142,"low":29.212,"volume":687779},{"i":72,"date":"2024-05-15","open":29.342,"close":29.062,"high":29.452,"low":28.702,"volume":674944},{"i":73,"date":"2024-05-16","open":29.092,"close":30.262,"high":30.462,"low":29.012,"volume":1291476},{"i":74,"date":"2024-05-17","open":30.312,"close":30.862,"high":30.912,"low":30.072,"volume":916879},{"i":75,"date":"2024-05-20","open":30.862,"close":30.392,"high":31.012,"low":30.102,"volume":914250},{"i":76,"date":"2024-05-21","open":30.372,"close":30.252,"high":30.532,"low":30.142,"volume":445999},{"i":77,"date":"2024-05-22","open":30.232,"close":30.072,"high":30.392,"low":29.772,"volume":664477},{"i":78,"date":"2024-05-23","open":29.912,"close":29.512,"high":30.022,"low":29.332,"volume":924585},{"i":79,"date":"2024-05-24","open":29.312,"close":28.752,"high":29.492,"low":28.672,"volume":870440},{"i":80,"date":"2024-05-27","open":28.862,"close":29.152,"high":29.222,"low":28.762,"volume":570938},{"i":81,"date":"2024-05-28","open":29.112,"close":28.842,"high":29.342,"low":28.732,"volume":476191},{"i":82,"date":"2024-05-29","open":28.762,"close":28.582,"high":29.072,"low":28.472,"volume":491041},{"i":83,"date":"2024-05-30","open":28.462,"close":28.352,"high":28.912,"low":28.192,"volume":559245},{"i":84,"date":"2024-05-31","open":28.542,"close":28.292,"high":28.612,"low":28.292,"volume":508932},{"i":85,"date":"2024-06-03","open":28.232,"close":28.162,"high":28.392,"low":27.932,"volume":608111},{"i":86,"date":"2024-06-04","open":28.162,"close":28.552,"high":28.692,"low":28.112,"volume":533788},{"i":87,"date":"2024-06-05","open":28.692,"close":28.002,"high":28.712,"low":27.902,"volume":691041},{"i":88,"date":"2024-06-06","open":28.102,"close":28.012,"high":28.212,"low":27.792,"volume":677241},{"i":89,"date":"2024-06-07","open":28.062,"close":28.002,"high":28.262,"low":27.662,"volume":678266},{"i":90,"date":"2024-06-11","open":27.792,"close":27.372,"high":27.982,"low":27.132,"volume":690448},{"i":91,"date":"2024-06-12","open":27.362,"close":27.102,"high":27.372,"low":26.962,"volume":511381},{"i":92,"date":"2024-06-13","open":27.212,"close":26.832,"high":27.232,"low":26.732,"volume":550184},{"i":93,"date":"2024-06-14","open":26.832,"close":27.822,"high":28.032,"low":26.832,"volume":991674},{"i":94,"date":"2024-06-17","open":27.612,"close":27.742,"high":27.812,"low":27.402,"volume":457682},{"i":95,"date":"2024-06-18","open":27.872,"close":27.722,"high":28.312,"low":27.632,"volume":453675},{"i":96,"date":"2024-06-19","open":27.722,"close":28.162,"high":28.412,"low":27.672,"volume":585937},{"i":97,"date":"2024-06-20","open":28.172,"close":28.022,"high":28.242,"low":27.912,"volume":392467},{"i":98,"date":"2024-06-21","open":27.892,"close":27.712,"high":28.092,"low":27.502,"volume":523963},{"i":99,"date":"2024-06-24","open":27.802,"close":28.082,"high":28.232,"low":27.502,"volume":692590},{"i":100,"date":"2024-06-25","open":28.082,"close":28.312,"high":28.482,"low":27.982,"volume":638160},{"i":101,"date":"2024-06-26","open":28.192,"close":28.072,"high":28.372,"low":27.962,"volume":452638},{"i":102,"date":"2024-06-27","open":27.972,"close":28.272,"high":28.352,"low":27.842,"volume":555173},{"i":103,"date":"2024-06-28","open":28.212,"close":28.202,"high":28.492,"low":28.052,"volume":525749},{"i":104,"date":"2024-07-01","open":28.202,"close":28.372,"high":28.412,"low":27.962,"volume":472239},{"i":105,"date":"2024-07-02","open":28.392,"close":29.092,"high":29.262,"low":28.372,"volume":868771},{"i":106,"date":"2024-07-03","open":29.022,"close":28.472,"high":29.102,"low":28.322,"volume":691373},{"i":107,"date":"2024-07-04","open":28.552,"close":28.722,"high":29.052,"low":28.492,"volume":696919},{"i":108,"date":"2024-07-05","open":28.722,"close":27.892,"high":28.842,"low":27.672,"volume":967783},{"i":109,"date":"2024-07-08","open":27.862,"close":28.002,"high":28.242,"low":27.722,"volume":545730},{"i":110,"date":"2024-07-09","open":28.002,"close":28.482,"high":28.562,"low":27.732,"volume":621037},{"i":111,"date":"2024-07-10","open":28.482,"close":28.692,"high":29.012,"low":28.462,"volume":726314},{"i":112,"date":"2024-07-11","open":29.064,"close":28.884,"high":29.114,"low":28.774,"volume":732389},{"i":113,"date":"2024-07-12","open":28.994,"close":29.984,"high":30.064,"low":28.994,"volume":944904},{"i":114,"date":"2024-07-15","open":29.984,"close":29.764,"high":30.034,"low":29.704,"volume":474604},{"i":115,"date":"2024-07-16","open":29.744,"close":29.774,"high":29.874,"low":29.444,"volume":455793},{"i":116,"date":"2024-07-17","open":29.684,"close":30.054,"high":30.174,"low":29.634,"volume":577954},{"i":117,"date":"2024-07-18","open":30.054,"close":30.074,"high":30.234,"low":29.744,"volume":598627},{"i":118,"date":"2024-07-19","open":29.984,"close":30.234,"high":30.284,"low":29.574,"volume":810072},{"i":119,"date":"2024-07-22","open":30.154,"close":29.324,"high":30.154,"low":29.074,"volume":808206},{"i":120,"date":"2024-07-23","open":29.324,"close":29.324,"high":29.694,"low":29.214,"volume":538755},{"i":121,"date":"2024-07-24","open":29.434,"close":29.164,"high":29.564,"low":29.014,"volume":482453},{"i":122,"date":"2024-07-25","open":29.204,"close":28.814,"high":29.304,"low":28.354,"volume":762079},{"i":123,"date":"2024-07-26","open":28.784,"close":28.354,"high":29.024,"low":28.094,"volume":601462},{"i":124,"date":"2024-07-29","open":28.364,"close":28.434,"high":28.634,"low":28.184,"volume":413475},{"i":125,"date":"2024-07-30","open":28.384,"close":28.404,"high":28.574,"low":28.134,"volume":390782},{"i":126,"date":"2024-07-31","open":28.404,"close":28.714,"high":28.984,"low":28.234,"volume":595370},{"i":127,"date":"2024-08-01","open":28.714,"close":28.694,"high":28.834,"low":28.254,"volume":409139},{"i":128,"date":"2024-08-02","open":28.404,"close":28.264,"high":28.584,"low":28.214,"volume":386130},{"i":129,"date":"2024-08-05","open":28.184,"close":28.084,"high":28.504,"low":28.034,"volume":584420},{"i":130,"date":"2024-08-06","open":28.344,"close":27.684,"high":28.374,"low":27.494,"volume":514389},{"i":131,"date":"2024-08-07","open":27.714,"close":27.564,"high":27.884,"low":27.534,"volume":390732},{"i":132,"date":"2024-08-08","open":27.594,"close":27.914,"high":27.964,"low":27.364,"volume":394600},{"i":133,"date":"2024-08-09","open":27.954,"close":28.314,"high":28.564,"low":27.794,"volume":482748},{"i":134,"date":"2024-08-12","open":28.284,"close":28.104,"high":28.324,"low":27.914,"volume":318943},{"i":135,"date":"2024-08-13","open":28.084,"close":27.924,"high":28.214,"low":27.744,"volume":282378},{"i":136,"date":"2024-08-14","open":27.884,"close":27.844,"high":28.124,"low":27.794,"volume":282446},{"i":137,"date":"2024-08-15","open":27.834,"close":28.744,"high":28.904,"low":27.634,"volume":739790},{"i":138,"date":"2024-08-16","open":28.734,"close":29.134,"high":29.234,"low":28.704,"volume":418503},{"i":139,"date":"2024-08-19","open":29.234,"close":29.404,"high":29.484,"low":29.014,"volume":422843},{"i":140,"date":"2024-08-20","open":29.434,"close":29.464,"high":29.584,"low":29.144,"volume":423729},{"i":141,"date":"2024-08-21","open":29.284,"close":29.224,"high":29.414,"low":28.804,"volume":378101},{"i":142,"date":"2024-08-22","open":29.264,"close":29.284,"high":29.534,"low":29.164,"volume":382864},{"i":143,"date":"2024-08-23","open":29.254,"close":29.684,"high":29.834,"low":29.054,"volume":465587},{"i":144,"date":"2024-08-26","open":29.684,"close":29.754,"high":29.824,"low":29.454,"volume":351175},{"i":145,"date":"2024-08-27","open":29.754,"close":29.684,"high":29.924,"low":29.514,"volume":387209},{"i":146,"date":"2024-08-28","open":29.814,"close":29.664,"high":29.964,"low":29.424,"volume":415232},{"i":147,"date":"2024-08-29","open":29.574,"close":28.914,"high":29.754,"low":28.884,"volume":516388},{"i":148,"date":"2024-08-30","open":28.784,"close":28.134,"high":29.094,"low":28.104,"volume":1112230},{"i":149,"date":"2024-09-02","open":27.984,"close":27.914,"high":28.364,"low":27.824,"volume":558021},{"i":150,"date":"2024-09-03","open":27.994,"close":27.604,"high":28.064,"low":27.384,"volume":505752},{"i":151,"date":"2024-09-04","open":27.514,"close":27.344,"high":27.914,"low":27.334,"volume":380526},{"i":152,"date":"2024-09-05","open":27.344,"close":27.184,"high":27.424,"low":26.884,"volume":542063},{"i":153,"date":"2024-09-06","open":27.234,"close":27.234,"high":27.724,"low":27.184,"volume":383182},{"i":154,"date":"2024-09-09","open":26.964,"close":26.224,"high":26.974,"low":26.024,"volume":871073},{"i":155,"date":"2024-09-10","open":26.234,"close":26.174,"high":26.414,"low":25.924,"volume":476024},{"i":156,"date":"2024-09-11","open":26.124,"close":26.064,"high":26.184,"low":25.914,"volume":415794},{"i":157,"date":"2024-09-12","open":26.084,"close":26.214,"high":26.484,"low":25.924,"volume":410267},{"i":158,"date":"2024-09-13","open":26.264,"close":26.584,"high":26.884,"low":25.984,"volume":495974},{"i":159,"date":"2024-09-18","open":26.594,"close":27.094,"high":27.184,"low":26.594,"volume":418540},{"i":160,"date":"2024-09-19","open":27.184,"close":26.804,"high":27.214,"low":26.614,"volume":451191},{"i":161,"date":"2024-09-20","open":26.804,"close":26.924,"high":27.094,"low":26.644,"volume":487418},{"i":162,"date":"2024-09-23","open":26.834,"close":27.374,"high":27.474,"low":26.824,"volume":344609},{"i":163,"date":"2024-09-24","open":27.664,"close":29.114,"high":29.124,"low":27.654,"volume":1361218},{"i":164,"date":"2024-09-25","open":29.834,"close":30.134,"high":30.474,"low":29.684,"volume":1856243},{"i":165,"date":"2024-09-26","open":30.144,"close":31.364,"high":31.364,"low":29.894,"volume":1745330},{"i":166,"date":"2024-09-27","open":32.094,"close":31.614,"high":32.484,"low":30.894,"volume":745458},{"i":167,"date":"2024-09-30","open":32.334,"close":33.594,"high":33.984,"low":31.904,"volume":2561013},{"i":168,"date":"2024-10-08","open":37.354,"close":35.984,"high":37.354,"low":34.804,"volume":2973039},{"i":169,"date":"2024-10-09","open":35.684,"close":32.994,"high":35.704,"low":32.994,"volume":1855932},{"i":170,"date":"2024-10-10","open":33.384,"close":34.714,"high":35.484,"low":33.384,"volume":1433298},{"i":171,"date":"2024-10-11","open":34.714,"close":34.414,"high":35.204,"low":34.014,"volume":903476},{"i":172,"date":"2024-10-14","open":34.994,"close":35.314,"high":35.784,"low":34.674,"volume":1292938},{"i":173,"date":"2024-10-15","open":35.154,"close":34.484,"high":35.974,"low":34.484,"volume":955977},{"i":174,"date":"2024-10-16","open":34.134,"close":35.484,"high":35.484,"low":34.114,"volume":1012548},{"i":175,"date":"2024-10-17","open":35.514,"close":34.474,"high":35.774,"low":34.474,"volume":848922},{"i":176,"date":"2024-10-18","open":34.494,"close":35.034,"high":35.414,"low":34.194,"volume":928194},{"i":177,"date":"2024-10-21","open":35.134,"close":34.834,"high":35.134,"low":34.484,"volume":717539},{"i":178,"date":"2024-10-22","open":34.824,"close":35.154,"high":35.584,"low":34.734,"volume":600526},{"i":179,"date":"2024-10-23","open":35.044,"close":35.644,"high":35.924,"low":35.004,"volume":627100},{"i":180,"date":"2024-10-24","open":35.534,"close":35.294,"high":35.664,"low":35.124,"volume":336312},{"i":181,"date":"2024-10-25","open":35.234,"close":35.084,"high":35.474,"low":35.044,"volume":447931},{"i":182,"date":"2024-10-28","open":34.994,"close":34.504,"high":35.084,"low":34.264,"volume":664641},{"i":183,"date":"2024-10-29","open":34.584,"close":34.584,"high":35.084,"low":34.394,"volume":514682},{"i":184,"date":"2024-10-30","open":34.494,"close":33.864,"high":34.884,"low":33.594,"volume":703408},{"i":185,"date":"2024-10-31","open":33.784,"close":33.344,"high":33.974,"low":32.894,"volume":850393},{"i":186,"date":"2024-11-01","open":33.424,"close":33.994,"high":34.284,"low":33.364,"volume":703102},{"i":187,"date":"2024-11-04","open":34.084,"close":34.734,"high":34.734,"low":33.394,"volume":646612},{"i":188,"date":"2024-11-05","open":34.414,"close":35.064,"high":35.084,"low":34.384,"volume":628745},{"i":189,"date":"2024-11-06","open":34.984,"close":34.544,"high":35.064,"low":34.134,"volume":648336},{"i":190,"date":"2024-11-07","open":34.404,"close":35.554,"high":35.564,"low":34.364,"volume":743472},{"i":191,"date":"2024-11-08","open":35.664,"close":34.784,"high":35.834,"low":34.734,"volume":745368},{"i":192,"date":"2024-11-11","open":34.284,"close":34.314,"high":34.684,"low":33.874,"volume":703146},{"i":193,"date":"2024-11-12","open":34.174,"close":33.574,"high":34.824,"low":33.494,"volume":893289},{"i":194,"date":"2024-11-13","open":33.574,"close":33.804,"high":33.964,"low":33.494,"volume":485304},{"i":195,"date":"2024-11-14","open":33.644,"close":34.044,"high":34.464,"low":33.514,"volume":676440},{"i":196,"date":"2024-11-15","open":34.064,"close":33.804,"high":34.554,"low":33.794,"volume":699277},{"i":197,"date":"2024-11-18","open":34.034,"close":33.884,"high":34.644,"low":33.784,"volume":763448},{"i":198,"date":"2024-11-19","open":33.894,"close":33.704,"high":34.164,"low":33.434,"volume":521249},{"i":199,"date":"2024-11-20","open":33.784,"close":33.464,"high":33.834,"low":33.384,"volume":451291},{"i":200,"date":"2024-11-21","open":33.464,"close":33.414,"high":33.644,"low":33.254,"volume":350336},{"i":201,"date":"2024-11-22","open":33.414,"close":32.434,"high":33.534,"low":32.344,"volume":690491},{"i":202,"date":"2024-11-25","open":32.684,"close":32.204,"high":32.844,"low":32.104,"volume":534095},{"i":203,"date":"2024-11-26","open":32.014,"close":32.374,"high":32.564,"low":31.824,"volume":459421},{"i":204,"date":"2024-11-27","open":32.374,"close":32.584,"high":32.664,"low":32.094,"volume":392077},{"i":205,"date":"2024-11-28","open":32.584,"close":32.454,"high":32.834,"low":32.164,"volume":451939},{"i":206,"date":"2024-11-29","open":32.574,"close":32.324,"high":32.984,"low":32.294,"volume":664380},{"i":207,"date":"2024-12-02","open":32.434,"close":32.494,"high":32.664,"low":32.184,"volume":424652},{"i":208,"date":"2024-12-03","open":32.634,"close":33.104,"high":33.204,"low":32.364,"volume":721986},{"i":209,"date":"2024-12-04","open":33.074,"close":32.794,"high":33.074,"low":32.514,"volume":620511},{"i":210,"date":"2024-12-05","open":32.644,"close":32.894,"high":33.344,"low":32.594,"volume":568949},{"i":211,"date":"2024-12-06","open":32.994,"close":33.684,"high":33.804,"low":32.994,"volume":877236},{"i":212,"date":"2024-12-09","open":33.574,"close":33.684,"high":33.974,"low":33.334,"volume":492995},{"i":213,"date":"2024-12-10","open":34.784,"close":34.584,"high":34.974,"low":34.384,"volume":1038953},{"i":214,"date":"2024-12-11","open":34.524,"close":34.284,"high":34.774,"low":34.214,"volume":517709},{"i":215,"date":"2024-12-12","open":34.274,"close":34.784,"high":34.814,"low":34.194,"volume":586889},{"i":216,"date":"2024-12-13","open":34.434,"close":33.284,"high":34.584,"low":33.264,"volume":1117983},{"i":217,"date":"2024-12-16","open":33.334,"close":33.724,"high":33.764,"low":33.304,"volume":640316},{"i":218,"date":"2024-12-17","open":33.524,"close":33.834,"high":34.144,"low":33.524,"volume":603104},{"i":219,"date":"2024-12-18","open":34.004,"close":34.504,"high":34.644,"low":33.844,"volume":805855},{"i":220,"date":"2024-12-19","open":34.364,"close":34.004,"high":34.514,"low":33.984,"volume":611196},{"i":221,"date":"2024-12-20","open":34.034,"close":33.894,"high":34.264,"low":33.844,"volume":542150},{"i":222,"date":"2024-12-23","open":33.974,"close":34.334,"high":34.684,"low":33.964,"volume":902692},{"i":223,"date":"2024-12-24","open":34.334,"close":35.204,"high":35.274,"low":34.304,"volume":993428},{"i":224,"date":"2024-12-25","open":35.214,"close":35.384,"high":35.544,"low":34.974,"volume":755913},{"i":225,"date":"2024-12-26","open":35.384,"close":35.464,"high":35.524,"low":34.994,"volume":539252},{"i":226,"date":"2024-12-27","open":35.464,"close":35.324,"high":35.624,"low":34.764,"volume":700320},{"i":227,"date":"2024-12-30","open":35.324,"close":35.604,"high":35.784,"low":35.234,"volume":678845},{"i":228,"date":"2024-12-31","open":35.544,"close":35.284,"high":35.884,"low":35.284,"volume":643717},{"i":229,"date":"2025-01-02","open":35.334,"close":34.494,"high":35.484,"low":34.324,"volume":642001},{"i":230,"date":"2025-01-03","open":34.584,"close":34.644,"high":35.024,"low":34.524,"volume":682583},{"i":231,"date":"2025-01-06","open":34.884,"close":35.034,"high":35.084,"low":34.114,"volume":617159},{"i":232,"date":"2025-01-07","open":34.954,"close":34.884,"high":35.134,"low":34.594,"volume":492752},{"i":233,"date":"2025-01-08","open":34.814,"close":35.264,"high":35.534,"low":34.804,"volume":751481},{"i":234,"date":"2025-01-09","open":35.384,"close":34.984,"high":35.414,"low":34.814,"volume":447083},{"i":235,"date":"2025-01-10","open":35.324,"close":34.964,"high":35.434,"low":34.794,"volume":481425},{"i":236,"date":"2025-01-13","open":34.914,"close":35.054,"high":35.134,"low":34.524,"volume":606323},{"i":237,"date":"2025-01-14","open":35.074,"close":35.834,"high":35.954,"low":34.884,"volume":708012},{"i":238,"date":"2025-01-15","open":35.974,"close":36.624,"high":36.984,"low":35.874,"volume":796701},{"i":239,"date":"2025-01-16","open":36.634,"close":36.974,"high":37.134,"low":36.514,"volume":592594},{"i":240,"date":"2025-01-17","open":36.944,"close":36.694,"high":37.144,"low":36.114,"volume":475901},{"i":241,"date":"2025-01-20","open":36.964,"close":36.104,"high":37.054,"low":36.094,"volume":542575},{"i":242,"date":"2025-01-21","open":36.304,"close":36.124,"high":36.494,"low":35.994,"volume":400685},{"i":243,"date":"2025-01-22","open":36.124,"close":35.434,"high":36.144,"low":35.304,"volume":588912},{"i":244,"date":"2025-01-23","open":35.654,"close":35.814,"high":36.214,"low":35.504,"volume":606618},{"i":245,"date":"2025-01-24","open":35.644,"close":36.244,"high":36.534,"low":35.444,"volume":574652},{"i":246,"date":"2025-01-27","open":36.564,"close":36.634,"high":36.954,"low":36.534,"volume":526060},{"i":247,"date":"2025-02-05","open":36.834,"close":35.984,"high":36.884,"low":35.884,"volume":504789},{"i":248,"date":"2025-02-06","open":35.984,"close":36.184,"high":36.364,"low":35.714,"volume":466088},{"i":249,"date":"2025-02-07","open":36.084,"close":36.184,"high":36.384,"low":35.944,"volume":521066},{"i":250,"date":"2025-02-10","open":36.184,"close":36.584,"high":36.904,"low":35.944,"volume":581806},{"i":251,"date":"2025-02-11","open":36.734,"close":36.964,"high":37.024,"low":36.624,"volume":457771},{"i":252,"date":"2025-02-12","open":36.944,"close":37.604,"high":37.644,"low":36.544,"volume":603591},{"i":253,"date":"2025-02-13","open":37.634,"close":37.694,"high":37.934,"low":37.324,"volume":462207},{"i":254,"date":"2025-02-14","open":37.674,"close":38.014,"high":38.014,"low":37.504,"volume":498737},{"i":255,"date":"2025-02-17","open":37.974,"close":37.704,"high":37.974,"low":37.344,"volume":536126},{"i":256,"date":"2025-02-18","open":37.494,"close":38.034,"high":38.464,"low":37.494,"volume":546665},{"i":257,"date":"2025-02-19","open":37.984,"close":37.964,"high":38.134,"low":37.744,"volume":374702},{"i":258,"date":"2025-02-20","open":37.984,"close":37.834,"high":38.074,"low":37.664,"volume":407675},{"i":259,"date":"2025-02-21","open":37.944,"close":37.384,"high":37.974,"low":37.204,"volume":595256},{"i":260,"date":"2025-02-24","open":37.374,"close":37.254,"high":37.734,"low":37.084,"volume":571107},{"i":261,"date":"2025-02-25","open":37.134,"close":37.014,"high":37.424,"low":36.894,"volume":507321},{"i":262,"date":"2025-02-26","open":37.114,"close":37.464,"high":37.684,"low":37.034,"volume":476447},{"i":263,"date":"2025-02-27","open":37.584,"close":38.364,"high":38.384,"low":37.264,"volume":622597},{"i":264,"date":"2025-02-28","open":38.364,"close":38.034,"high":38.644,"low":38.034,"volume":705424},{"i":265,"date":"2025-03-03","open":38.104,"close":38.034,"high":38.604,"low":37.934,"volume":470149},{"i":266,"date":"2025-03-04","open":37.894,"close":37.784,"high":38.084,"low":37.754,"volume":317245},{"i":267,"date":"2025-03-05","open":37.944,"close":38.874,"high":38.894,"low":37.734,"volume":632037},{"i":268,"date":"2025-03-06","open":38.874,"close":38.944,"high":39.084,"low":38.434,"volume":572053},{"i":269,"date":"2025-03-07","open":38.884,"close":39.554,"high":39.784,"low":38.834,"volume":605413},{"i":270,"date":"2025-03-10","open":39.474,"close":39.054,"high":39.564,"low":38.804,"volume":508750},{"i":271,"date":"2025-03-11","open":38.754,"close":39.494,"high":39.624,"low":38.694,"volume":565741},{"i":272,"date":"2025-03-12","open":39.484,"close":39.524,"high":39.844,"low":39.234,"volume":418258},{"i":273,"date":"2025-03-13","open":39.584,"close":39.824,"high":40.364,"low":39.484,"volume":585539},{"i":274,"date":"2025-03-14","open":39.984,"close":41.144,"high":41.454,"low":39.924,"volume":911275},{"i":275,"date":"2025-03-17","open":41.304,"close":41.024,"high":41.484,"low":40.964,"volume":654210},{"i":276,"date":"2025-03-18","open":41.274,"close":41.124,"high":41.364,"low":40.804,"volume":428220},{"i":277,"date":"2025-03-19","open":41.264,"close":42.004,"high":42.084,"low":41.084,"volume":670706},{"i":278,"date":"2025-03-20","open":41.904,"close":41.224,"high":41.904,"low":40.764,"volume":678656},{"i":279,"date":"2025-03-21","open":41.104,"close":40.684,"high":41.324,"low":40.504,"volume":675412},{"i":280,"date":"2025-03-24","open":40.534,"close":41.034,"high":41.174,"low":40.534,"volume":449576},{"i":281,"date":"2025-03-25","open":40.984,"close":41.074,"high":41.484,"low":40.934,"volume":356872},{"i":282,"date":"2025-03-26","open":40.484,"close":38.644,"high":40.574,"low":38.594,"volume":1578326},{"i":283,"date":"2025-03-27","open":38.734,"close":39.244,"high":39.724,"low":38.724,"volume":827951},{"i":284,"date":"2025-03-28","open":39.284,"close":39.204,"high":39.434,"low":39.044,"volume":386184},{"i":285,"date":"2025-03-31","open":39.194,"close":39.274,"high":39.764,"low":38.594,"volume":539569},{"i":286,"date":"2025-04-01","open":39.264,"close":38.854,"high":39.274,"low":38.734,"volume":389360},{"i":287,"date":"2025-04-02","open":38.854,"close":38.714,"high":39.134,"low":38.664,"volume":331202},{"i":288,"date":"2025-04-03","open":38.004,"close":38.634,"high":38.834,"low":38.004,"volume":464166},{"i":289,"date":"2025-04-07","open":36.924,"close":36.814,"high":37.984,"low":35.374,"volume":1815633},{"i":290,"date":"2025-04-08","open":36.764,"close":37.134,"high":37.184,"low":36.424,"volume":1610477},{"i":291,"date":"2025-04-09","open":36.584,"close":36.444,"high":37.004,"low":36.284,"volume":973969},{"i":292,"date":"2025-04-10","open":36.974,"close":37.084,"high":37.434,"low":36.534,"volume":743789},{"i":293,"date":"2025-04-11","open":37.094,"close":37.494,"high":37.674,"low":36.794,"volume":583057},{"i":294,"date":"2025-04-14","open":37.664,"close":37.464,"high":37.894,"low":37.394,"volume":482160},{"i":295,"date":"2025-04-15","open":37.474,"close":38.084,"high":38.274,"low":37.434,"volume":614564},{"i":296,"date":"2025-04-16","open":37.964,"close":38.234,"high":38.564,"low":37.804,"volume":576294},{"i":297,"date":"2025-04-17","open":38.104,"close":38.104,"high":38.344,"low":37.834,"volume":405793},{"i":298,"date":"2025-04-18","open":38.114,"close":38.734,"high":38.774,"low":38.034,"volume":435001},{"i":299,"date":"2025-04-21","open":38.644,"close":38.264,"high":39.064,"low":38.264,"volume":416466},{"i":300,"date":"2025-04-22","open":38.294,"close":37.994,"high":38.524,"low":37.994,"volume":433788},{"i":301,"date":"2025-04-23","open":38.284,"close":37.974,"high":38.284,"low":37.754,"volume":467744},{"i":302,"date":"2025-04-24","open":37.984,"close":38.194,"high":38.364,"low":37.934,"volume":413652},{"i":303,"date":"2025-04-25","open":38.274,"close":38.064,"high":38.534,"low":38.024,"volume":424350},{"i":304,"date":"2025-04-28","open":38.134,"close":38.334,"high":38.544,"low":38.014,"volume":386973},{"i":305,"date":"2025-04-29","open":38.334,"close":37.984,"high":38.634,"low":37.984,"volume":457699},{"i":306,"date":"2025-04-30","open":37.624,"close":36.724,"high":37.624,"low":36.494,"volume":1172682},{"i":307,"date":"2025-05-06","open":36.884,"close":37.354,"high":37.394,"low":36.494,"volume":666410},{"i":308,"date":"2025-05-07","open":37.774,"close":38.004,"high":38.214,"low":37.294,"volume":712914},{"i":309,"date":"2025-05-08","open":37.994,"close":38.784,"high":39.404,"low":37.984,"volume":833810},{"i":310,"date":"2025-05-09","open":38.784,"close":39.464,"high":39.584,"low":38.784,"volume":668155},{"i":311,"date":"2025-05-12","open":39.434,"close":39.784,"high":40.384,"low":39.094,"volume":848974},{"i":312,"date":"2025-05-13","open":40.074,"close":40.544,"high":40.634,"low":39.834,"volume":699124},{"i":313,"date":"2025-05-14","open":40.534,"close":40.794,"high":41.284,"low":40.304,"volume":712790},{"i":314,"date":"2025-05-15","open":40.814,"close":40.904,"high":41.364,"low":40.634,"volume":684600},{"i":315,"date":"2025-05-16","open":40.734,"close":40.254,"high":40.964,"low":40.014,"volume":619655},{"i":316,"date":"2025-05-19","open":40.184,"close":39.824,"high":40.444,"low":39.734,"volume":502817},{"i":317,"date":"2025-05-20","open":40.014,"close":39.884,"high":40.594,"low":39.854,"volume":500535},{"i":318,"date":"2025-05-21","open":39.934,"close":39.884,"high":40.354,"low":39.824,"volume":499200},{"i":319,"date":"2025-05-22","open":39.884,"close":40.494,"high":40.544,"low":39.734,"volume":565656},{"i":320,"date":"2025-05-23","open":40.494,"close":40.034,"high":40.664,"low":39.884,"volume":541460},{"i":321,"date":"2025-05-26","open":39.874,"close":39.784,"high":40.154,"low":39.614,"volume":456100},{"i":322,"date":"2025-05-27","open":39.784,"close":39.724,"high":40.134,"low":39.654,"volume":363750},{"i":323,"date":"2025-05-28","open":39.764,"close":39.664,"high":40.034,"low":39.584,"volume":300355},{"i":324,"date":"2025-05-29","open":39.684,"close":39.454,"high":39.934,"low":39.434,"volume":492990},{"i":325,"date":"2025-05-30","open":39.534,"close":39.414,"high":39.864,"low":39.334,"volume":571391},{"i":326,"date":"2025-06-03","open":39.484,"close":39.954,"high":40.414,"low":39.484,"volume":503685},{"i":327,"date":"2025-06-04","open":40.034,"close":40.044,"high":40.254,"low":39.884,"volume":373417},{"i":328,"date":"2025-06-05","open":40.044,"close":40.354,"high":40.404,"low":39.984,"volume":421317},{"i":329,"date":"2025-06-06","open":40.434,"close":40.454,"high":40.694,"low":40.284,"volume":373499},{"i":330,"date":"2025-06-09","open":40.584,"close":40.584,"high":40.664,"low":40.194,"volume":474774},{"i":331,"date":"2025-06-10","open":40.554,"close":40.654,"high":41.034,"low":40.434,"volume":528349},{"i":332,"date":"2025-06-11","open":40.704,"close":41.294,"high":41.664,"low":40.704,"volume":776761},{"i":333,"date":"2025-06-12","open":41.384,"close":41.214,"high":41.634,"low":41.084,"volume":452391},{"i":334,"date":"2025-06-13","open":41.224,"close":41.164,"high":41.334,"low":40.934,"volume":474081},{"i":335,"date":"2025-06-16","open":41.064,"close":41.764,"high":41.794,"low":40.934,"volume":414474},{"i":336,"date":"2025-06-17","open":41.864,"close":41.964,"high":42.034,"low":41.694,"volume":474209},{"i":337,"date":"2025-06-18","open":41.904,"close":41.834,"high":42.054,"low":41.634,"volume":426429},{"i":338,"date":"2025-06-19","open":41.824,"close":41.614,"high":42.044,"low":41.354,"volume":513454},{"i":339,"date":"2025-06-20","open":41.714,"close":41.974,"high":42.164,"low":41.534,"volume":448157},{"i":340,"date":"2025-06-23","open":41.884,"close":42.234,"high":42.324,"low":41.414,"volume":538931},{"i":341,"date":"2025-06-24","open":42.294,"close":42.734,"high":42.984,"low":42.164,"volume":655815},{"i":342,"date":"2025-06-25","open":42.734,"close":43.484,"high":43.484,"low":42.574,"volume":607680},{"i":343,"date":"2025-06-26","open":43.474,"close":43.864,"high":43.864,"low":43.034,"volume":590201},{"i":344,"date":"2025-06-27","open":43.834,"close":42.204,"high":43.854,"low":42.024,"volume":954143},{"i":345,"date":"2025-06-30","open":42.114,"close":41.934,"high":42.274,"low":41.754,"volume":624614},{"i":346,"date":"2025-07-01","open":41.944,"close":42.434,"high":42.654,"low":41.904,"volume":450613},{"i":347,"date":"2025-07-02","open":42.684,"close":42.884,"high":43.144,"low":42.434,"volume":518563},{"i":348,"date":"2025-07-03","open":42.884,"close":42.594,"high":42.934,"low":42.324,"volume":556226},{"i":349,"date":"2025-07-04","open":42.584,"close":43.054,"high":43.484,"low":42.384,"volume":678948},{"i":350,"date":"2025-07-07","open":43.054,"close":43.184,"high":43.284,"low":42.684,"volume":567427},{"i":351,"date":"2025-07-08","open":43.264,"close":43.604,"high":43.654,"low":43.084,"volume":637421},{"i":352,"date":"2025-07-09","open":43.484,"close":43.114,"high":43.754,"low":43.114,"volume":614566},{"i":353,"date":"2025-07-10","open":43.084,"close":44.224,"high":44.534,"low":43.084,"volume":1219784},{"i":354,"date":"2025-07-11","open":44.264,"close":43.624,"high":44.484,"low":43.604,"volume":1184443},{"i":355,"date":"2025-07-14","open":43.634,"close":43.554,"high":44.074,"low":43.424,"volume":648484},{"i":356,"date":"2025-07-15","open":43.754,"close":43.204,"high":43.904,"low":42.784,"volume":666206},{"i":357,"date":"2025-07-16","open":43.244,"close":43.094,"high":43.524,"low":42.864,"volume":468186},{"i":358,"date":"2025-07-17","open":43.084,"close":42.984,"high":43.314,"low":42.894,"volume":416895},{"i":359,"date":"2025-07-18","open":43.034,"close":43.034,"high":43.144,"low":42.724,"volume":543431},{"i":360,"date":"2025-07-21","open":43.034,"close":42.834,"high":43.214,"low":42.814,"volume":566412},{"i":361,"date":"2025-07-22","open":42.834,"close":42.924,"high":42.964,"low":42.194,"volume":922319},{"i":362,"date":"2025-07-23","open":42.954,"close":43.104,"high":43.684,"low":42.944,"volume":853249},{"i":363,"date":"2025-07-24","open":43.194,"close":42.864,"high":43.344,"low":42.784,"volume":826620},{"i":364,"date":"2025-07-25","open":42.824,"close":42.814,"high":43.154,"low":42.734,"volume":696264},{"i":365,"date":"2025-07-28","open":42.784,"close":42.424,"high":43.144,"low":42.394,"volume":635127},{"i":366,"date":"2025-07-29","open":42.424,"close":42.124,"high":42.784,"low":42.124,"volume":785813},{"i":367,"date":"2025-07-30","open":42.154,"close":42.404,"high":42.734,"low":41.914,"volume":725461},{"i":368,"date":"2025-07-31","open":42.384,"close":42.464,"high":42.544,"low":41.834,"volume":733195},{"i":369,"date":"2025-08-01","open":42.484,"close":42.404,"high":42.954,"low":42.334,"volume":594621},{"i":370,"date":"2025-08-04","open":42.294,"close":42.884,"high":42.954,"low":42.294,"volume":498008},{"i":371,"date":"2025-08-05","open":42.764,"close":43.234,"high":43.384,"low":42.624,"volume":555258},{"i":372,"date":"2025-08-06","open":43.274,"close":43.104,"high":43.714,"low":43.094,"volume":430296},{"i":373,"date":"2025-08-07","open":43.104,"close":43.134,"high":43.584,"low":42.944,"volume":440643},{"i":374,"date":"2025-08-08","open":43.184,"close":42.514,"high":43.264,"low":42.514,"volume":456422},{"i":375,"date":"2025-08-11","open":42.514,"close":42.084,"high":42.614,"low":42.084,"volume":536724},{"i":376,"date":"2025-08-12","open":42.114,"close":41.984,"high":42.464,"low":41.984,"volume":562252},{"i":377,"date":"2025-08-13","open":42.124,"close":41.524,"high":42.234,"low":41.474,"volume":876737},{"i":378,"date":"2025-08-14","open":41.534,"close":41.764,"high":41.924,"low":41.484,"volume":676352},{"i":379,"date":"2025-08-15","open":41.644,"close":41.284,"high":41.724,"low":41.284,"volume":932957},{"i":380,"date":"2025-08-18","open":41.084,"close":41.494,"high":41.654,"low":40.874,"volume":926397},{"i":381,"date":"2025-08-19","open":41.434,"close":41.384,"high":41.684,"low":41.274,"volume":574119},{"i":382,"date":"2025-08-20","open":41.284,"close":41.434,"high":41.614,"low":41.134,"volume":547240},{"i":383,"date":"2025-08-21","open":41.484,"close":41.454,"high":41.574,"low":41.214,"volume":578540},{"i":384,"date":"2025-08-22","open":41.454,"close":41.244,"high":41.464,"low":41.024,"volume":794496},{"i":385,"date":"2025-08-25","open":41.304,"close":41.854,"high":41.854,"low":41.094,"volume":907390},{"i":386,"date":"2025-08-26","open":41.874,"close":41.504,"high":42.004,"low":41.404,"volume":755722},{"i":387,"date":"2025-08-27","open":41.484,"close":40.984,"high":41.644,"low":40.984,"volume":758141},{"i":388,"date":"2025-08-28","open":41.004,"close":40.964,"high":41.284,"low":40.584,"volume":822426},{"i":389,"date":"2025-08-29","open":40.964,"close":40.874,"high":41.974,"low":40.874,"volume":1360879},{"i":390,"date":"2025-09-01","open":40.604,"close":39.964,"high":40.624,"low":39.864,"volume":1276333},{"i":391,"date":"2025-09-02","open":39.844,"close":41.424,"high":41.484,"low":39.844,"volume":1452141},{"i":392,"date":"2025-09-03","open":41.424,"close":40.884,"high":41.554,"low":40.684,"volume":818406},{"i":393,"date":"2025-09-04","open":40.794,"close":41.034,"high":41.304,"low":40.124,"volume":935363},{"i":394,"date":"2025-09-05","open":40.984,"close":40.744,"high":41.004,"low":40.514,"volume":572328},{"i":395,"date":"2025-09-08","open":40.684,"close":40.414,"high":41.084,"low":40.354,"volume":851682},{"i":396,"date":"2025-09-09","open":40.404,"close":40.814,"high":40.864,"low":40.384,"volume":589527},{"i":397,"date":"2025-09-10","open":40.784,"close":40.984,"high":41.134,"low":40.544,"volume":471387},{"i":398,"date":"2025-09-11","open":41.114,"close":41.284,"high":41.314,"low":40.764,"volume":650731},{"i":399,"date":"2025-09-12","open":41.364,"close":40.524,"high":41.454,"low":40.404,"volume":823140},{"i":400,"date":"2025-09-15","open":40.464,"close":40.204,"high":40.774,"low":40.094,"volume":699491},{"i":401,"date":"2025-09-16","open":40.304,"close":39.734,"high":40.414,"low":39.644,"volume":859051},{"i":402,"date":"2025-09-17","open":39.744,"close":39.744,"high":40.174,"low":39.684,"volume":572363},{"i":403,"date":"2025-09-18","open":39.764,"close":38.814,"high":39.824,"low":38.784,"volume":1003522},{"i":404,"date":"2025-09-19","open":38.784,"close":38.984,"high":39.514,"low":38.534,"volume":836563},{"i":405,"date":"2025-09-22","open":39.134,"close":38.904,"high":39.354,"low":38.784,"volume":656110},{"i":406,"date":"2025-09-23","open":38.964,"close":39.534,"high":39.734,"low":38.614,"volume":938851},{"i":407,"date":"2025-09-24","open":39.484,"close":39.304,"high":39.874,"low":39.274,"volume":643900},{"i":408,"date":"2025-09-25","open":39.304,"close":38.804,"high":39.344,"low":38.794,"volume":666949},{"i":409,"date":"2025-09-26","open":38.794,"close":38.784,"high":38.984,"low":38.284,"volume":682767},{"i":410,"date":"2025-09-29","open":38.754,"close":38.664,"high":39.274,"low":38.344,"volume":835551},{"i":411,"date":"2025-09-30","open":38.634,"close":38.394,"high":38.774,"low":38.394,"volume":700025},{"i":412,"date":"2025-10-09","open":38.194,"close":38.314,"high":38.424,"low":37.804,"volume":972320},{"i":413,"date":"2025-10-10","open":38.284,"close":38.164,"high":38.634,"low":38.114,"volume":955050},{"i":414,"date":"2025-10-13","open":37.744,"close":38.094,"high":38.284,"low":37.684,"volume":1065936},{"i":415,"date":"2025-10-14","open":38.074,"close":39.244,"high":39.474,"low":37.814,"volume":1733827},{"i":416,"date":"2025-10-15","open":39.234,"close":39.484,"high":39.554,"low":38.994,"volume":1062767},{"i":417,"date":"2025-10-16","open":39.484,"close":39.914,"high":39.974,"low":39.114,"volume":1062488},{"i":418,"date":"2025-10-17","open":39.864,"close":39.574,"high":40.204,"low":39.364,"volume":829827},{"i":419,"date":"2025-10-20","open":39.594,"close":39.404,"high":39.774,"low":39.084,"volume":649477},{"i":420,"date":"2025-10-21","open":39.474,"close":39.964,"high":40.084,"low":39.474,"volume":759931},{"i":421,"date":"2025-10-22","open":39.964,"close":39.934,"high":40.184,"low":39.714,"volume":551334},{"i":422,"date":"2025-10-23","open":39.934,"close":40.224,"high":40.474,"low":39.764,"volume":713174},{"i":423,"date":"2025-10-24","open":40.334,"close":39.934,"high":40.434,"low":39.834,"volume":698832},{"i":424,"date":"2025-10-27","open":39.884,"close":39.574,"high":39.954,"low":39.404,"volume":988949},{"i":425,"date":"2025-10-28","open":39.604,"close":39.584,"high":39.704,"low":39.214,"volume":705951},{"i":426,"date":"2025-10-29","open":39.514,"close":38.754,"high":39.514,"low":38.674,"volume":910988},{"i":427,"date":"2025-10-30","open":38.784,"close":39.184,"high":39.344,"low":38.714,"volume":1131538},{"i":428,"date":"2025-10-31","open":39.244,"close":38.874,"high":39.284,"low":38.824,"volume":702607},{"i":429,"date":"2025-11-03","open":39.124,"close":39.774,"high":39.954,"low":39.044,"volume":921981},{"i":430,"date":"2025-11-04","open":39.824,"close":40.994,"high":41.094,"low":39.794,"volume":1340036},{"i":431,"date":"2025-11-05","open":41.084,"close":40.784,"high":41.454,"low":40.734,"volume":731714},{"i":432,"date":"2025-11-06","open":40.634,"close":40.324,"high":40.874,"low":40.294,"volume":871973},{"i":433,"date":"2025-11-07","open":40.384,"close":40.494,"high":40.704,"low":40.264,"volume":593191},{"i":434,"date":"2025-11-10","open":40.434,"close":40.704,"high":40.864,"low":40.264,"volume":532369},{"i":435,"date":"2025-11-11","open":40.674,"close":40.944,"high":41.024,"low":40.504,"volume":544671},{"i":436,"date":"2025-11-12","open":41.104,"close":40.914,"high":41.344,"low":40.914,"volume":587929},{"i":437,"date":"2025-11-13","open":40.954,"close":41.194,"high":41.284,"low":40.724,"volume":587980},{"i":438,"date":"2025-11-14","open":41.224,"close":41.234,"high":41.574,"low":41.164,"volume":518210},{"i":439,"date":"2025-11-17","open":41.084,"close":40.634,"high":41.184,"low":40.484,"volume":610674},{"i":440,"date":"2025-11-18","open":40.544,"close":40.864,"high":40.894,"low":40.424,"volume":517439},{"i":441,"date":"2025-11-19","open":40.864,"close":41.204,"high":41.484,"low":40.784,"volume":511696},{"i":442,"date":"2025-11-20","open":41.204,"close":41.214,"high":41.774,"low":41.034,"volume":585852},{"i":443,"date":"2025-11-21","open":41.224,"close":40.984,"high":41.534,"low":40.744,"volume":791264},{"i":444,"date":"2025-11-24","open":41.084,"close":40.614,"high":41.194,"low":40.494,"volume":678549},{"i":445,"date":"2025-11-25","open":40.644,"close":41.234,"high":41.284,"low":40.424,"volume":666409},{"i":446,"date":"2025-11-26","open":41.324,"close":41.234,"high":41.614,"low":40.954,"volume":451072},{"i":447,"date":"2025-11-27","open":41.164,"close":41.174,"high":41.374,"low":40.584,"volume":621434},{"i":448,"date":"2025-11-28","open":41.084,"close":40.934,"high":41.104,"low":40.804,"volume":494658},{"i":449,"date":"2025-12-01","open":41.064,"close":41.424,"high":41.454,"low":40.914,"volume":567919},{"i":450,"date":"2025-12-02","open":41.424,"close":41.364,"high":41.634,"low":41.204,"volume":406735},{"i":451,"date":"2025-12-03","open":41.254,"close":40.994,"high":41.564,"low":40.984,"volume":468960},{"i":452,"date":"2025-12-04","open":41.034,"close":41.204,"high":41.404,"low":40.994,"volume":361207},{"i":453,"date":"2025-12-05","open":41.234,"close":41.434,"high":41.534,"low":40.894,"volume":548906},{"i":454,"date":"2025-12-08","open":41.424,"close":41.164,"high":41.624,"low":41.054,"volume":580039},{"i":455,"date":"2025-12-09","open":41.164,"close":41.024,"high":41.284,"low":40.814,"volume":465939},{"i":456,"date":"2025-12-10","open":41.064,"close":39.684,"high":41.064,"low":39.534,"volume":1083157},{"i":457,"date":"2025-12-11","open":39.844,"close":39.664,"high":40.034,"low":39.394,"volume":846231},{"i":458,"date":"2025-12-12","open":39.734,"close":39.724,"high":39.814,"low":39.464,"volume":717625},{"i":459,"date":"2025-12-15","open":39.724,"close":39.784,"high":40.264,"low":39.614,"volume":562666},{"i":460,"date":"2025-12-16","open":39.764,"close":39.684,"high":40.114,"low":39.414,"volume":566176},{"i":461,"date":"2025-12-17","open":39.584,"close":39.504,"high":39.834,"low":39.214,"volume":631267},{"i":462,"date":"2025-12-18","open":39.524,"close":40.354,"high":40.404,"low":39.384,"volume":768119},{"i":463,"date":"2025-12-19","open":40.354,"close":39.974,"high":40.464,"low":39.894,"volume":573823},{"i":464,"date":"2025-12-22","open":40.064,"close":39.754,"high":40.114,"low":39.694,"volume":524740},{"i":465,"date":"2025-12-23","open":39.724,"close":39.894,"high":40.024,"low":39.644,"volume":606510},{"i":466,"date":"2025-12-24","open":39.914,"close":39.814,"high":39.974,"low":39.534,"volume":536305},{"i":467,"date":"2025-12-25","open":39.914,"close":39.764,"high":40.064,"low":39.684,"volume":499214},{"i":468,"date":"2025-12-26","open":39.774,"close":39.684,"high":39.864,"low":39.604,"volume":508810},{"i":469,"date":"2025-12-29","open":39.644,"close":39.854,"high":39.914,"low":39.404,"volume":682551},{"i":470,"date":"2025-12-30","open":39.884,"close":40.264,"high":40.464,"low":39.764,"volume":834783},{"i":471,"date":"2025-12-31","open":40.224,"close":40.084,"high":40.314,"low":39.904,"volume":554142},{"i":472,"date":"2026-01-05","open":40.464,"close":40.334,"high":40.784,"low":40.254,"volume":840830},{"i":473,"date":"2026-01-06","open":40.434,"close":40.714,"high":40.774,"low":40.074,"volume":923715},{"i":474,"date":"2026-01-07","open":40.734,"close":40.134,"high":41.004,"low":40.124,"volume":880560},{"i":475,"date":"2026-01-08","open":40.184,"close":39.564,"high":40.234,"low":39.284,"volume":1115727},{"i":476,"date":"2026-01-09","open":39.524,"close":39.284,"high":39.744,"low":39.104,"volume":985471},{"i":477,"date":"2026-01-12","open":39.284,"close":39.104,"high":39.414,"low":38.984,"volume":1186641},{"i":478,"date":"2026-01-13","open":39.184,"close":39.114,"high":39.364,"low":39.014,"volume":1159365},{"i":479,"date":"2026-01-14","open":39.114,"close":38.054,"high":39.154,"low":38.044,"volume":1917744},{"i":480,"date":"2026-01-15","open":38.094,"close":38.094,"high":38.404,"low":37.984,"volume":1217271},{"i":481,"date":"2026-01-16","open":38.487,"close":37.717,"high":38.497,"low":37.647,"volume":1525245},{"i":482,"date":"2026-01-19","open":37.727,"close":37.547,"high":37.917,"low":37.497,"volume":988703},{"i":483,"date":"2026-01-20","open":37.567,"close":37.727,"high":38.127,"low":37.507,"volume":1113873},{"i":484,"date":"2026-01-21","open":37.917,"close":37.237,"high":37.937,"low":37.177,"volume":1215000},{"i":485,"date":"2026-01-22","open":37.267,"close":36.847,"high":37.577,"low":36.797,"volume":1877546},{"i":486,"date":"2026-01-23","open":36.847,"close":36.497,"high":37.167,"low":36.377,"volume":1892113},{"i":487,"date":"2026-01-26","open":36.497,"close":37.017,"high":37.297,"low":36.307,"volume":2166794},{"i":488,"date":"2026-01-27","open":37.057,"close":37.097,"high":37.507,"low":36.867,"volume":1572406},{"i":489,"date":"2026-01-28","open":37.117,"close":36.797,"high":37.437,"low":36.697,"volume":2041667},{"i":490,"date":"2026-01-29","open":36.877,"close":37.527,"high":37.647,"low":36.547,"volume":1999982},{"i":491,"date":"2026-01-30","open":37.527,"close":37.667,"high":38.167,"low":37.527,"volume":1660843},{"i":492,"date":"2026-02-02","open":37.877,"close":37.447,"high":38.297,"low":37.407,"volume":1384979},{"i":493,"date":"2026-02-03","open":37.667,"close":37.297,"high":37.667,"low":37.137,"volume":842792},{"i":494,"date":"2026-02-04","open":37.297,"close":38.007,"high":38.017,"low":37.257,"volume":1021316},{"i":495,"date":"2026-02-05","open":37.937,"close":38.707,"high":38.917,"low":37.907,"volume":1218895},{"i":496,"date":"2026-02-06","open":38.697,"close":38.597,"high":38.947,"low":38.307,"volume":802980},{"i":497,"date":"2026-02-09","open":38.597,"close":38.477,"high":38.737,"low":38.327,"volume":658949},{"i":498,"date":"2026-02-10","open":38.487,"close":38.337,"high":38.557,"low":38.307,"volume":495965},{"i":499,"date":"2026-02-11","open":38.357,"close":38.397,"high":38.447,"low":38.197,"volume":528817},{"i":500,"date":"2026-02-12","open":38.397,"close":37.987,"high":38.417,"low":37.727,"volume":777526},{"i":501,"date":"2026-02-13","open":37.947,"close":37.707,"high":38.087,"low":37.627,"volume":705370},{"i":502,"date":"2026-02-24","open":38.197,"close":37.937,"high":38.407,"low":37.817,"volume":754674},{"i":503,"date":"2026-02-25","open":37.897,"close":37.777,"high":38.147,"low":37.717,"volume":723971},{"i":504,"date":"2026-02-26","open":37.797,"close":37.697,"high":38.017,"low":37.497,"volume":593325},{"i":505,"date":"2026-02-27","open":37.747,"close":37.747,"high":37.947,"low":37.637,"volume":637035},{"i":506,"date":"2026-03-02","open":37.597,"close":37.667,"high":37.867,"low":37.417,"volume":685473},{"i":507,"date":"2026-03-03","open":37.657,"close":38.177,"high":38.547,"low":37.557,"volume":1384656},{"i":508,"date":"2026-03-04","open":38.007,"close":37.597,"high":38.027,"low":37.007,"volume":1151939},{"i":509,"date":"2026-03-05","open":37.657,"close":38.147,"high":38.237,"low":37.627,"volume":783370},{"i":510,"date":"2026-03-06","open":38.097,"close":38.197,"high":38.317,"low":37.947,"volume":465957},{"i":511,"date":"2026-03-09","open":37.897,"close":37.787,"high":38.177,"low":37.747,"volume":766775},{"i":512,"date":"2026-03-10","open":37.937,"close":38.217,"high":38.237,"low":37.797,"volume":613717},{"i":513,"date":"2026-03-11","open":38.297,"close":38.497,"high":38.497,"low":37.947,"volume":689407},{"i":514,"date":"2026-03-12","open":38.447,"close":38.497,"high":38.577,"low":38.327,"volume":527723},{"i":515,"date":"2026-03-13","open":38.457,"close":38.757,"high":39.047,"low":38.347,"volume":765277},{"i":516,"date":"2026-03-16","open":38.767,"close":38.907,"high":39.037,"low":38.637,"volume":610945},{"i":517,"date":"2026-03-17","open":38.887,"close":39.117,"high":39.357,"low":38.827,"volume":656229},{"i":518,"date":"2026-03-18","open":39.127,"close":38.917,"high":39.317,"low":38.787,"volume":705831},{"i":519,"date":"2026-03-19","open":38.877,"close":38.767,"high":39.037,"low":38.697,"volume":650247},{"i":520,"date":"2026-03-20","open":38.847,"close":38.747,"high":39.077,"low":38.657,"volume":615803},{"i":521,"date":"2026-03-23","open":38.577,"close":37.677,"high":38.697,"low":37.547,"volume":957738},{"i":522,"date":"2026-03-24","open":37.797,"close":38.247,"high":38.317,"low":37.727,"volume":616336},{"i":523,"date":"2026-03-25","open":38.327,"close":38.257,"high":38.397,"low":37.937,"volume":653817},{"i":524,"date":"2026-03-26","open":38.147,"close":38.557,"high":38.687,"low":38.137,"volume":616790},{"i":525,"date":"2026-03-27","open":38.497,"close":38.437,"high":38.697,"low":38.247,"volume":468007},{"i":526,"date":"2026-03-30","open":38.237,"close":38.477,"high":38.567,"low":38.127,"volume":646054},{"i":527,"date":"2026-03-31","open":38.537,"close":38.317,"high":38.727,"low":38.277,"volume":663097},{"i":528,"date":"2026-04-01","open":38.557,"close":38.817,"high":39.037,"low":38.417,"volume":881526},{"i":529,"date":"2026-04-02","open":38.857,"close":38.757,"high":38.917,"low":38.577,"volume":534630},{"i":530,"date":"2026-04-03","open":38.757,"close":38.397,"high":38.817,"low":38.357,"volume":464485},{"i":531,"date":"2026-04-07","open":38.387,"close":37.987,"high":38.597,"low":37.957,"volume":528367},{"i":532,"date":"2026-04-08","open":38.497,"close":38.617,"high":38.637,"low":38.187,"volume":669498},{"i":533,"date":"2026-04-09","open":38.477,"close":38.257,"high":38.517,"low":38.117,"volume":535854},{"i":534,"date":"2026-04-10","open":38.317,"close":38.207,"high":38.377,"low":38.127,"volume":543202},{"i":535,"date":"2026-04-13","open":38.127,"close":37.977,"high":38.157,"low":37.917,"volume":525145},{"i":536,"date":"2026-04-14","open":37.997,"close":38.127,"high":38.177,"low":37.947,"volume":503999},{"i":537,"date":"2026-04-15","open":38.247,"close":38.897,"high":38.917,"low":38.217,"volume":1052104},{"i":538,"date":"2026-04-16","open":38.897,"close":38.907,"high":39.147,"low":38.747,"volume":617258},{"i":539,"date":"2026-04-17","open":38.847,"close":38.517,"high":38.897,"low":38.497,"volume":587925},{"i":540,"date":"2026-04-20","open":38.497,"close":38.867,"high":38.897,"low":38.327,"volume":588776},{"i":541,"date":"2026-04-21","open":38.907,"close":38.867,"high":39.147,"low":38.857,"volume":545949},{"i":542,"date":"2026-04-22","open":38.867,"close":38.737,"high":39.027,"low":38.617,"volume":507595},{"i":543,"date":"2026-04-23","open":38.717,"close":38.807,"high":38.857,"low":38.517,"volume":569489},{"i":544,"date":"2026-04-24","open":38.737,"close":38.377,"high":38.797,"low":38.357,"volume":629414},{"i":545,"date":"2026-04-27","open":38.517,"close":38.377,"high":38.987,"low":38.317,"volume":926168},{"i":546,"date":"2026-04-28","open":38.377,"close":38.597,"high":38.627,"low":38.257,"volume":669305},{"i":547,"date":"2026-04-29","open":37.907,"close":37.497,"high":38.017,"low":37.337,"volume":2533117},{"i":548,"date":"2026-04-30","open":37.397,"close":37.267,"high":37.507,"low":37.117,"volume":1169574},{"i":549,"date":"2026-05-06","open":37.287,"close":36.997,"high":37.347,"low":36.817,"volume":1431771},{"i":550,"date":"2026-05-07","open":37.047,"close":36.947,"high":37.157,"low":36.937,"volume":790090},{"i":551,"date":"2026-05-08","open":37.027,"close":36.937,"high":37.177,"low":36.897,"volume":869539},{"i":552,"date":"2026-05-11","open":36.947,"close":36.967,"high":36.977,"low":36.697,"volume":925489},{"i":553,"date":"2026-05-12","open":36.977,"close":36.897,"high":37.137,"low":36.857,"volume":967299},{"i":554,"date":"2026-05-13","open":36.957,"close":36.877,"high":37.087,"low":36.847,"volume":718304},{"i":555,"date":"2026-05-14","open":36.807,"close":36.807,"high":37.017,"low":36.727,"volume":867868},{"i":556,"date":"2026-05-15","open":36.807,"close":36.647,"high":36.967,"low":36.607,"volume":821738},{"i":557,"date":"2026-05-18","open":36.647,"close":36.467,"high":36.657,"low":36.347,"volume":707684},{"i":558,"date":"2026-05-19","open":36.477,"close":36.367,"high":36.737,"low":36.337,"volume":719910},{"i":559,"date":"2026-05-20","open":36.367,"close":36.167,"high":36.437,"low":36.167,"volume":693184},{"i":560,"date":"2026-05-21","open":36.177,"close":36.147,"high":36.337,"low":36.107,"volume":725200},{"i":561,"date":"2026-05-22","open":36.097,"close":36.017,"high":36.327,"low":35.967,"volume":797617},{"i":562,"date":"2026-05-25","open":36.007,"close":35.937,"high":36.257,"low":35.897,"volume":710668},{"i":563,"date":"2026-05-26","open":35.937,"close":35.997,"high":36.287,"low":35.897,"volume":706203},{"i":564,"date":"2026-05-27","open":36.007,"close":35.997,"high":36.187,"low":35.777,"volume":845146},{"i":565,"date":"2026-05-28","open":36.047,"close":36.117,"high":36.427,"low":35.967,"volume":995791},{"i":566,"date":"2026-05-29","open":36.097,"close":37.007,"high":37.037,"low":35.927,"volume":1531384},{"i":567,"date":"2026-06-01","open":36.997,"close":37.197,"high":37.197,"low":36.797,"volume":961379},{"i":568,"date":"2026-06-02","open":37.157,"close":37.797,"high":37.877,"low":37.047,"volume":1256970},{"i":569,"date":"2026-06-03","open":37.807,"close":37.497,"high":37.807,"low":37.247,"volume":881275},{"i":570,"date":"2026-06-04","open":37.397,"close":37.097,"high":37.647,"low":36.987,"volume":738841},{"i":571,"date":"2026-06-05","open":37.177,"close":37.577,"high":37.697,"low":37.107,"volume":778709},{"i":572,"date":"2026-06-08","open":37.397,"close":37.497,"high":37.757,"low":37.357,"volume":769478},{"i":573,"date":"2026-06-09","open":37.497,"close":37.487,"high":37.637,"low":37.397,"volume":664500},{"i":574,"date":"2026-06-10","open":37.447,"close":37.897,"high":38.077,"low":37.377,"volume":935861},{"i":575,"date":"2026-06-11","open":37.927,"close":37.727,"high":38.087,"low":37.567,"volume":594454},{"i":576,"date":"2026-06-12","open":37.587,"close":38.337,"high":38.347,"low":37.337,"volume":1119834},{"i":577,"date":"2026-06-15","open":38.207,"close":37.947,"high":38.367,"low":37.727,"volume":977404},{"i":578,"date":"2026-06-16","open":37.807,"close":37.567,"high":37.887,"low":37.407,"volume":789669},{"i":579,"date":"2026-06-17","open":37.677,"close":37.227,"high":37.847,"low":37.137,"volume":660452},{"i":580,"date":"2026-06-18","open":37.147,"close":36.257,"high":37.197,"low":36.257,"volume":1003461},{"i":581,"date":"2026-06-22","open":36.007,"close":36.647,"high":36.897,"low":35.947,"volume":1100768},{"i":582,"date":"2026-06-23","open":36.647,"close":36.397,"high":37.187,"low":36.347,"volume":1008007},{"i":583,"date":"2026-06-24","open":36.487,"close":35.757,"high":36.577,"low":35.747,"volume":1236166},{"i":584,"date":"2026-06-25","open":35.727,"close":35.227,"high":35.987,"low":35.197,"volume":1181162},{"i":585,"date":"2026-06-26","open":35.377,"close":34.997,"high":35.467,"low":34.877,"volume":1055410},{"i":586,"date":"2026-06-29","open":34.897,"close":35.417,"high":35.717,"low":34.397,"volume":1080735},{"i":587,"date":"2026-06-30","open":35.367,"close":34.497,"high":35.387,"low":34.347,"volume":1099038},{"i":588,"date":"2026-07-01","open":34.517,"close":34.907,"high":35.117,"low":34.277,"volume":891221},{"i":589,"date":"2026-07-02","open":35.277,"close":35.597,"high":35.797,"low":35.127,"volume":944614},{"i":590,"date":"2026-07-03","open":35.667,"close":35.827,"high":36.057,"low":35.347,"volume":853124},{"i":591,"date":"2026-07-06","open":35.697,"close":36.727,"high":36.757,"low":35.517,"volume":971544},{"i":592,"date":"2026-07-07","open":36.717,"close":36.547,"high":36.857,"low":36.297,"volume":652587},{"i":593,"date":"2026-07-08","open":36.357,"close":36.937,"high":36.967,"low":36.147,"volume":767135},{"i":594,"date":"2026-07-09","open":36.697,"close":36.547,"high":36.807,"low":36.367,"volume":765646},{"i":595,"date":"2026-07-10","open":36.61,"close":36.88,"high":36.92,"low":36.33,"volume":793772},{"i":596,"date":"2026-07-13","open":36.81,"close":37.25,"high":37.4,"low":36.71,"volume":933085},{"i":597,"date":"2026-07-14","open":37.1,"close":37.18,"high":37.24,"low":36.82,"volume":804154},{"i":598,"date":"2026-07-15","open":37,"close":37.76,"high":37.96,"low":36.75,"volume":1154626},{"i":599,"date":"2026-07-16","open":37.7,"close":37.67,"high":38.12,"low":37.5,"volume":766899},{"i":600,"date":"2026-07-17","open":37.76,"close":38.02,"high":38.2,"low":37.68,"volume":1158584},{"i":601,"date":"2026-07-20","open":37.95,"close":38.91,"high":38.91,"low":37.89,"volume":1433610},{"i":602,"date":"2026-07-21","open":39.18,"close":37.99,"high":39.4,"low":37.9,"volume":1560127},{"i":603,"date":"2026-07-22","open":37.85,"close":38.71,"high":38.71,"low":37.63,"volume":1084546},{"i":604,"date":"2026-07-23","open":38.68,"close":38.91,"high":38.99,"low":38.45,"volume":794938},{"i":605,"date":"2026-07-24","open":39.18,"close":39.2,"high":39.25,"low":38.9,"volume":982960},{"i":606,"date":"2026-07-27","open":39.12,"close":39,"high":39.24,"low":38.69,"volume":715846},{"i":607,"date":"2026-07-28","open":39.17,"close":39.59,"high":39.59,"low":38.95,"volume":1050187},{"i":608,"date":"2026-07-29","open":39.98,"close":39.66,"high":40.07,"low":39.49,"volume":1148712},{"i":609,"date":"2026-07-30","open":39.66,"close":40.55,"high":40.55,"low":39.55,"volume":1374580},{"i":610,"date":"2026-07-31","open":39.85,"close":39.62,"high":40.17,"low":39.04,"volume":1491550},{"i":611,"date":"2026-08-03","open":39.88,"close":40.36,"high":40.42,"low":39.8,"volume":1217493},{"i":612,"date":"2026-08-04","open":40.16,"close":39.28,"high":40.16,"low":39.21,"volume":1104999},{"i":613,"date":"2026-08-05","open":39.18,"close":38.94,"high":39.48,"low":38.72,"volume":960454},{"i":614,"date":"2026-08-06","open":39,"close":38.97,"high":39.15,"low":38.47,"volume":853755},{"i":615,"date":"2026-08-07","open":38.9,"close":38.8,"high":39.1,"low":38.48,"volume":779647},{"i":616,"date":"2026-08-10","open":38.79,"close":38.91,"high":39.27,"low":38.7,"volume":651758},{"i":617,"date":"2026-08-11","open":39,"close":38.95,"high":39.2,"low":38.77,"volume":500770},{"i":618,"date":"2026-08-12","open":38.95,"close":38.7,"high":38.97,"low":38.56,"volume":557489},{"i":619,"date":"2026-08-13","open":38.59,"close":38.77,"high":38.81,"low":38.5,"volume":501985},{"i":620,"date":"2026-08-14","open":38.65,"close":38.46,"high":38.75,"low":38.46,"volume":486802},{"i":621,"date":"2026-08-17","open":38.35,"close":38.2,"high":38.46,"low":38.06,"volume":656744},{"i":622,"date":"2026-08-18","open":38.15,"close":38.29,"high":38.36,"low":38.03,"volume":601361},{"i":623,"date":"2026-08-19","open":38.55,"close":39.15,"high":39.15,"low":38.4,"volume":1248939},{"i":624,"date":"2026-08-20","open":38.8,"close":38.86,"high":39.07,"low":38.47,"volume":747857},{"i":625,"date":"2026-08-21","open":38.8,"close":38.9,"high":39.1,"low":38.76,"volume":514219},{"i":626,"date":"2026-08-24","open":38.87,"close":39.58,"high":39.7,"low":38.77,"volume":1045783},{"i":627,"date":"2026-08-25","open":39.7,"close":39.5,"high":39.92,"low":39.42,"volume":634183},{"i":628,"date":"2026-08-26","open":39.41,"close":39.8,"high":39.98,"low":39.38,"volume":646455},{"i":629,"date":"2026-08-27","open":39.63,"close":39.58,"high":39.94,"low":39.32,"volume":614592},{"i":630,"date":"2026-08-28","open":39.46,"close":39.35,"high":39.55,"low":39.23,"volume":481033},{"i":631,"date":"2026-08-31","open":39.51,"close":40.12,"high":40.28,"low":39.5,"volume":1136251},{"i":632,"date":"2026-09-01","open":40.04,"close":40.86,"high":40.88,"low":39.9,"volume":1147661},{"i":633,"date":"2026-09-02","open":40.9,"close":40.87,"high":41,"low":40.63,"volume":648611},{"i":634,"date":"2026-09-03","open":40.76,"close":41.07,"high":41.36,"low":40.52,"volume":768716},{"i":635,"date":"2026-09-04","open":41.05,"close":41.69,"high":41.78,"low":40.95,"volume":845229},{"i":636,"date":"2026-09-07","open":41.65,"close":41.07,"high":41.76,"low":41.03,"volume":738683},{"i":637,"date":"2026-09-08","open":41.01,"close":40.9,"high":41.38,"low":40.81,"volume":493102},{"i":638,"date":"2026-09-09","open":40.85,"close":41,"high":41.22,"low":40.75,"volume":432074},{"i":639,"date":"2026-09-10","open":41,"close":41.57,"high":41.67,"low":40.8,"volume":660003},{"i":640,"date":"2026-09-11","open":41.75,"close":41.35,"high":41.75,"low":41.05,"volume":737983}];
+
+function aggregateWeekly(candles, n=5){
+  const out=[];
+  for(let i=0;i<candles.length;i+=n){
+    const chunk=candles.slice(i,i+n);
+    if(!chunk.length) continue;
+    out.push({
+      i: out.length,
+      sourceStartIdx: chunk[0].i,
+      sourceEndIdx: chunk[chunk.length-1].i,
+      startDate: chunk[0].date,
+      date: chunk[chunk.length-1].date,
+      open: chunk[0].open,
+      close: chunk[chunk.length-1].close,
+      high: Math.max(...chunk.map(c=>c.high)),
+      low: Math.min(...chunk.map(c=>c.low)),
+      volume: chunk.reduce((s,c)=>s+(c.volume||0),0),
+    });
+  }
+  return out;
+}
+
+  const API = { dataMeta, dailyCandles, aggregateWeekly };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  global.ChanData = API;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #f6f5f0; }
+    * { box-sizing: border-box; }
+    ::selection { background: #dbe4ef; }
+    [data-chart-wrap="1"]::-webkit-scrollbar { height: 10px; }
+    [data-chart-wrap="1"]::-webkit-scrollbar-track { background: #f0eee6; border-radius: 999px; }
+    [data-chart-wrap="1"]::-webkit-scrollbar-thumb { background: #c8c2b5; border-radius: 999px; border: 2px solid #f0eee6; }
+  </style>
+</helmet>
+<div style="display:flex;height:100vh;width:100%;font-family:'IBM Plex Sans',sans-serif;background:#f6f5f0;color:#1c1f26;overflow:hidden;">
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;">
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:16px 24px 10px 24px;border-bottom:1px solid #e2ddd0;flex-wrap:wrap;">
+      <div style="display:flex;align-items:baseline;gap:12px;">
+        <div style="font-size:18px;font-weight:700;letter-spacing:0.2px;">缠论结构判断工作台</div>
+        <div style="font-size:13px;color:#8b8677;font-family:'IBM Plex Mono',monospace;">{{ symbolLine }}</div>
+      </div>
+      <div style="font-size:11px;color:#a19c8c;">{{ dataLine }}</div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 24px;border-bottom:1px solid #e2ddd0;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="font-size:11px;font-weight:700;color:#8b8677;">股票</span>
+          <input type="text" placeholder="代码/如 600036" value="{{ symbolInputValue }}" onInput="{{ onSymbolInput }}" onKeyDown="{{ onSymbolKeyDown }}" style="width:118px;height:28px;border:1px solid #e2ddd0;border-radius:6px;padding:0 8px;font-size:12px;font-family:'IBM Plex Mono',monospace;background:#ffffff;color:#1c1f26;" />
+          <button onClick="{{ onLoadClick }}" disabled="{{ loadDisabled }}" style="height:28px;border:none;background:{{ loadBtnBg }};color:#ffffff;font-size:12px;font-weight:600;border-radius:6px;padding:0 12px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">{{ loadBtnLabel }}</button>
+          <button onClick="{{ onRefreshClick }}" disabled="{{ refreshDisabled }}" title="刷新当前股票最新数据" style="width:28px;height:28px;border:none;background:#ece9e0;color:#1c1f26;font-size:14px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">⟳</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:#8b8677;">最近:</span>
+          <sc-for list="{{ recentChips }}" as="rc" hint-placeholder-count="3">
+            <button onClick="{{ rc.onClick }}" style="border:1px solid #e2ddd0;background:#ffffff;color:#3a3730;font-size:11px;padding:4px 8px;border-radius:999px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">{{ rc.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="font-size:11px;font-weight:700;color:#8b8677;">图表视图</span>
+          <div style="display:flex;gap:2px;background:#ece9e0;border-radius:8px;padding:2px;">
+            <sc-for list="{{ modeOptions }}" as="opt" hint-placeholder-count="3">
+              <button onClick="{{ opt.onClick }}" style="border:none;background:{{ opt.bg }};color:{{ opt.color }};font-size:12px;font-weight:600;padding:6px 11px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">{{ opt.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="font-size:11px;font-weight:700;color:#8b8677;">K线缩放</span>
+          <div style="display:flex;align-items:center;gap:2px;background:#ece9e0;border-radius:8px;padding:2px;">
+            <button onClick="{{ zoomOut }}" style="width:28px;height:28px;border:none;background:#ffffff;color:#1c1f26;font-size:16px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;line-height:1;">−</button>
+            <button onClick="{{ resetZoom }}" style="min-width:52px;height:28px;border:none;background:transparent;color:#3a3730;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Mono',monospace;">{{ zoomLabel }}</button>
+            <button onClick="{{ zoomIn }}" style="width:28px;height:28px;border:none;background:#ffffff;color:#1c1f26;font-size:16px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;line-height:1;">+</button>
+            <button onClick="{{ fitAll }}" style="height:28px;border:none;background:#ffffff;color:#1c1f26;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;padding:0 8px;">全局</button>
+          </div>
+        </div>
+      </div>
+      <div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;padding-top:2px;">
+        <span style="font-size:11px;font-weight:700;color:#8b8677;padding:6px 2px 0 0;">标记层</span>
+        <sc-for list="{{ layerChips }}" as="chip" hint-placeholder-count="8">
+          <button onClick="{{ chip.toggle }}" style="border:1px solid {{ chip.border }};background:{{ chip.bg }};color:{{ chip.color }};font-size:11.5px;font-weight:500;padding:5px 9px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'IBM Plex Sans',sans-serif;">
+            <span style="width:7px;height:7px;border-radius:50%;background:{{ chip.dot }};display:inline-block;"></span>{{ chip.label }}
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ hasLoadError }}" hint-placeholder-val="{{ false }}">
+        <div style="flex-basis:100%;font-size:11.5px;color:#d1453a;padding-left:2px;">{{ loadErrorText }}</div>
+      </sc-if>
+      <sc-if value="{{ isLoadingSymbol }}" hint-placeholder-val="{{ false }}">
+        <div style="flex-basis:100%;font-size:11.5px;color:#8b8677;padding-left:2px;">{{ loadingText }}</div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px 24px 32px 24px;display:flex;flex-direction:column;gap:16px;">
+        <sc-for list="{{ panels }}" as="panel" hint-placeholder-count="2">
+          <div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;">
+              <div style="display:flex;align-items:baseline;gap:8px;">
+                <div style="font-size:13px;font-weight:700;">{{ panel.title }}</div>
+                <div style="font-size:11.5px;color:#9c9788;">{{ panel.hint }}</div>
+              </div>
+              <div style="font-size:11px;color:#a19c8c;font-family:'IBM Plex Mono',monospace;">{{ panel.dateRange }}</div>
+            </div>
+            <div style="display:flex;gap:8px;margin:0 0 8px 0;flex-wrap:wrap;">
+              <sc-for list="{{ panel.summaryChips }}" as="chip" hint-placeholder-count="3">
+                <button onClick="{{ chip.onClick }}" style="border:none;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;background:{{ chip.bg }};color:{{ chip.color }};cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">{{ chip.text }}</button>
+              </sc-for>
+            </div>
+            <div data-chart-wrap="1" style="position:relative;background:#ffffff;border:1px solid #e2ddd0;border-radius:10px;padding:8px 6px 8px 6px;overflow-x:auto;overflow-y:hidden;">
+              <svg viewBox="0 0 {{ panel.vbW }} {{ panel.vbH }}" style="width:{{ panel.vbW }}px;max-width:none;height:{{ panel.vbH }}px;display:block;" onClick="{{ clearIfBg }}">
+
+                <sc-for list="{{ panel.gridlines }}" as="gl" hint-placeholder-count="4">
+                  <g>
+                    <line x1="{{ panel.marginLeft }}" y1="{{ gl.y }}" x2="{{ panel.gridX2 }}" y2="{{ gl.y }}" stroke="#f0eee6" stroke-width="1"></line>
+                    <text x="{{ panel.gridLabelX }}" y="{{ gl.y }}" dy="3.5" font-size="10.5" fill="#a19c8c" font-family="IBM Plex Mono,monospace">{{ gl.label }}</text>
+                  </g>
+                </sc-for>
+
+                <sc-for list="{{ panel.xTicks }}" as="tk" hint-placeholder-count="6">
+                  <line x1="{{ tk.x }}" y1="{{ panel.axisY }}" x2="{{ tk.x }}" y2="{{ panel.axisY2 }}" stroke="#e2ddd0" stroke-width="1"></line>
+                  <text x="{{ tk.x }}" y="{{ panel.tickY }}" font-size="10.5" fill="#7f796b" text-anchor="middle" font-family="IBM Plex Mono,monospace">{{ tk.label }}</text>
+                </sc-for>
+
+                <sc-for list="{{ panel.phaseBandRects }}" as="pb" hint-placeholder-count="4">
+                  <g onClick="{{ pb.onClick }}" onMouseEnter="{{ pb.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                    <rect x="{{ pb.x }}" y="{{ pb.y }}" width="{{ pb.w }}" height="{{ pb.h }}" fill="{{ pb.bg }}" stroke="{{ pb.stroke }}" stroke-width="1" stroke-dasharray="{{ pb.dash }}"></rect>
+                    <text x="{{ pb.tx }}" y="{{ pb.ty }}" font-size="11" fill="{{ pb.textColor }}" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="700">{{ pb.label }}</text>
+                  </g>
+                </sc-for>
+                <text x="{{ panel.gridLabelX }}" y="{{ panel.phaseLaneLabelY }}" font-size="10.5" fill="#8b8677" font-family="IBM Plex Sans,sans-serif" font-weight="700">阶段</text>
+
+                <sc-if value="{{ panel.focusRect }}" hint-placeholder-val="{{ null }}">
+                  <rect x="{{ panel.focusRect.x }}" y="{{ panel.marginTop }}" width="{{ panel.focusRect.w }}" height="{{ panel.plotH }}" fill="rgba(184,121,10,0.08)" stroke="#b8790a" stroke-width="1" stroke-dasharray="3 3"></rect>
+                </sc-if>
+                <sc-if value="{{ panel.linkOverlay }}" hint-placeholder-val="{{ null }}">
+                  <rect x="{{ panel.linkOverlay.x }}" y="{{ panel.marginTop }}" width="{{ panel.linkOverlay.w }}" height="{{ panel.plotH }}" fill="rgba(55,65,81,0.07)" stroke="#6b7280" stroke-width="1" stroke-dasharray="3 3"></rect>
+                </sc-if>
+
+                <sc-if value="{{ panel.leaveHighlight }}" hint-placeholder-val="{{ null }}">
+                  <g style="pointer-events:none;">
+                    <line x1="{{ panel.leaveHighlight.x1 }}" y1="{{ panel.leaveHighlight.y1 }}" x2="{{ panel.leaveHighlight.x2 }}" y2="{{ panel.leaveHighlight.y2 }}" stroke="{{ panel.leaveHighlight.color }}" stroke-width="8" stroke-linecap="round" opacity="0.20"></line>
+                  </g>
+                  <g onClick="{{ panel.leaveHighlight.onClick }}" style="cursor:pointer;">
+                    <rect x="{{ panel.leaveHighlight.capX }}" y="{{ panel.leaveHighlight.capY }}" width="{{ panel.leaveHighlight.capW }}" height="{{ panel.leaveHighlight.capH }}" rx="4" fill="{{ panel.leaveHighlight.color }}"></rect>
+                    <text x="{{ panel.leaveHighlight.capTx }}" y="{{ panel.leaveHighlight.capTy }}" font-size="11" fill="#ffffff" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="700">{{ panel.leaveHighlight.label }}</text>
+                  </g>
+                </sc-if>
+
+                <sc-if value="{{ layers.zhongshuXd }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.xdBoxes }}" as="zx" hint-placeholder-count="2">
+                    <g onClick="{{ zx.onClick }}" onMouseEnter="{{ zx.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <rect x="{{ zx.x }}" y="{{ zx.y }}" width="{{ zx.w }}" height="{{ zx.h }}" fill="{{ zx.fill }}" stroke="{{ zx.stroke }}" stroke-width="{{ zx.strokeW }}" stroke-dasharray="{{ zx.dash }}"></rect>
+                      <text x="{{ zx.labelX }}" y="{{ zx.labelY }}" font-size="10.5" fill="{{ zx.labelColor }}" font-family="IBM Plex Sans,sans-serif" font-weight="600">{{ zx.label }}</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+                <sc-if value="{{ layers.zhongshuBi }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.biBoxes }}" as="zb" hint-placeholder-count="2">
+                    <g onClick="{{ zb.onClick }}" onMouseEnter="{{ zb.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <rect x="{{ zb.x }}" y="{{ zb.y }}" width="{{ zb.w }}" height="{{ zb.h }}" fill="{{ zb.fill }}" stroke="{{ zb.stroke }}" stroke-width="{{ zb.strokeW }}" stroke-dasharray="{{ zb.dash }}"></rect>
+                      <text x="{{ zb.labelX }}" y="{{ zb.labelY }}" font-size="10.5" fill="{{ zb.labelColor }}" font-family="IBM Plex Sans,sans-serif" font-weight="700">{{ zb.label }}</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.xianduan }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.xdSegs }}" as="xd" hint-placeholder-count="2">
+                    <line x1="{{ xd.x1 }}" y1="{{ xd.y1 }}" x2="{{ xd.x2 }}" y2="{{ xd.y2 }}" stroke="{{ xd.color }}" stroke-width="{{ xd.w }}" stroke-linecap="round" onClick="{{ xd.onClick }}" onMouseEnter="{{ xd.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;"></line>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.bi }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.biSegs }}" as="bi" hint-placeholder-count="6">
+                    <line x1="{{ bi.x1 }}" y1="{{ bi.y1 }}" x2="{{ bi.x2 }}" y2="{{ bi.y2 }}" stroke="{{ bi.color }}" stroke-width="{{ bi.w }}" onClick="{{ bi.onClick }}" onMouseEnter="{{ bi.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;"></line>
+                  </sc-for>
+                </sc-if>
+
+                <sc-for list="{{ panel.candles }}" as="c" hint-placeholder-count="60">
+                  <g onClick="{{ c.onClick }}" onMouseEnter="{{ c.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                    <line x1="{{ c.wickX }}" y1="{{ c.wickY1 }}" x2="{{ c.wickX }}" y2="{{ c.wickY2 }}" stroke="{{ c.color }}" stroke-width="1"></line>
+                    <rect x="{{ c.x }}" y="{{ c.bodyY }}" width="{{ c.w }}" height="{{ c.bodyH }}" fill="{{ c.color }}"></rect>
+                  </g>
+                </sc-for>
+
+                <sc-if value="{{ layers.fenxing }}" hint-placeholder-val="{{ false }}">
+                  <sc-for list="{{ panel.fxMarkers }}" as="fx" hint-placeholder-count="6">
+                    <polygon points="{{ fx.points }}" fill="{{ fx.color }}" onClick="{{ fx.onClick }}" onMouseEnter="{{ fx.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;"></polygon>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.beichi }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.beichiMarkers }}" as="bc" hint-placeholder-count="1">
+                    <g opacity="{{ bc.opacity }}" onClick="{{ bc.onClick }}" onMouseEnter="{{ bc.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <rect x="{{ bc.x }}" y="{{ bc.y }}" width="14" height="14" fill="#c9820a" transform="{{ bc.rotate }}"></rect>
+                      <text x="{{ bc.tx }}" y="{{ bc.ty }}" font-size="10.5" fill="#ffffff" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="700">背</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.signals }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.sigMarkers }}" as="sig" hint-placeholder-count="3">
+                    <g opacity="{{ sig.opacity }}" onClick="{{ sig.onClick }}" onMouseEnter="{{ sig.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <circle cx="{{ sig.x }}" cy="{{ sig.y }}" r="{{ sig.r }}" fill="{{ sig.fill }}" stroke="{{ sig.stroke }}" stroke-width="1.4" stroke-dasharray="{{ sig.dash }}"></circle>
+                      <text x="{{ sig.x }}" y="{{ sig.y }}" dy="3.5" font-size="10.5" fill="{{ sig.textColor }}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-weight="700">{{ sig.label }}</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.sr }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.srLines }}" as="sr" hint-placeholder-count="2">
+                    <g onClick="{{ sr.onClick }}" onMouseEnter="{{ sr.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <line x1="{{ sr.x1 }}" y1="{{ sr.y }}" x2="{{ panel.gridX2 }}" y2="{{ sr.y }}" stroke="{{ sr.color }}" stroke-width="1.2" stroke-dasharray="5 3"></line>
+                      <text x="{{ panel.gridLabelX }}" y="{{ sr.y }}" dy="-3" font-size="10.5" fill="{{ sr.color }}" font-family="IBM Plex Mono,monospace" font-weight="600">{{ sr.priceLabel }}</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.failure }}" hint-placeholder-val="{{ true }}">
+                  <sc-if value="{{ panel.failLine }}" hint-placeholder-val="{{ null }}">
+                    <g onClick="{{ panel.failLine.onClick }}" onMouseEnter="{{ panel.failLine.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <line x1="{{ panel.failLine.x1 }}" y1="{{ panel.failLine.y }}" x2="{{ panel.gridX2 }}" y2="{{ panel.failLine.y }}" stroke="#b23b30" stroke-width="1.4" stroke-dasharray="2 3"></line>
+                      <text x="{{ panel.failLine.x1 }}" y="{{ panel.failLine.y }}" dy="-4" font-size="10.5" fill="#b23b30" font-family="IBM Plex Sans,sans-serif" font-weight="700">{{ panel.failLine.label }}</text>
+                    </g>
+                  </sc-if>
+                </sc-if>
+
+              </svg>
+            </div>
+
+            <sc-if value="{{ panel.isDaily }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:4px;margin-top:8px;overflow-x:auto;padding-bottom:2px;">
+                <sc-for list="{{ stages }}" as="st" hint-placeholder-count="4">
+                  <button onClick="{{ st.onClick }}" style="flex-shrink:0;border:1px solid {{ st.border }};background:{{ st.bg }};color:{{ st.color }};font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;">{{ st.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ panel.isWeekly }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:1px;margin-top:6px;border-radius:4px;overflow:hidden;height:14px;">
+                <sc-for list="{{ panel.trendBands }}" as="tb" hint-placeholder-count="3">
+                  <div title="{{ tb.title }}" style="flex-grow:{{ tb.grow }};flex-basis:0;background:{{ tb.bg }};display:flex;align-items:center;justify-content:center;">
+                    <span style="font-size:9px;color:{{ tb.textColor }};font-weight:600;white-space:nowrap;overflow:hidden;">{{ tb.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ notReady }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:60px;color:#9c9788;font-size:13px;">正在计算分型 / 笔 / 中枢结构…</div>
+    </sc-if>
+
+  </div>
+
+  <div style="width:370px;flex-shrink:0;border-left:1px solid #e2ddd0;background:#ffffff;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;">
+
+    <sc-if value="{{ judgment }}" hint-placeholder-val="{{ null }}">
+      <div style="border:1.5px solid #1c1f26;border-radius:8px;padding:14px;background:#fff;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+          <div style="font-size:10.5px;font-weight:700;color:#8b8677;letter-spacing:0.5px;">当前判断</div>
+          <div style="font-size:10.5px;color:#a19c8c;">先看结论，再点图上标记看证据</div>
+        </div>
+        <div style="font-size:16px;font-weight:700;line-height:1.38;margin-bottom:12px;">{{ judgment.conclusion }}</div>
+        <div style="display:grid;grid-template-columns:84px 1fr;gap:7px 9px;font-size:12.5px;line-height:1.5;">
+          <div style="color:#8b8677;">数据新鲜度</div><div>{{ judgment.freshnessLine }}</div>
+          <div style="color:#8b8677;">当前动作</div><div style="font-weight:650;color:{{ judgment.currentColor }};">{{ judgment.currentLine }}</div>
+          <div style="color:#8b8677;">力度(A/C)</div><div style="font-weight:650;color:{{ judgment.strengthColor }};">{{ judgment.strengthLine }}</div>
+          <div style="color:#8b8677;">背景方向</div><div>{{ judgment.backgroundLine }}</div>
+          <div style="color:#8b8677;">转折风险</div><div>{{ judgment.reversalLine }}</div>
+          <div style="color:#8b8677;">确认条件</div><div>{{ judgment.confirmLine }}</div>
+          <div style="color:#8b8677;">失效条件</div><div style="color:#b23b30;font-weight:600;">{{ judgment.failLine }}</div>
+          <div style="color:#8b8677;">可达级别</div><div>{{ judgment.levelLine }}</div>
+          <div style="color:#8b8677;">下一步</div><div>{{ judgment.task }}</div>
+        </div>
+        <div style="margin-top:12px;padding:9px 10px;background:#f6f5f0;border-radius:6px;font-size:12.5px;line-height:1.5;font-weight:600;">{{ judgment.action }}</div>
+      </div>
+    </sc-if>
+
+    <div style="border-top:1px solid #e2ddd0;margin-top:2px;"></div>
+
+    <sc-if value="{{ selectedDetail }}" hint-placeholder-val="{{ null }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:{{ selectedDetail.statusBg }};color:{{ selectedDetail.statusColor }};">{{ selectedDetail.statusLabel }}</span>
+            <div style="font-size:14.5px;font-weight:700;">{{ selectedDetail.title }}</div>
+          </div>
+          <button onClick="{{ clearSelected }}" style="border:none;background:none;color:#9c9788;font-size:16px;cursor:pointer;line-height:1;padding:0;">×</button>
+        </div>
+        <div style="font-size:12px;color:#a19c8c;font-family:'IBM Plex Mono',monospace;margin-bottom:4px;">{{ selectedDetail.meta }}</div>
+        <div style="font-size:11.5px;color:#9c9788;margin-bottom:14px;">来源：{{ selectedDetail.source }}</div>
+
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#2f7d55;letter-spacing:0.4px;margin-bottom:4px;">已满足条件</div>
+          <div style="font-size:13px;line-height:1.6;color:#3a3730;">{{ selectedDetail.rule }}</div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#b8790a;letter-spacing:0.4px;margin-bottom:4px;">未满足 / 何时确认</div>
+          <div style="font-size:13px;line-height:1.6;color:#3a3730;">{{ selectedDetail.confirm }}</div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#b23b30;letter-spacing:0.4px;margin-bottom:4px;">何时失效</div>
+          <div style="font-size:13px;line-height:1.6;color:#3a3730;">{{ selectedDetail.invalidate }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#1c1f26;letter-spacing:0.4px;margin-bottom:4px;">操作含义</div>
+          <div style="font-size:13px;line-height:1.6;color:#3a3730;">{{ selectedDetail.action }}</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showActiveList }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:10.5px;font-weight:700;color:#8b8677;letter-spacing:0.5px;margin-bottom:8px;">当前活跃结构</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <sc-for list="{{ activeRows }}" as="row" hint-placeholder-count="4">
+            <div onClick="{{ row.onClick }}" style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:8px 10px;background:#f6f5f0;border-radius:6px;cursor:pointer;">
+              <span style="color:#8b8677;">{{ row.label }}</span>
+              <span style="font-weight:600;color:{{ row.color }};font-family:'IBM Plex Mono',monospace;">{{ row.value }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:14px;font-size:11.5px;color:#a19c8c;">点击任意一行可查看判断依据、确认条件与失效条件。</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showLegend }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:10.5px;font-weight:700;color:#8b8677;letter-spacing:0.5px;margin-bottom:8px;">状态图例</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:12px;">
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1f9d63;margin-right:8px;"></span>确认 —— 实线 / 实心 / 明确标签</div>
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:1.5px dashed #1f9d63;margin-right:8px;"></span>候选 —— 虚线 / 空心 / 带"?"</div>
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b9b5aa;margin-right:8px;"></span>失效 —— 灰色淡化，可追溯</div>
+        </div>
+        <div style="font-size:10.5px;font-weight:700;color:#8b8677;letter-spacing:0.5px;margin-bottom:8px;">标记图例</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <sc-for list="{{ legendRows }}" as="lg" hint-placeholder-count="9">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <span style="width:16px;height:16px;border-radius:4px;background:{{ lg.swatch }};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700;">{{ lg.mark }}</span>
+              <div>
+                <div style="font-size:12.5px;font-weight:600;">{{ lg.label }}</div>
+                <div style="font-size:11px;color:#9c9788;">{{ lg.desc }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{ hover }}" hint-placeholder-val="{{ null }}">
+    <div style="position:absolute;left:{{ hover.x }}px;top:{{ hover.y }}px;transform:translate(-50%,-130%);background:#1c1f26;color:#fff;font-size:11.5px;padding:6px 9px;border-radius:6px;pointer-events:none;white-space:nowrap;font-family:'IBM Plex Mono',monospace;z-index:50;">{{ hover.text }}</div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    daily: null,
+    weekly: null,
+    dataMeta: null,
+    mode: 'daily',
+    chartZoom: 1,
+    layers: { fenxing: false, bi: true, xianduan: false, zhongshuBi: true, zhongshuXd: true, beichi: true, signals: true, sr: true, failure: true },
+    selected: null,
+    hover: null,
+    linkedRange: null,
+    focusRange: null,
+    symbolInput: '',
+    loading: false,
+    loadError: null,
+    recentSymbols: [],
+    activeSymbol: null,
+    candlesOverride: null,
+  };
+
+  componentDidMount() {
+    const dataMod = window.ChanData;
+    const algo = window.ChanAlgo;
+    this.algo = algo;
+    this.dataMod = dataMod;
+
+    let recentSymbols = [];
+    try {
+      const raw = localStorage.getItem('chan_recent_symbols');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) recentSymbols = parsed;
+      }
+    } catch (e) { recentSymbols = []; }
+    this.setState({ recentSymbols });
+
+    // B5: 首次打开直接用内置离线数据，不发网络请求，保证 file:// 下立刻有图。
+    const meta = dataMod.dataMeta || null;
+    const norm = meta ? this.normalizeCode(meta.symbol) : null;
+    this.applyCandles(dataMod.dailyCandles, meta, norm ? { code: norm.code, name: (meta && meta.name) || norm.pure } : null);
+  }
+
+  // B6: componentDidMount 与「加载成功」都走同一个 applyCandles，避免两套逻辑。
+  applyCandles(candles, meta, symbolInfo) {
+    const algo = this.algo;
+    const dataMod = this.dataMod;
+    const daily = this.buildStruct(candles, algo);
+    const weeklyCandles = dataMod.aggregateWeekly(candles, 5);
+    const weekly = this.buildStruct(weeklyCandles, algo);
+    this.setState({
+      daily, weekly,
+      dataMeta: meta || null,
+      activeSymbol: symbolInfo || null,
+      candlesOverride: symbolInfo ? candles : null,
+      selected: null,
+      focusRange: null,
+      linkedRange: null,
+      loading: false,
+      loadError: null,
+    });
+  }
+
+  // B2: 代码规范化。
+  normalizeCode(input) {
+    if (input == null) return null;
+    const raw = String(input).trim();
+    if (!raw) return null;
+    const prefixed = raw.match(/^(sh|sz|bj)(\d{6})$/i);
+    if (prefixed) return { code: prefixed[1].toLowerCase() + prefixed[2], pure: prefixed[2] };
+    if (/^\d{6}$/.test(raw)) {
+      let prefix = null;
+      if (raw[0] === '6') prefix = 'sh';
+      else if (raw[0] === '0' || raw[0] === '3') prefix = 'sz';
+      else if (raw[0] === '4' || raw[0] === '8') prefix = 'bj';
+      if (!prefix) return null;
+      return { code: prefix + raw, pure: raw };
+    }
+    return null;
+  }
+
+  // B1: K线接口。
+  async fetchKline(code) {
+    const url = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${code},day,,,900,qfq`;
+    let resp;
+    try {
+      resp = await fetch(url);
+    } catch (e) {
+      throw new Error('网络请求失败');
+    }
+    if (!resp || !resp.ok) throw new Error('网络请求失败');
+    let json;
+    try {
+      json = await resp.json();
+    } catch (e) {
+      throw new Error('代码不存在');
+    }
+    const bucket = json && json.data && json.data[code];
+    const arr = bucket && (bucket.qfqday || bucket.day || bucket.qfqweek);
+    if (!arr || !arr.length) throw new Error('代码不存在');
+    return arr;
+  }
+
+  // B1: 名称接口，GBK 解码，失败降级为代码本身。
+  async fetchName(code) {
+    try {
+      const resp = await fetch(`https://qt.gtimg.cn/q=${code}`);
+      if (!resp || !resp.ok) return null;
+      const buf = await resp.arrayBuffer();
+      const text = new TextDecoder('gbk').decode(buf);
+      const m = text.match(/="([^"]*)"/);
+      if (!m) return null;
+      const parts = m[1].split('~');
+      return parts[1] || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // B3: 接口数据 -> {i, date, open, close, high, low, volume}，夹紧修正 + 连续重编号。
+  parseCandles(rawArr) {
+    const out = [];
+    for (const item of rawArr || []) {
+      if (!item || item.length < 5) continue;
+      const date = item[0];
+      const open = parseFloat(item[1]);
+      const close = parseFloat(item[2]);
+      const high = parseFloat(item[3]);
+      const low = parseFloat(item[4]);
+      const volumeRaw = item[5] != null ? parseFloat(item[5]) : 0;
+      if ([open, close, high, low].some((v) => Number.isNaN(v))) continue;
+      const lowFixed = Math.min(low, open, close);
+      const highFixed = Math.max(high, open, close);
+      out.push({ date, open, close, high: highFixed, low: lowFixed, volume: Number.isNaN(volumeRaw) ? 0 : volumeRaw });
+    }
+    out.forEach((c, idx) => { c.i = idx; });
+    return out;
+  }
+
+  // B4: 「最近」记忆列表，file:// 下 localStorage 可能抛异常，读写均需 try/catch。
+  rememberSymbol(code, name) {
+    let list = this.state.recentSymbols || [];
+    list = [{ code, name }, ...list.filter((s) => s.code !== code)].slice(0, 8);
+    this.setState({ recentSymbols: list });
+    try {
+      localStorage.setItem('chan_recent_symbols', JSON.stringify(list));
+    } catch (e) { /* file:// 下可能抛异常，降级为不记忆 */ }
+  }
+
+  async loadSymbol(explicitCode) {
+    const raw = (explicitCode != null ? explicitCode : (this.state.symbolInput || '')).trim();
+    if (!raw) return;
+    const norm = this.normalizeCode(raw);
+    if (!norm) { this.setState({ loadError: '无法识别的代码' }); return; }
+    this.setState({ loading: true, loadError: null });
+    try {
+      const rawArr = await this.fetchKline(norm.code);
+      const candles = this.parseCandles(rawArr);
+      if (candles.length < 120) throw new Error('数据不足以做结构分析（需≥120根）');
+      const name = await this.fetchName(norm.code);
+      const resolvedName = name || norm.pure;
+      const meta = {
+        symbol: norm.pure,
+        name: resolvedName,
+        market: norm.code.slice(0, 2).toUpperCase(),
+        timeframe: '1d',
+        begin: candles[0].date,
+        end: candles[candles.length - 1].date,
+        source: '腾讯证券 fqkline 接口',
+        adjustment: '前复权',
+      };
+      this.applyCandles(candles, meta, { code: norm.code, name: resolvedName });
+      this.rememberSymbol(norm.code, resolvedName);
+      this.setState({ symbolInput: '' });
+    } catch (e) {
+      const msg = (e && e.message) ? e.message : '加载失败';
+      this.setState({ loading: false, loadError: msg });
+    }
+  }
+
+  refreshCurrent() {
+    if (!this.state.activeSymbol || this.state.loading) return;
+    this.loadSymbol(this.state.activeSymbol.code);
+  }
+
+  buildStruct(candles, algo) {
+    const merged = algo.mergeInclusion(candles);
+    const fenxing = algo.findFenxing(merged);
+    const bi = algo.buildBi(fenxing);
+    const xianduan = algo.buildXianduan(bi);
+    const zs = algo.buildAllZhongshu(xianduan, bi);
+    const biCenters = zs.bi;
+    const xdCenters = zs.xianduan;
+    const trendBi = algo.computeTrendSegments(biCenters);
+    const trendXd = algo.computeTrendSegments(xdCenters);
+    const strengthBi = algo.computeTrendStrength(biCenters, candles, bi);
+    const beichi = algo.computeBeichi(biCenters, candles, bi);
+    const signals = algo.deriveSignals(biCenters, beichi);
+    const sr = algo.supportResistance(biCenters);
+    const fail = algo.failureLine(signals, bi);
+    return { candles, merged, fenxing, bi, xianduan, biCenters, xdCenters, trendBi, trendXd, strengthBi, beichi, signals, sr, fail };
+  }
+
+  annotateSignals(signals, objects, candles) {
+    return (signals || []).map((sig) => {
+      const stopPrice = sig.boundary != null ? sig.boundary : sig.price;
+      let failed = sig.status === 'failed';
+      let failedAt = null;
+      if (!failed) {
+        for (let k = sig.idx + 1; k < candles.length; k++) {
+          const c = candles[k];
+          if (sig.dir === 'buy' && c.close < stopPrice) { failed = true; failedAt = c.date; break; }
+          if (sig.dir === 'sell' && c.close > stopPrice) { failed = true; failedAt = c.date; break; }
+        }
+      }
+      const baseStatus = sig.status || 'confirmed';
+      return { ...sig, stopPrice, stopFromIdx: sig.idx, confirmedAt: baseStatus === 'candidate' ? null : sig.date, failedAt, status: failed ? 'failed' : baseStatus };
+    });
+  }
+
+  getCurrentSignal(annotatedSignals) {
+    const list = annotatedSignals || [];
+    const active = [...list].reverse().find((s) => s.status !== 'failed');
+    if (active) return active;
+    return list.length ? list[list.length - 1] : null;
+  }
+
+  recentBiStart(struct) {
+    const centers = struct.biCenters || [];
+    if (!centers.length) return 0;
+    const last = centers[centers.length - 1];
+    if (!last.memberIds || !last.memberIds.length) return 0;
+    const idx = (struct.bi || []).findIndex((b) => b.id === last.memberIds[0]);
+    return idx >= 0 ? idx : 0;
+  }
+
+  computeStages(daily) {
+    const { biCenters, bi, beichi, signals, trendBi } = daily;
+    if (!biCenters.length) return [];
+    const sigMap = { '1B': '一买触发', '2B': '二买确认', '3B': '突破延续', '1S': '一卖触发', '2S': '二卖确认', '3S': '破位延续' };
+    const trendMap = { up: '上涨延续', down: '下跌延续', range: '盘整整理', pending: '结构形成中' };
+    const events = [];
+    biCenters.forEach((zs) => {
+      const sigs = signals.filter((s) => s.zsId === zs.id);
+      const bcs = beichi.filter((b) => b.zsId === zs.id);
+      if (!sigs.length && !bcs.length) {
+        const trendSeg = trendBi.find((t) => t.centerId === zs.id);
+        const label = trendMap[trendSeg ? trendSeg.trend : 'pending'];
+        events.push({ idx: zs.startIdx, label: `${label} ${zs.startDate.slice(5)}`, kind: 'trend', primaryKind: 'zhongshu', primary: zs });
+      } else {
+        bcs.forEach((bc) => { if (!sigs.some((s) => s.idx === bc.idx)) events.push({ idx: bc.idx, label: `${bc.dir === 'up' ? '顶背驰' : '底背驰'} ${bc.date.slice(5)}`, kind: 'beichi', primaryKind: 'beichi', primary: bc }); });
+        sigs.forEach((sig) => events.push({ idx: sig.idx, label: `${sigMap[sig.type] || sig.type} ${sig.date.slice(5)}`, kind: sig.dir, primaryKind: 'signal', primary: sig }));
+      }
+    });
+    events.sort((a, b) => a.idx - b.idx);
+    const stages = events.map((ev) => ({ ...ev, startIdx: ev.idx }));
+    for (let i = 0; i < stages.length - 1; i++) stages[i].endIdx = stages[i + 1].startIdx - 1;
+    if (bi.length && stages.length) stages[stages.length - 1].endIdx = bi[bi.length - 1].end.idx;
+    return stages;
+  }
+
+  selectItem(kind, payload, level) { this.setState({ selected: { kind, payload, level } }); }
+  selectCandle(candle, level, candles) {
+    if (level === 'weekly' && this.state.daily) {
+      const startIdx = candle.i * 5;
+      const endIdx = Math.min(this.state.daily.candles.length - 1, startIdx + 4);
+      const start = this.state.daily.candles[startIdx];
+      const end = this.state.daily.candles[endIdx];
+      this.setState({
+        selected: { kind: 'candle', payload: candle, level },
+        linkedRange: start && end ? { startDate: start.date, endDate: end.date } : null,
+      });
+      return;
+    }
+    this.setState({ selected: { kind: 'candle', payload: candle, level }, focusRange: { startIdx: candle.i, endIdx: candle.i } });
+  }
+  clearSelected() { this.setState({ selected: null, focusRange: null }); }
+  hoverAt(e, text) {
+    this.setState({ hover: { x: e.clientX, y: e.clientY, text } });
+  }
+  clearHover() { this.setState({ hover: null }); }
+  setMode(m) { this.setState({ mode: m, linkedRange: m === 'link' ? this.state.linkedRange : null }); }
+  setZoom(nextZoom) {
+    const chartZoom = Math.max(0.1, Math.min(2.4, Math.round(nextZoom * 20) / 20));
+    this.setState({ chartZoom });
+  }
+  zoomBy(delta) { this.setZoom((this.state.chartZoom || 1) + delta); }
+  resetZoom() { this.setZoom(1); }
+  fitAll() { this.setZoom(0.1); }
+  toggleLayer(key) { this.setState((s) => ({ layers: { ...s.layers, [key]: !s.layers[key] } })); }
+  focusStage(stage) {
+    this.setState({ selected: { kind: stage.primaryKind, payload: stage.primary, level: 'daily' }, focusRange: { startIdx: stage.startIdx, endIdx: stage.endIdx } });
+  }
+
+  fmt(n) { return n.toFixed(2); }
+
+  backgroundInfo(struct) {
+    const list = struct.trendXd || [];
+    if (!list.length) {
+      return { label: '方向待确认', color: '#8b8677', statusText: '候选', line: '线段中枢尚未形成，背景方向暂不判定', source: '线段中枢' };
+    }
+    const t = list[list.length - 1];
+    const labelMap = { up: '上涨趋势', down: '下跌趋势', range: '震荡/盘整', pending: '方向待确认' };
+    const colorMap = { up: '#1f7d50', down: '#b23b30', range: '#7a766a', pending: '#8b8677' };
+    const statusText = t.status === 'confirmed' ? '确认' : '候选';
+    if (list.length === 1) {
+      return {
+        label: '方向待确认', color: '#8b8677', statusText,
+        line: `目前只有 1 个线段中枢（${t.startDate || ''}~${t.endDate || ''}），样本不足以判断趋势方向，暂按"方向待确认"处理`,
+        source: '线段中枢',
+      };
+    }
+    const label = labelMap[t.trend] || '方向待确认';
+    return { label, color: colorMap[t.trend] || '#7a766a', statusText, line: `线段中枢关系：${label}（${t.startDate || ''}~${t.endDate || ''}）`, source: '线段中枢' };
+  }
+
+  buildCurrentInfoForCenter(struct, center) {
+    const hasLeft = !!center.leaveObj;
+    const hasPullback = !!center.pullbackObj;
+    if (!hasLeft) {
+      return { label: '中枢内震荡', color: '#7a766a', line: `价格仍在笔中枢 [${this.fmt(center.zd)}, ${this.fmt(center.zg)}] 内震荡`, zone: [center.zd, center.zg], leaveDir: null, hasLeft, hasPullback };
+    }
+    const up = center.leaveDir === 'up';
+    const label = up ? '向上突破中枢' : '向下跌破中枢';
+    const color = up ? '#1f7d50' : '#b23b30';
+    let line;
+    if (!hasPullback) {
+      line = `当前：${up ? '向上' : '向下'}离开笔中枢 [${this.fmt(center.zd)}, ${this.fmt(center.zg)}]，尚未回踩确认`;
+    } else {
+      const sig3 = (struct.signals || []).find((s) => s.zsId === center.id && (s.type === '3B' || s.type === '3S'));
+      const success = sig3 && sig3.status !== 'failed';
+      line = success
+        ? `当前：${up ? '向上' : '向下'}离开笔中枢 [${this.fmt(center.zd)}, ${this.fmt(center.zg)}]，已回踩，三${up ? '买' : '卖'}成立`
+        : `当前：${up ? '向上' : '向下'}离开笔中枢 [${this.fmt(center.zd)}, ${this.fmt(center.zg)}]，回踩已回补中枢，突破失败`;
+    }
+    return { label, color, line, zone: [center.zd, center.zg], leaveDir: center.leaveDir, hasLeft, hasPullback };
+  }
+
+  trendInfo(struct) {
+    const background = this.backgroundInfo(struct);
+    const centers = struct.biCenters || [];
+    const last = centers[centers.length - 1];
+    const current = last
+      ? this.buildCurrentInfoForCenter(struct, last)
+      : { label: '方向待确认', color: '#8b8677', line: '尚无笔中枢，无法判断当前操作层状态', zone: null, leaveDir: null, hasLeft: false, hasPullback: false };
+    return { background, current };
+  }
+
+  strengthInfo(struct) {
+    const centers = struct.biCenters || [];
+    const zs = centers[centers.length - 1];
+    if (!zs) return { label: '力度不可比', color: '#8b8677', line: '尚无笔中枢，无法评估力度', status: 'insufficient' };
+    const s = (struct.strengthBi && struct.strengthBi.byCenter[zs.id]) || { status: 'insufficient', label: '力度不可比' };
+    if (s.status === 'comparable') {
+      const color = s.verdict === 'weak' ? '#b8790a' : s.verdict === 'strong' ? (s.dir === 'up' ? '#1f7d50' : '#b23b30') : '#7a766a';
+      return {
+        label: s.label, color, status: s.status, ratio: s.ratio, verdict: s.verdict, basis: s.basis,
+        A: s.A, C: s.C, areaA: s.areaA, areaC: s.areaC, detail: s.detail,
+        line: `${s.label}（离开段/进入段 MACD面积比 ${s.ratio.toFixed(2)}）`,
+      };
+    }
+    return { label: s.label, color: '#8b8677', line: s.label, status: s.status, reason: s.reason };
+  }
+
+  currentDivergenceInfo(struct) {
+    const centers = struct.biCenters || [];
+    const last = centers[centers.length - 1];
+    if (!last) return { label: '暂无', color: '#9c9788', line: '结构不足，不能判断当前背驰', current: null };
+    const current = (struct.beichi || []).find((b) => b.zsId === last.id);
+    if (current) {
+      return {
+        label: `${current.dir === 'up' ? '顶背驰' : '底背驰'}候选`,
+        color: '#c9820a',
+        line: `${current.date} 当前笔中枢离开段出现${current.dir === 'up' ? '顶背驰' : '底背驰'}候选，力度比 ${current.ratio}`,
+        current,
+      };
+    }
+    const s = this.strengthInfo(struct);
+    if (s.status === 'comparable' && s.verdict === 'weak') {
+      return { label: '力度减弱，未成背驰', color: '#b8790a', line: '力度减弱，未成背驰（减弱＝离开段面积小于进入段；背驰还需价格创新极值且完成确认）', current: null };
+    }
+    if (s.status === 'incomparable' || s.status === 'insufficient') {
+      return { label: '力度不可比，暂不判断背驰', color: '#9c9788', line: '力度不可比，暂不判断背驰', current: null };
+    }
+    return { label: '暂无当前背驰', color: '#9c9788', line: '当前笔中枢离开段没有背驰候选', current: null };
+  }
+
+  buildChartVM(struct, layers, vbW, vbH, level, opts) {
+    const { linkedRange, focusRange, recentBiStart } = opts;
+    const candles = struct.candles;
+    const marginLeft = 8, marginRight = 62, marginTop = 14, marginBottom = 66;
+    const plotW = vbW - marginLeft - marginRight;
+    const plotH = vbH - marginTop - marginBottom;
+    const gridX2 = vbW - marginRight;
+    const gridLabelX = vbW - marginRight + 6;
+    let lo = Math.min(...candles.map((c) => c.low));
+    let hi = Math.max(...candles.map((c) => c.high));
+    const pad = (hi - lo) * 0.06;
+    lo -= pad; hi += pad;
+    const step = plotW / candles.length;
+    const cw = Math.max(1.1, step * 0.62);
+    const idxToX = (idx) => marginLeft + idx * step + step / 2;
+    const priceToY = (p) => marginTop + ((hi - p) / (hi - lo)) * plotH;
+
+    const candleVMs = candles.map((c) => {
+      const up = c.close >= c.open;
+      const color = up ? '#1f9d63' : '#d1453a';
+      const bodyTop = priceToY(Math.max(c.open, c.close));
+      const bodyBot = priceToY(Math.min(c.open, c.close));
+      return {
+        x: idxToX(c.i) - cw / 2, w: cw, bodyY: bodyTop, bodyH: Math.max(1, bodyBot - bodyTop), wickX: idxToX(c.i), wickY1: priceToY(c.high), wickY2: priceToY(c.low), color,
+        onClick: () => this.selectCandle(c, level, candles),
+        onHover: (e) => this.hoverAt(e, `${level === 'weekly' ? '5日合成K' : '日K主图'} · ${c.date} · O ${this.fmt(c.open)} H ${this.fmt(c.high)} L ${this.fmt(c.low)} C ${this.fmt(c.close)}`),
+      };
+    });
+
+    const fxMarkers = struct.fenxing.map((fx) => {
+      const x = idxToX(fx.idx);
+      const y = fx.type === 'top' ? priceToY(fx.price) - 8 : priceToY(fx.price) + 8;
+      const points = fx.type === 'top' ? `${x - 5},${y + 8} ${x + 5},${y + 8} ${x},${y}` : `${x - 5},${y - 8} ${x + 5},${y - 8} ${x},${y}`;
+      return { points, color: '#6b7280', onClick: () => this.selectItem('fenxing', fx, level), onHover: (e) => this.hoverAt(e, `${fx.type === 'top' ? '顶分型' : '底分型'} · ${fx.date} · ${this.fmt(fx.price)}`) };
+    });
+
+    const biSegs = struct.bi.map((b, i) => {
+      const recent = i >= recentBiStart - 1;
+      return {
+        x1: idxToX(b.start.idx), y1: priceToY(b.start.price), x2: idxToX(b.end.idx), y2: priceToY(b.end.price),
+        color: recent ? '#3f4652' : '#cfcabd', w: recent ? 1.7 : 1,
+        onClick: () => this.selectItem('bi', b, level),
+        onHover: (e) => this.hoverAt(e, `笔·${b.dir === 'up' ? '向上' : '向下'} · ${b.start.date}~${b.end.date}`),
+      };
+    });
+
+    const xdSegs = struct.xianduan.map((xd) => {
+      const recent = xd.biRange[1] >= recentBiStart - 1;
+      return {
+        x1: idxToX(xd.startIdx), y1: priceToY(xd.startPrice), x2: idxToX(xd.endIdx), y2: priceToY(xd.endPrice),
+        color: recent ? '#2b3a55' : '#d8d5cc', w: recent ? 3 : 1.6,
+        onClick: () => this.selectItem('xianduan', xd, level),
+        onHover: (e) => this.hoverAt(e, `线段·${xd.dir === 'up' ? '向上' : '向下'}`),
+      };
+    });
+
+    const xdBoxes = (struct.xdCenters || []).map((zs) => {
+      const x = idxToX(zs.startIdx) - 4, w = idxToX(zs.endIdx) - idxToX(zs.startIdx) + 8;
+      const y = priceToY(zs.zg), h = Math.max(2, priceToY(zs.zd) - priceToY(zs.zg));
+      return {
+        x, y, w, h, fill: 'rgba(43,58,85,0.05)', stroke: '#8f9bb0', strokeW: 1, dash: '6 4',
+        label: w >= 90 ? '线段中枢' : '', labelColor: '#6b7280', labelX: x + 6, labelY: y + 13,
+        onClick: () => this.selectItem('zhongshu', zs, level),
+        onHover: (e) => this.hoverAt(e, `线段中枢（背景级） · ZG ${this.fmt(zs.zg)} / ZD ${this.fmt(zs.zd)}`),
+      };
+    });
+    const biBoxes = (struct.biCenters || []).map((zs, i) => {
+      const isLast = i === struct.biCenters.length - 1;
+      const x = idxToX(zs.startIdx) - 3, w = idxToX(zs.endIdx) - idxToX(zs.startIdx) + 6;
+      const y = priceToY(zs.zg), h = Math.max(2, priceToY(zs.zd) - priceToY(zs.zg));
+      return {
+        x, y, w, h,
+        fill: isLast ? 'rgba(43,58,85,0.10)' : 'rgba(200,196,184,0.14)',
+        stroke: isLast ? '#2b3a55' : '#d8d5cc', strokeW: isLast ? 1.4 : 1, dash: isLast ? '0' : '4 3',
+        label: isLast && w >= 90 ? `笔中枢 ${this.fmt(zs.zd)}–${this.fmt(zs.zg)}` : '', labelColor: '#2b3a55', labelX: x + 6, labelY: y + 13,
+        onClick: () => this.selectItem('zhongshu', zs, level),
+        onHover: (e) => this.hoverAt(e, `笔中枢（操作级） · ZG ${this.fmt(zs.zg)} / ZD ${this.fmt(zs.zd)}`),
+      };
+    });
+
+    const beichiMarkers = struct.beichi.map((bc, i) => {
+      const isLast = i === struct.beichi.length - 1;
+      const x = idxToX(bc.idx), yBase = priceToY(bc.price);
+      const y = bc.dir === 'up' ? yBase - 28 : yBase + 14;
+      return { x: x - 7, y, tx: x, ty: y + 10, rotate: `rotate(45 ${x} ${y + 7})`, opacity: isLast ? 1 : 0.35, onClick: () => this.selectItem('beichi', bc, level), onHover: (e) => this.hoverAt(e, `背驰 · 力度比 ${bc.ratio}`) };
+    });
+
+    const dirColor = (dir) => (dir === 'buy' ? '#1f9d63' : '#d1453a');
+    const annotatedSignals = this.annotateSignals(struct.signals, struct.bi, candles);
+    const sigMarkers = annotatedSignals.map((sig) => {
+      const x = idxToX(sig.idx), yBase = priceToY(sig.price);
+      const y = sig.dir === 'buy' ? yBase + 20 : yBase - 20;
+      const c = dirColor(sig.dir);
+      const isCandidate = sig.status === 'candidate';
+      const isFailed = sig.status === 'failed';
+      return {
+        x, y, r: isFailed ? 10 : 12,
+        label: sig.displayType || sig.type, textColor: isCandidate ? c : '#ffffff',
+        fill: isFailed ? '#c9c5b8' : (isCandidate ? 'none' : c),
+        stroke: isCandidate ? c : (isFailed ? '#b9b5aa' : c),
+        dash: isCandidate ? '3 2' : '0', opacity: isFailed ? 0.55 : 1,
+        onClick: () => this.selectItem('signal', sig, level),
+        onHover: (e) => this.hoverAt(e, `${sig.type} · ${sig.date || ''} · ${this.fmt(sig.price)} · ${isCandidate ? '候选' : isFailed ? '已失效' : '已确认'}${sig.conflictNote ? ' · 与背驰冲突需降级' : ''}`),
+      };
+    });
+
+    let srLines = [];
+    const lastCenter = struct.biCenters[struct.biCenters.length - 1];
+    if (lastCenter) {
+      srLines = [
+        { x1: idxToX(lastCenter.startIdx), y: priceToY(lastCenter.zg), color: '#b8790a', priceLabel: this.fmt(lastCenter.zg), onClick: () => this.selectItem('sr', { price: lastCenter.zg, type: 'resistance', center: lastCenter }, level), onHover: (e) => this.hoverAt(e, `压力位 · ${this.fmt(lastCenter.zg)}`) },
+        { x1: idxToX(lastCenter.startIdx), y: priceToY(lastCenter.zd), color: '#2f7d55', priceLabel: this.fmt(lastCenter.zd), onClick: () => this.selectItem('sr', { price: lastCenter.zd, type: 'support', center: lastCenter }, level), onHover: (e) => this.hoverAt(e, `支撑位 · ${this.fmt(lastCenter.zd)}`) },
+      ];
+    }
+
+    let failLine = null;
+    if (level === 'daily') {
+      const activeSig = this.getCurrentSignal(annotatedSignals);
+      if (activeSig) {
+        const stop = activeSig.stopPrice;
+        const lineName = activeSig.status === 'candidate' ? '候选失效线' : '失败线';
+        failLine = { x1: idxToX(activeSig.stopFromIdx || activeSig.idx), y: priceToY(stop), label: `${lineName} ${this.fmt(stop)}`, onClick: () => this.selectItem('failure', { price: stop, dir: activeSig.dir, signal: activeSig, label: activeSig.dir === 'buy' ? '跌破失效' : '涨破失效' }, level), onHover: (e) => this.hoverAt(e, `${lineName} · ${this.fmt(stop)}`) };
+      }
+    }
+
+    const gridlines = [0, 1, 2, 3].map((k) => { const price = hi - (k / 3) * (hi - lo); return { y: priceToY(price), label: this.fmt(price) }; });
+    const tickCount = Math.max(level === 'weekly' ? 5 : 8, Math.min(level === 'weekly' ? 14 : 28, Math.floor(plotW / 150)));
+    const xTicks = Array.from({ length: tickCount }, (_, k) => {
+      const idx = Math.min(candles.length - 1, Math.round((k / (tickCount - 1)) * (candles.length - 1)));
+      return { x: idxToX(idx), label: candles[idx].date.slice(5) };
+    });
+
+    // 附录A1：阶段带——中枢期(灰) + 离开段(实色，方向取 leaveDir，文字含力度)，两者互不重叠。
+    const bandX = (idx, side) => idxToX(Math.max(0, Math.min(candles.length - 1, idx))) + (side === 'end' ? step / 2 : -step / 2);
+    const laneY = vbH - 58, laneH = 22;
+    const strengthByCenterBi = (struct.strengthBi && struct.strengthBi.byCenter) || {};
+    const verdictSuffix = (zsId) => {
+      const s = strengthByCenterBi[zsId];
+      if (!s || s.status !== 'comparable') return '力度不可比';
+      return s.verdict === 'weak' ? '力度弱' : s.verdict === 'strong' ? '力度强' : '力度平';
+    };
+    const phaseBandRects = [];
+    (struct.trendBi || []).forEach((t) => {
+      const centerObj = (struct.biCenters || []).find((z) => z.id === t.centerId);
+      const zx1 = bandX(t.zoneStartIdx || 0, 'start');
+      const zx2 = bandX(t.zoneEndIdx || t.zoneStartIdx || 0, 'end');
+      const zw = Math.max(3, zx2 - zx1);
+      let zoneLabel = '';
+      if (zw >= 100 && centerObj) zoneLabel = `中枢 ${this.fmt(centerObj.zd)}–${this.fmt(centerObj.zg)}`;
+      else if (zw >= 42) zoneLabel = '中枢';
+      phaseBandRects.push({
+        x: zx1, y: laneY, w: zw, h: laneH, bg: '#efede6', stroke: '#cfcabd', dash: '0', textColor: '#6b6659',
+        tx: zx1 + zw / 2, ty: laneY + 14.5, label: zoneLabel,
+        onClick: () => (centerObj ? this.selectItem('zhongshu', centerObj, level) : null),
+        onHover: (e) => this.hoverAt(e, `中枢期 · ${t.startDate || ''}~${t.endDate || ''}`),
+      });
+      if (t.leaveStartIdx != null && t.leaveEndIdx != null) {
+        const lx1 = bandX(t.leaveStartIdx, 'start');
+        const lx2 = bandX(t.leaveEndIdx, 'end');
+        const lw = Math.max(3, lx2 - lx1);
+        const dir = t.leaveDir;
+        const color = dir === 'up' ? '#1f9d63' : '#d1453a';
+        const arrow = dir === 'up' ? '↑' : '↓';
+        const dirWord = dir === 'up' ? '上涨' : '下跌';
+        const suffix = verdictSuffix(t.centerId);
+        let label = '';
+        if (lw >= 120) label = `${arrow} ${dirWord} · ${suffix}`;
+        else if (lw >= 58) label = `${arrow} ${dirWord}`;
+        else if (lw >= 22) label = arrow;
+        const sInfo = strengthByCenterBi[t.centerId];
+        const dashed = sInfo && sInfo.status === 'comparable' && sInfo.verdict === 'weak';
+        phaseBandRects.push({
+          x: lx1, y: laneY, w: lw, h: laneH, bg: color, stroke: color, dash: dashed ? '4 3' : '0', textColor: '#ffffff',
+          tx: lx1 + lw / 2, ty: laneY + 14.5, label,
+          onClick: () => this.selectItem('trend', this.trendInfo(struct), level),
+          onHover: (e) => this.hoverAt(e, `${dir === 'up' ? '↑上涨' : '↓下跌'} · ${t.startDate || ''}~${t.endDate || ''} · 离开笔中枢 [${centerObj ? this.fmt(centerObj.zd) : ''}, ${centerObj ? this.fmt(centerObj.zg) : ''}] · ${suffix}`),
+        });
+      }
+    });
+
+    // 附录A2：在价格图上高亮最新一个离开段，减少视线在图表底部与价格区之间的往返。
+    let leaveHighlight = null;
+    const lastBiCenterForUi = struct.biCenters[struct.biCenters.length - 1];
+    if (lastBiCenterForUi && lastBiCenterForUi.leaveObj) {
+      const C = lastBiCenterForUi.leaveObj;
+      const hx1 = idxToX(C.start.idx), hy1 = priceToY(C.start.price);
+      const hx2 = idxToX(C.end.idx), hy2 = priceToY(C.end.price);
+      const dir = lastBiCenterForUi.leaveDir;
+      const color = dir === 'up' ? '#1f9d63' : '#d1453a';
+      const suffixUi = verdictSuffix(lastBiCenterForUi.id);
+      const capLabel = `${dir === 'up' ? '↑ 向上离开中枢' : '↓ 向下离开中枢'} · ${suffixUi}`;
+      const capH = 20;
+      const capW = Math.max(110, capLabel.length * 12 + 24);
+      let capTopY = dir === 'up' ? (hy2 - 22 - capH) : (hy2 + 22);
+      capTopY = Math.max(2, Math.min(vbH - capH - 2, capTopY));
+      let capX = hx2 - capW / 2;
+      capX = Math.max(marginLeft, Math.min(gridX2 - capW, capX));
+      leaveHighlight = {
+        x1: hx1, y1: hy1, x2: hx2, y2: hy2, color,
+        capX, capY: capTopY, capW, capH, capTx: capX + capW / 2, capTy: capTopY + capH / 2 + 4,
+        label: capLabel,
+        onClick: () => this.selectItem('trend', this.trendInfo(struct), level),
+      };
+    }
+
+    // 附录A3：图表上方的三枚一眼摘要胶囊。
+    const trendInfoObj = this.trendInfo(struct);
+    const strengthObjUi = this.strengthInfo(struct);
+    let curBg = '#f0eee6', curColor = '#7a766a';
+    if (trendInfoObj.current.leaveDir === 'up') { curBg = '#e6f4ec'; curColor = '#1f7d50'; }
+    else if (trendInfoObj.current.leaveDir === 'down') { curBg = '#fae9e7'; curColor = '#b23b30'; }
+    // 胶囊只给一句可读结论 + 具体比值，不重复"弱/动能减弱"这类同义词。
+    let stBg = '#f0eee6', stColor = '#8b8677';
+    let stText = strengthObjUi.status === 'incomparable' ? '不可比（无同向参照段）' : '不可比（动能过弱）';
+    if (strengthObjUi.status === 'comparable') {
+      const dirWord = (strengthObjUi.dir || (lastBiCenterForUi && lastBiCenterForUi.leaveDir)) === 'up' ? '上涨' : '下跌';
+      const ratioTxt = strengthObjUi.ratio != null ? ` ${strengthObjUi.ratio.toFixed(2)}` : '';
+      if (strengthObjUi.verdict === 'weak') { stBg = '#fdf1de'; stColor = '#9a5c04'; stText = `${dirWord}减弱${ratioTxt}`; }
+      else if (strengthObjUi.verdict === 'strong') {
+        const up = dirWord === '上涨';
+        stBg = up ? '#e6f4ec' : '#fae9e7'; stColor = up ? '#1f7d50' : '#b23b30'; stText = `${dirWord}增强${ratioTxt}`;
+      } else { stBg = '#f0eee6'; stColor = '#7a766a'; stText = `${dirWord}持平${ratioTxt}`; }
+    }
+    const summaryChips = [
+      { text: `背景 · ${trendInfoObj.background.label}`, bg: '#eef1f5', color: '#2b3a55', onClick: () => this.selectItem('trend', trendInfoObj, level) },
+      { text: `当前 · ${trendInfoObj.current.label}`, bg: curBg, color: curColor, onClick: () => this.selectItem('trend', trendInfoObj, level) },
+      { text: `力度 · ${stText}`, bg: stBg, color: stColor, onClick: () => this.selectItem('strength', strengthObjUi, level) },
+    ];
+
+    const trendLabelFull = { up: '上涨趋势', down: '下跌趋势', range: '盘整', pending: '构建中' };
+    const trendColorFull = { up: { bg: 'rgba(31,157,99,0.14)', text: '#1f7d50' }, down: { bg: 'rgba(209,69,58,0.14)', text: '#b23b30' }, range: { bg: '#eceae3', text: '#7a766a' }, pending: { bg: '#eceae3', text: '#a19c8c' } };
+    const trendBands = (struct.trendBi || []).map((t) => { const c = trendColorFull[t.trend] || trendColorFull.range; return { grow: Math.max(1, (t.zoneEndIdx || t.zoneStartIdx) - t.zoneStartIdx + 1), bg: c.bg, textColor: c.text, label: trendLabelFull[t.trend] || '盘整', title: `${t.startDate || ''} ~ ${t.endDate || ''}` }; });
+
+    let linkOverlay = null;
+    if (level === 'daily' && linkedRange) {
+      const sIdx = candles.findIndex((c) => c.date >= linkedRange.startDate);
+      const eIdx = candles.findIndex((c) => c.date >= linkedRange.endDate);
+      if (sIdx >= 0) { const x1 = idxToX(sIdx) - step / 2; const x2 = idxToX(eIdx >= 0 ? eIdx : candles.length - 1) + step / 2; linkOverlay = { x: x1, w: Math.max(4, x2 - x1) }; }
+    }
+    let focusRect = null;
+    if (level === 'daily' && focusRange) {
+      const x1 = idxToX(focusRange.startIdx) - step / 2, x2 = idxToX(focusRange.endIdx) + step / 2;
+      focusRect = { x: x1, w: Math.max(4, x2 - x1) };
+    }
+
+    return {
+      vbW, vbH, vbAspect: `${vbW} / ${vbH}`, marginLeft, marginTop, gridX2, gridLabelX, plotH, axisY: vbH - 22, axisY2: vbH - 17, tickY: vbH - 5,
+      phaseLaneLabelY: laneY + 14,
+      dateRange: `${candles[0].date} ~ ${candles[candles.length - 1].date}`,
+      candles: candleVMs, fxMarkers, biSegs, xdSegs, xdBoxes, biBoxes, beichiMarkers, sigMarkers, srLines, failLine, gridlines, xTicks,
+      trendBands, phaseBandRects, leaveHighlight, summaryChips, linkOverlay, focusRect,
+    };
+  }
+
+  computeJudgment(daily, weekly, dailyCandles) {
+    const trend = this.trendInfo(daily);
+    const strength = this.strengthInfo(daily);
+    const divergence = this.currentDivergenceInfo(daily);
+    const annotated = this.annotateSignals(daily.signals, daily.bi, dailyCandles);
+    const currentSignal = this.getCurrentSignal(annotated);
+    const lastCenter = daily.biCenters[daily.biCenters.length - 1];
+    const lastPen = daily.bi[daily.bi.length - 1];
+    const nameMap = { '1B': '一买', '2B': '二买', '3B': '三买', '1S': '一卖', '2S': '二卖', '3S': '三卖' };
+
+    // 数据新鲜度：最后一笔尚未封闭（provisional），其后有多少根K线还没有形成新的确认结构。
+    const nAfterLastPen = lastPen ? (dailyCandles.length - 1 - lastPen.end.idx) : (dailyCandles.length - 1);
+    const freshnessLine = nAfterLastPen <= 0 ? '结构已更新至最新K线' : `最后一笔未封闭，其后 ${nAfterLastPen} 根K线尚未形成新分型`;
+
+    let sigName = '暂无信号', statusSuffix = '', levelLine, confirmLine, failLineTxt;
+    if (currentSignal) {
+      const nm = nameMap[currentSignal.type] || currentSignal.type;
+      sigName = currentSignal.stage === 'leave' && currentSignal.displayType ? `${nm}（${currentSignal.displayType}观察）` : nm;
+      if (currentSignal.status === 'confirmed') {
+        statusSuffix = '已确认';
+        levelLine = '已达确认级别（笔中枢操作级）';
+        confirmLine = '结构已确认；继续跟踪失效条件，不代表结构不会再变化';
+      } else if (currentSignal.status === 'candidate') {
+        statusSuffix = '候选';
+        if (currentSignal.conflictNote) levelLine = currentSignal.conflictNote;
+        else if (currentSignal.stage === 'leave') levelLine = '当前仅到"突破观察"级别；回踩完成后可升级为确认三买/三卖';
+        else levelLine = '候选中，等待条件满足后确认';
+        confirmLine = currentSignal.needsCondition || '等待后续结构完成确认条件';
+      } else {
+        statusSuffix = '已证伪';
+        levelLine = '该信号已证伪，等待新的中枢与离开段';
+        confirmLine = '等待新的分型 / 笔 / 中枢重新形成';
+      }
+      failLineTxt = currentSignal.stopPrice != null
+        ? `${currentSignal.dir === 'buy' ? '收盘跌破' : '收盘涨破'} ${this.fmt(currentSignal.stopPrice)} 视为该判断失效${currentSignal.failedAt ? `，已在 ${currentSignal.failedAt} 触发` : ''}`
+        : '暂无明确防守位';
+    } else {
+      levelLine = '暂无信号，等待新的中枢与离开段';
+      confirmLine = lastCenter ? `等待价格离开中枢 [${this.fmt(lastCenter.zd)}, ${this.fmt(lastCenter.zg)}] 并完成回踩/反抽，或出现背驰信号` : '结构不足，等待笔中枢形成';
+      failLineTxt = lastCenter ? `跌破 ${this.fmt(lastCenter.zd)} 或涨破 ${this.fmt(lastCenter.zg)} 需重新判断` : '暂无';
+    }
+    // 同一中枢上若同时存在背驰类(1B/1S)与突破类(3B/3S)的未证伪信号，结论行必须同时呈现两种读法，
+    // 否则标题只显示其中一个，会让使用者忽略与之互斥的另一种可能。
+    const liveOnCenter = lastCenter
+      ? annotated.filter((s) => s.zsId === lastCenter.id && s.status !== 'failed')
+      : [];
+    const divergenceSig = liveOnCenter.find((s) => s.type === '1B' || s.type === '1S');
+    const breakoutSig = liveOnCenter.find((s) => s.type === '3B' || s.type === '3S');
+    let conclusion;
+    if (divergenceSig && breakoutSig) {
+      const dName = nameMap[divergenceSig.type] || divergenceSig.type;
+      const bName = nameMap[breakoutSig.type] || breakoutSig.type;
+      const dvWord = divergenceSig.type === '1S' ? '顶背驰' : '底背驰';
+      conclusion = `${trend.current.label}，但出现${dvWord}｜${dName}与${bName}两种读法冲突，均未确认`;
+    } else {
+      conclusion = `${trend.current.label}｜${sigName}${statusSuffix ? `（${statusSuffix}）` : ''}`;
+    }
+
+    let reversalLine;
+    if (divergence.current) reversalLine = divergence.line;
+    else if (currentSignal && currentSignal.status === 'candidate') reversalLine = '已有候选信号，但尚未完成确认，不能提前当作转折';
+    else if (currentSignal && currentSignal.status === 'failed') reversalLine = '最近信号已失败，按新结构重新评估';
+    else reversalLine = divergence.line;
+
+    // 「下一步」是要做的动作，不重复「确认条件」的原文，否则面板里三行讲同一件事。
+    let task;
+    if (currentSignal && currentSignal.status === 'candidate') {
+      if (divergenceSig && breakoutSig) {
+        task = `等下一段回踩走完：守住 ${this.fmt(breakoutSig.boundary != null ? breakoutSig.boundary : (lastCenter ? lastCenter.zg : 0))} 则偏向突破延续，跌回中枢则偏向背驰兑现`;
+      } else if (currentSignal.stage === 'leave') {
+        task = '等下一段回踩走完，再看是否守住中枢边界';
+      } else {
+        task = '跟踪回抽/反抽是否满足确认条件';
+      }
+    } else if (currentSignal && currentSignal.status === 'confirmed') {
+      task = '跟踪价格是否继续沿信号方向运行，关注失效条件';
+    } else {
+      task = '观察是否出现新的分型/笔离开当前区间';
+    }
+
+    let action;
+    if (!currentSignal) action = '尚未确认，不满足确认条件前不作操作结论';
+    else if (currentSignal.status === 'confirmed') action = '该判断已达确认级别；继续以失效条件为准跟踪，不等同交易指令';
+    else if (currentSignal.status === 'candidate') action = '尚未确认，不满足确认条件前不作操作结论';
+    else action = '已证伪，重新等待新的中枢与离开段';
+
+    return {
+      conclusion,
+      currentLine: trend.current.line,
+      currentColor: trend.current.color,
+      strengthLine: strength.line,
+      strengthColor: strength.color,
+      backgroundLine: trend.background.line,
+      freshnessLine,
+      reversalLine,
+      confirmLine,
+      failLine: failLineTxt,
+      levelLine,
+      task,
+      action,
+      annotated, currentSignal, trendInfo: trend, strengthInfo: strength, divergenceInfo: divergence,
+    };
+  }
+
+  renderVals() {
+    const { daily, weekly, dataMeta, mode, chartZoom, layers, selected, hover, linkedRange, focusRange, symbolInput, loading, loadError, recentSymbols, activeSymbol } = this.state;
+    const ready = !!(daily && weekly);
+
+    const recentChips = (recentSymbols || []).map((s) => {
+      const pure = (s.code || '').replace(/^(sh|sz|bj)/i, '');
+      return { code: s.code, label: `${s.name || pure}${pure}`, onClick: () => this.loadSymbol(s.code) };
+    });
+    const loadingCodeLabel = (symbolInput && symbolInput.trim()) || (activeSymbol && activeSymbol.code) || '';
+
+    const modeOptions = ['daily', 'link', 'weekly'].map((m) => ({ label: m === 'link' ? '双图对照' : m === 'weekly' ? '5日合成K' : '日K主图', bg: mode === m ? '#ffffff' : 'transparent', color: mode === m ? '#1c1f26' : '#8b8677', onClick: () => this.setMode(m) }));
+
+    const layerDefs = [
+      { key: 'fenxing', label: '分型', dot: '#6b7280' }, { key: 'bi', label: '笔', dot: '#3f4652' }, { key: 'xianduan', label: '线段', dot: '#2b3a55' },
+      { key: 'zhongshuBi', label: '笔中枢', dot: '#2b3a55' }, { key: 'zhongshuXd', label: '线段中枢', dot: '#8f9bb0' },
+      { key: 'beichi', label: '背驰', dot: '#c9820a' }, { key: 'signals', label: '买卖点', dot: '#1f9d63' },
+      { key: 'sr', label: '压力/支撑', dot: '#b8790a' }, { key: 'failure', label: '防守/失败线', dot: '#b23b30' },
+    ];
+    const layerChips = layerDefs.map((d) => { const on = layers[d.key]; return { ...d, toggle: () => this.toggleLayer(d.key), bg: on ? '#eef1f5' : '#ffffff', border: on ? '#c3cbd6' : '#e2ddd0', color: on ? '#2b3a55' : '#9c9788' }; });
+
+    let panels = [], stages = [], judgment = null, annotatedDaily = [];
+    if (ready) {
+      annotatedDaily = this.annotateSignals(daily.signals, daily.bi, daily.candles);
+      judgment = this.computeJudgment(daily, weekly, daily.candles);
+      stages = this.computeStages(daily).map((st) => {
+        const kindColor = { buy: '#1f9d63', sell: '#d1453a', beichi: '#b8790a', trend: '#6b7280' }[st.kind] || '#6b7280';
+        const active = focusRange && focusRange.startIdx === st.startIdx;
+        return { ...st, onClick: () => this.focusStage(st), bg: active ? kindColor : '#f6f5f0', color: active ? '#ffffff' : kindColor, border: active ? kindColor : '#e2ddd0' };
+      });
+
+      const wantWeekly = mode === 'link' || mode === 'weekly';
+      const wantDaily = mode === 'link' || mode === 'daily';
+      const dailyRecentStart = this.recentBiStart(daily);
+      const weeklyRecentStart = this.recentBiStart(weekly);
+      if (wantWeekly) {
+        const weeklyHeight = mode === 'weekly' ? 460 : 240;
+        const weeklyBase = mode === 'weekly' ? Math.max(1200, weekly.candles.length * 56 + 140) : Math.max(1100, weekly.candles.length * 46 + 120);
+        const weeklyWidth = Math.max(900, Math.round(weeklyBase * chartZoom));
+        const vm = this.buildChartVM(weekly, layers, weeklyWidth, weeklyHeight, 'weekly', { linkedRange: null, focusRange: null, recentBiStart: weeklyRecentStart });
+        panels.push({ ...vm, title: '5日合成K对照', hint: mode === 'link' ? '点击一根合成K，高亮对应日K区间' : '只作较大观察层参考，不等同严格级别', key: 'weekly', isWeekly: true });
+      }
+      if (wantDaily) {
+        const dailyHeight = mode === 'daily' ? 540 : 460;
+        const dailyBase = Math.max(mode === 'daily' ? 1800 : 1500, daily.candles.length * 14 + 160);
+        const dailyWidth = Math.max(900, Math.round(dailyBase * chartZoom));
+        const vm = this.buildChartVM(daily, layers, dailyWidth, dailyHeight, 'daily', { linkedRange, focusRange, recentBiStart: dailyRecentStart });
+        panels.push({ ...vm, title: '日K主图', hint: '在同一张K线上观察分型、笔、中枢、阶段与买卖点', key: 'daily', isDaily: true });
+      }
+    }
+
+    let selectedDetail = null;
+    if (selected) {
+      const d = this.explain(selected.kind, selected.payload);
+      if (d) selectedDetail = { ...d, meta: `${selected.level === 'weekly' ? '5日合成K' : '日K主图'} · ${d.meta}` };
+    }
+
+    let activeRows = [];
+    if (ready) {
+      const activeLevel = mode === 'weekly' ? 'weekly' : 'daily';
+      const activeStruct = activeLevel === 'weekly' ? weekly : daily;
+      const activeAnnotated = this.annotateSignals(activeStruct.signals, activeStruct.bi, activeStruct.candles);
+      const activeSig = this.getCurrentSignal(activeAnnotated);
+      const lastBi = activeStruct.bi[activeStruct.bi.length - 1];
+      const lastZs = activeStruct.biCenters[activeStruct.biCenters.length - 1];
+      const activeTrend = this.trendInfo(activeStruct);
+      const activeStrength = this.strengthInfo(activeStruct);
+      const activeDivergence = this.currentDivergenceInfo(activeStruct);
+      activeRows = [
+        { label: `${activeLevel === 'weekly' ? '合成K' : '主图'}当前`, value: activeTrend.current.label, color: activeTrend.current.color, onClick: () => this.selectItem('trend', activeTrend, activeLevel) },
+        { label: '背景方向', value: activeTrend.background.label, color: activeTrend.background.color, onClick: () => this.selectItem('trend', activeTrend, activeLevel) },
+        { label: '当前力度', value: activeStrength.label, color: activeStrength.color, onClick: () => this.selectItem('strength', activeStrength, activeLevel) },
+        { label: `${activeLevel === 'weekly' ? '合成K' : '主图'}最新笔中枢`, value: lastZs ? `${this.fmt(lastZs.zd)} ~ ${this.fmt(lastZs.zg)}` : '—', color: '#2b3a55', onClick: lastZs ? (() => this.selectItem('zhongshu', lastZs, activeLevel)) : null },
+        { label: '最新笔方向', value: lastBi ? (lastBi.dir === 'up' ? '向上' : '向下') : '—', color: lastBi && lastBi.dir === 'up' ? '#1f9d63' : '#d1453a', onClick: lastBi ? (() => this.selectItem('bi', lastBi, activeLevel)) : null },
+        { label: '最新信号', value: activeSig ? `${activeSig.displayType || activeSig.type}（${activeSig.status === 'candidate' ? '候选' : activeSig.status === 'failed' ? '失效' : '确认'}）` : '暂无', color: activeSig ? (activeSig.status === 'candidate' ? '#b8790a' : activeSig.status === 'failed' ? '#9c9788' : (activeSig.dir === 'buy' ? '#1f9d63' : '#d1453a')) : '#9c9788', onClick: activeSig ? (() => this.selectItem('signal', activeSig, activeLevel)) : null },
+        { label: '当前背驰', value: activeDivergence.label, color: activeDivergence.color, onClick: activeDivergence.current ? (() => this.selectItem('beichi', activeDivergence.current, activeLevel)) : (() => this.selectItem('strength', activeStrength, activeLevel)) },
+      ];
+    }
+
+    const legendRows = [
+      { swatch: '#6b7280', mark: '▲', label: '顶/底分型', desc: '默认隐藏，学习视图可开启' },
+      { swatch: '#3f4652', mark: '', label: '笔', desc: '深色=当前结构，浅灰=历史' },
+      { swatch: '#2b3a55', mark: '', label: '笔中枢（操作级）', desc: '实色高亮=最近中枢，其余为历史，虚线=历史边界' },
+      { swatch: '#8f9bb0', mark: '', label: '线段中枢（背景级）', desc: '虚线大框，代表更高一级背景方向' },
+      { swatch: '#7a766a', mark: '', label: '阶段带', desc: '灰=中枢期，绿/红=离开段（箭头为方向，文字含力度）' },
+      { swatch: '#c9820a', mark: '背', label: '背驰', desc: '最近一次为高亮，历史淡化' },
+      { swatch: '#1f9d63', mark: '1B', label: '买点（实心=确认）', desc: '空心虚线=候选，灰色=已失效' },
+      { swatch: '#d1453a', mark: '1S', label: '卖点（实心=确认）', desc: '空心虚线=候选，灰色=已失效' },
+      { swatch: '#b8790a', mark: '', label: '压力/支撑位', desc: '仅显示当前中枢的上下沿' },
+      { swatch: '#b23b30', mark: '', label: '防守/失败线', desc: '当前最相关信号的止损参考位' },
+    ];
+
+    return {
+      ready, notReady: !ready,
+      modeOptions, layerChips, layers, panels, stages, judgment,
+      zoomLabel: `${Math.round((chartZoom || 1) * 100)}%`,
+      zoomOut: () => this.zoomBy(-0.2),
+      zoomIn: () => this.zoomBy(0.2),
+      resetZoom: () => this.resetZoom(),
+      fitAll: () => this.fitAll(),
+      symbolLine: dataMeta ? `${dataMeta.name} · ${dataMeta.symbol}` : '招商银行 · 600036',
+      dataLine: dataMeta ? `真实历史${dataMeta.adjustment || ''}日K · ${dataMeta.begin}~${dataMeta.end} · ${dataMeta.source} · SPEC v0.4 · 笔中枢(操作级)+线段中枢(背景级)` : '真实行情加载中 · 非交易信号',
+      selectedDetail, showActiveList: !selected, showLegend: false,
+      activeRows, legendRows, hover,
+      clearSelected: () => this.clearSelected(),
+      clearIfBg: (e) => { if (e.target === e.currentTarget) this.clearSelected(); },
+      clearHover: () => this.clearHover(),
+      symbolInputValue: symbolInput || '',
+      onSymbolInput: (e) => this.setState({ symbolInput: e.target.value }),
+      // 兼容不同环境对回车键的命名（Enter / Return）与老式 keyCode。
+      onSymbolKeyDown: (e) => { if (e.key === 'Enter' || e.key === 'Return' || e.keyCode === 13) this.loadSymbol(); },
+      onLoadClick: () => this.loadSymbol(),
+      onRefreshClick: () => this.refreshCurrent(),
+      loadDisabled: !!loading,
+      refreshDisabled: !!loading || !activeSymbol,
+      loadBtnLabel: loading ? '加载中…' : '加载',
+      loadBtnBg: loading ? '#8b8677' : '#2b3a55',
+      recentChips,
+      hasLoadError: !!loadError,
+      loadErrorText: loadError || '',
+      isLoadingSymbol: !!loading,
+      loadingText: `正在获取 ${loadingCodeLabel} 行情…`,
+    };
+  }
+
+  explain(kind, payload) {
+    const f = this.fmt.bind(this);
+    const statusStyle = {
+      confirmed: { bg: '#e6f4ec', color: '#1f7d50', label: '已确认' },
+      candidate: { bg: '#fdf1de', color: '#b8790a', label: '候选' },
+      failed: { bg: '#f0eee6', color: '#8b8677', label: '已失效' },
+      neutral: { bg: '#eef1f5', color: '#2b3a55', label: '结构' },
+    };
+    switch (kind) {
+      case 'candle': {
+        const s = statusStyle.neutral;
+        return { title: 'K线', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${payload.date} · 收 ${f(payload.close)}`, source: '原始K线数据',
+          rule: `开 ${f(payload.open)} / 高 ${f(payload.high)} / 低 ${f(payload.low)} / 收 ${f(payload.close)}。`,
+          confirm: 'K线收盘后，该根K线数据固定；但它是否成为分型、笔端点，需要等待右侧结构确认。',
+          invalidate: '单根K线本身不谈失效；后续只会影响它在结构中的角色。',
+          action: '用来定位价格位置，不单独作为买卖依据。' };
+      }
+      case 'trend': {
+        const cur = payload.current, bg = payload.background;
+        const s = cur.hasLeft ? statusStyle.candidate : statusStyle.neutral;
+        return {
+          title: `当前 · ${cur.label}`,
+          statusBg: s.bg, statusColor: s.color, statusLabel: cur.hasLeft ? '候选/观察' : '结构',
+          meta: cur.zone ? `[${f(cur.zone[0])}, ${f(cur.zone[1])}]` : '暂无笔中枢区间',
+          source: '笔中枢（操作级）离开状态 + 线段中枢（背景级）关系',
+          rule: `当前：${cur.line}`,
+          confirm: `背景：${bg.line}`,
+          invalidate: cur.hasLeft ? '若价格重新回到中枢区间内，离开状态被否定，需要重新观察。' : '若价格向任一方向真正离开中枢，状态才会改变。',
+          action: '当前层回答"现在正在发生什么"，背景层回答"更大格局是什么"；两者分开看，不能用一个结论互相替代。',
+        };
+      }
+      case 'strength': {
+        const s = payload.status === 'comparable' ? (payload.verdict === 'weak' ? statusStyle.candidate : payload.verdict === 'strong' ? statusStyle.confirmed : statusStyle.neutral) : statusStyle.neutral;
+        return {
+          title: `力度 · ${payload.label}`,
+          statusBg: s.bg, statusColor: s.color, statusLabel: payload.status === 'comparable' ? '可比较' : '不可比',
+          meta: payload.status === 'comparable' && payload.A && payload.C ? `A:${payload.A.startDate}~${payload.A.endDate} / C:${payload.C.startDate}~${payload.C.endDate}` : '样本不足',
+          source: '中枢进入段(A) vs 离开段(C) 的 MACD 面积比',
+          rule: payload.status === 'comparable'
+            ? `进入段 A（${payload.A.startDate}~${payload.A.endDate}）面积 ${f(payload.areaA)}，离开段 C（${payload.C.startDate}~${payload.C.endDate}）面积 ${f(payload.areaC)}，比值 ${payload.ratio.toFixed(2)}。`
+            : (payload.reason || '同向参照段不足，或两段动能都过小，暂不能比较。'),
+          confirm: payload.status === 'comparable' ? '比较基于已走完的进入段与离开段，可直接引用。' : '需要出现同向参照段，且两段MACD动能都不过小，才能比较。',
+          invalidate: '若离开段继续延伸并刷新极值，比值会被重新计算，结论可能改变。',
+          action: '力度只是"趋势可能衰竭"的提示灯，不单独构成操作依据。',
+        };
+      }
+      case 'fenxing': {
+        const isTop = payload.type === 'top'; const s = statusStyle.neutral;
+        return { title: isTop ? '顶分型' : '底分型', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${payload.date} · ${f(payload.price)}`, source: '由三根处理后K线的高低点比较得出',
+          rule: `中间K线的最${isTop ? '高价同时高于左右两根' : '低价同时低于左右两根'}，形成局部${isTop ? '高点' : '低点'}。`,
+          confirm: '右侧一根K线收盘后即完成比较，分型成立。', invalidate: `若后续创出更${isTop ? '高的高点' : '低的低点'}，该分型被新的分型取代。`, action: '仅是最小结构单位，不单独构成操作依据。' };
+      }
+      case 'bi': {
+        const s = statusStyle.neutral;
+        return { title: `笔 · ${payload.dir === 'up' ? '向上' : '向下'}`, statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${payload.start.date} ~ ${payload.end.date} · 幅度 ${f(payload.range)}`, source: '连接一顶分型与一底分型',
+          rule: '两分型之间间隔足够的独立K线，是缠论最小的走势单位。', confirm: '两端分型都确认后，笔即成立。', invalidate: '若价格反向突破该笔起点价格，笔被延伸或替换。', action: '单独一笔不构成操作依据，需结合中枢与背驰判断。' };
+      }
+      case 'xianduan': {
+        const s = statusStyle[payload.status] || statusStyle.neutral;
+        const ev = payload.evidence || {};
+        return { title: `线段 · ${payload.dir === 'up' ? '向上' : '向下'}`, statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${f(payload.startPrice)} → ${f(payload.endPrice)}`, source: '由至少三笔重叠种子与特征序列分型推导',
+          rule: `起始三笔需有公共区间；随后按${payload.dir === 'up' ? '向下笔' : '向上笔'}作为特征序列检查线段结束。`,
+          confirm: payload.status === 'confirmed' ? `确认依据：${ev.featureCase === 'case1_no_gap' ? '第一类，无缺口特征序列分型。' : ev.featureCase === 'case2_gap' ? '第二类，缺口特征序列分型，且下一线段已验证。' : '特征序列结束证据。'}` : `尚未确认：${(payload.rejection_reasons || []).join('；') || '等待右侧特征序列证据'}`,
+          invalidate: '若后续特征序列缺口分支没有完成第二序列确认，或原方向恢复，需要重新划分后缀。',
+          action: '线段用于生成线段中枢（背景级）；候选线段不能作为严格中枢输入。' };
+      }
+      case 'zhongshu': {
+        const s = statusStyle[payload.status] || statusStyle.neutral;
+        const isXd = payload.level === 'xianduan';
+        return { title: isXd ? '线段中枢（背景级）' : '笔中枢（操作级）', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `ZG ${f(payload.zg)} / ZD ${f(payload.zd)}`, source: isXd ? '连续3个确认线段区间重叠' : '连续3个笔区间重叠',
+          rule: 'ZD=max(组成对象低点)，ZG=min(组成对象高点)，且 ZD<ZG 才是有效重叠区。',
+          confirm: payload.status === 'confirmed' ? '组成对象均已确认，且三段重叠成立。' : `尚非严格中枢：${(payload.rejection_reasons || []).join('；') || '依赖对象还不是确认结构'}`,
+          invalidate: '后续同级对象完全脱离 [ZD, ZG] 后，原中枢结束，并等待新中枢或扩张关系。',
+          action: isXd ? '线段中枢代表更大级别的背景方向，不直接给出操作点。' : '笔中枢边界可作为压力/支撑参考，是买卖点判断的直接依据层级。' };
+      }
+      case 'beichi': {
+        const s = statusStyle[payload.status] || statusStyle.candidate;
+        return { title: '背驰候选', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `力度比 ${payload.ratio}`, source: '比较中枢进入段(A)与离开段(C)力度',
+          rule: '使用MACD柱面积比较：C段（离开段）创新高/新低，但同向柱面积小于A段（进入段）。',
+          confirm: `当前${payload.status === 'confirmed' ? '已确认' : '仍为候选'}：${(payload.rejection_reasons || []).join('；') || '—'}。A面积 ${payload.areaA == null ? '—' : f(payload.areaA)}，C面积 ${payload.areaC == null ? '—' : f(payload.areaC)}。`,
+          invalidate: '若后续同向离开段继续增强并刷新极值，或中枢重划，该背驰候选失效。',
+          action: '背驰只是买卖点前置条件；未完成确认前不作为操作点。' };
+      }
+      case 'signal': {
+        const map = {
+          '1B': ['第一类买点', '底背驰后的理论转折信号，表示下跌力度开始衰竭，但仍要等待后续结构验证。', '背驰笔走完、出现底分型时确认。', '价格收盘跌破该低点并创出新低，一买失效。', '教学标记为理论买点；实际动作要结合仓位、级别和失败线。'],
+          '1S': ['第一类卖点', '顶背驰后的理论转折信号，表示上涨力度开始衰竭，但仍要等待后续结构验证。', '背驰笔走完、出现顶分型时确认。', '价格收盘涨破该高点并创出新高，一卖失效。', '教学标记为理论卖点；实际动作要结合仓位、级别和失败线。'],
+          '2B': ['第二类买点', '一买后的首次回抽不创新低，用来观察反转是否开始延续。', '回抽笔走完且未跌破一买位置时确认。', '回抽反而跌破一买位置，二买失效。', '比一买多了一次回抽验证，但仍不是无风险信号。'],
+          '2S': ['第二类卖点', '一卖后的首次反抽不创新高，用来观察转弱是否开始延续。', '反抽笔走完且未涨破一卖位置时确认。', '反抽涨破一卖位置，二卖失效。', '比一卖多了一次反抽验证，但仍需要看失败线。'],
+          '3B': ['第三类买点', '离开中枢上沿后回抽不回中枢，表示价格暂时摆脱原中枢。', '回抽笔走完仍站在中枢上沿之外时确认。', '回抽价格重新进入中枢区间，三买失效。', '教学标记为突破后回踩确认点，不代表自动满仓。'],
+          '3S': ['第三类卖点', '离开中枢下沿后反抽不回中枢，表示价格暂时脱离原中枢。', '反抽笔走完仍站在中枢下沿之外时确认。', '反抽价格重新进入中枢区间，三卖失效。', '教学标记为跌破后反抽确认点，不代表自动清仓。'],
+        };
+        const m = map[payload.type];
+        const status = payload.status || 'confirmed';
+        const s = statusStyle[status];
+        const confirmBase = status === 'candidate' ? (payload.needsCondition || m[2]) : m[2];
+        const confirmText = payload.conflictNote ? `${confirmBase}（${payload.conflictNote}）` : confirmBase;
+        const failText = payload.stopPrice != null ? `${m[3]} 本次参考线：${f(payload.stopPrice)}${payload.failedAt ? `，已在 ${payload.failedAt} 触发。` : '。'}` : m[3];
+        if (payload.stage === 'leave') {
+          const isBuy = payload.dir === 'buy';
+          return {
+            title: isBuy ? '向上突破观察点（三买前置）' : '向下破位观察点（三卖前置）',
+            statusBg: s.bg, statusColor: s.color, statusLabel: s.label,
+            meta: `${payload.date || ''} · ${f(payload.price)}`,
+            source: `来自中枢 ${payload.zsId || ''}`,
+            rule: isBuy ? '当前向上离开中枢上沿，但第三类买点要等回踩不回中枢后才成立。' : '当前向下离开中枢下沿，但第三类卖点要等反抽不回中枢后才成立。',
+            confirm: confirmText,
+            invalidate: failText,
+            action: '这是观察标记，不是确认买卖点；真正动作要等回踩/反抽完成。'
+          };
+        }
+        return { title: m[0] + (status === 'candidate' ? '（候选）' : ''), statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${payload.date || ''} · ${f(payload.price)}`, source: `来自中枢 ${payload.zsId || ''}`, rule: m[1], confirm: confirmText, invalidate: failText, action: status === 'failed' ? '该信号已失败，不作为操作依据，等待新结构。' : (status === 'candidate' ? '仅观察，不满足确认条件前不操作。' : m[4]) };
+      }
+      case 'sr': {
+        const s = statusStyle.neutral;
+        return { title: payload.type === 'resistance' ? '压力位' : '支撑位', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${f(payload.price)}`, source: '取自当前中枢边界',
+          rule: '当前中枢的上沿（压力）/下沿（支撑），用于观察价格是否离开或重新回到中枢。', confirm: payload.center ? `由 ${payload.center.startDate} ~ ${payload.center.endDate} 的中枢确认时同步确定。` : '由当前中枢确认时同步确定。', invalidate: '价格有效突破并站稳其外侧后，旧边界的意义会下降，并随新中枢形成而更新。', action: '作为观察价格能否突破/跌破的参考位，本身不是操作信号。' };
+      }
+      case 'failure': {
+        const s = statusStyle.neutral;
+        const sig = payload.signal;
+        const dirText = payload.dir === 'buy' ? '买点向下失败' : '卖点向上失败';
+        return { title: '防守位 / 失败线', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${f(payload.price)}`, source: sig ? `来自 ${sig.type} · ${sig.date || ''}` : '来自当前最相关买卖点/候选',
+          rule: sig && sig.status === 'candidate' ? '候选信号尚未确认，这条线表示候选条件被破坏的位置。' : '取对应买卖点的结构失效价格，作为该判断是否继续有效的参考线。',
+          confirm: sig && sig.confirmedAt ? `${sig.confirmedAt} 信号确认时同步设定。` : '信号确认或候选出现时同步设定。',
+          invalidate: `${payload.label || dirText}。这里判断的是结构是否失效，不等同机械交易指令。`,
+          action: '教学上用来训练“判断错了在哪里认错”，实际交易还需结合仓位和风控。' };
+      }
+      default: return null;
+    }
+  }
+}
+
+</script>
+</body>
+</html>

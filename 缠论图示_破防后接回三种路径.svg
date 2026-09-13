@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0,10 4,0 8" fill="#4f5d75"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0,10 4,0 8" fill="#2563eb"/>
+    </marker>
+    <style>
+      .bg{fill:#f5f5f5}
+      .title{font:400 34px "Times New Roman","Songti SC",serif;fill:#2d3142}
+      .sub{font:500 15px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .panel{fill:#fff;stroke:rgba(45,49,66,.16);stroke-width:1.2}
+      .panel-red{fill:rgba(220,38,38,.035);stroke:rgba(220,38,38,.32);stroke-width:1.4}
+      .panel-blue{fill:rgba(37,99,235,.035);stroke:rgba(37,99,235,.32);stroke-width:1.4}
+      .panel-green{fill:rgba(22,163,74,.04);stroke:rgba(22,163,74,.34);stroke-width:1.4}
+      .txt{font:800 18px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#172033}
+      .small{font:500 13px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .tiny{font:600 12px "SF Mono","Menlo",monospace;fill:#7a8399}
+      .label{font:800 13px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+      .price{fill:none;stroke:#64748b;stroke-width:3;stroke-dasharray:8 7}
+      .future{fill:none;stroke:#94a3b8;stroke-width:3;stroke-dasharray:6 6}
+      .guard{stroke:#f59e0b;stroke-width:2.6}
+      .pressure{stroke:#2563eb;stroke-width:2.6}
+      .fail{stroke:#dc2626;stroke-width:2.6}
+      .tag-red{fill:#fef2f2;stroke:#dc2626}
+      .tag-blue{fill:#eff6ff;stroke:#2563eb}
+      .tag-green{fill:#f0fdf4;stroke:#16a34a}
+      .tag-orange{fill:#fff7ed;stroke:#f59e0b}
+      .arrow{fill:none;stroke:#4f5d75;stroke-width:2.2;marker-end:url(#arrow)}
+      .arrow-blue{fill:none;stroke:#2563eb;stroke-width:2.4;marker-end:url(#arrow-blue)}
+      .dot-red{fill:#fef2f2;stroke:#dc2626;stroke-width:3}
+      .dot-blue{fill:#eff6ff;stroke:#2563eb;stroke-width:3}
+      .dot-green{fill:#f0fdf4;stroke:#16a34a;stroke-width:3}
+      .dot-orange{fill:#fff7ed;stroke:#f59e0b;stroke-width:3}
+    </style>
+  </defs>
+
+  <rect class="bg" width="1400" height="900"/>
+  <text class="title" x="64" y="70">破防后，什么时候可以接回？三种路径</text>
+  <text class="sub" x="64" y="102">关键区别：原防守位只说明旧结构坏在哪里；破防后的反弹小高点，才是判断修复能不能成立的新压力位。</text>
+
+  <!-- shared mini legend -->
+  <g transform="translate(64 124)">
+    <line class="guard" x1="0" y1="0" x2="64" y2="0"/>
+    <text class="tiny" x="76" y="4">原防守位</text>
+    <line class="pressure" x1="188" y1="0" x2="252" y2="0"/>
+    <text class="tiny" x="264" y="4">破防后反弹压力位</text>
+    <circle class="dot-blue" cx="476" cy="0" r="7"/>
+    <text class="tiny" x="492" y="4">普通确认</text>
+    <circle class="dot-green" cx="612" cy="0" r="7"/>
+    <text class="tiny" x="628" y="4">稳健确认</text>
+  </g>
+
+  <!-- panel 1 -->
+  <g transform="translate(64 172)">
+    <rect class="panel-red" x="0" y="0" width="392" height="560" rx="10"/>
+    <text class="txt" x="28" y="40">A. 假修复：不接回</text>
+    <text class="small" x="28" y="68">反弹没有站上压力位，或站上后很快跌回。</text>
+
+    <line class="guard" x1="36" y1="208" x2="356" y2="208"/>
+    <text class="tiny" x="260" y="198">原防守位</text>
+    <line class="pressure" x1="132" y1="152" x2="356" y2="152"/>
+    <text class="tiny" x="228" y="142">反弹压力位</text>
+    <line class="fail" x1="36" y1="340" x2="356" y2="340"/>
+    <text class="tiny" x="236" y="360">前低/失败线</text>
+
+    <path class="price" d="M44 132 L84 84 L124 176 L164 232 L204 164 L244 260 L284 312 L332 352"/>
+    <circle class="dot-orange" cx="164" cy="232" r="9"/>
+    <text class="tiny" x="180" y="238">破防</text>
+    <circle class="dot-red" cx="204" cy="164" r="9"/>
+    <text class="tiny" x="220" y="168">反弹不过压力</text>
+    <circle class="dot-red" cx="332" cy="352" r="9"/>
+
+    <rect class="tag-red" x="36" y="408" width="320" height="76" rx="8"/>
+    <text class="label" x="196" y="436" text-anchor="middle" fill="#b91c1c">结论：不能接回</text>
+    <text class="small" x="196" y="464" text-anchor="middle">这只是弱反弹，结构没有修复</text>
+  </g>
+
+  <!-- panel 2 -->
+  <g transform="translate(504 172)">
+    <rect class="panel-blue" x="0" y="0" width="392" height="560" rx="10"/>
+    <text class="txt" x="28" y="40">B. 普通修复：轻仓试错</text>
+    <text class="small" x="28" y="68">收盘突破压力位，但还没经过回踩验证。</text>
+
+    <line class="guard" x1="36" y1="208" x2="356" y2="208"/>
+    <text class="tiny" x="260" y="198">原防守位</text>
+    <line class="pressure" x1="132" y1="152" x2="356" y2="152"/>
+    <text class="tiny" x="228" y="142">反弹压力位</text>
+    <line class="fail" x1="36" y1="340" x2="356" y2="340"/>
+    <text class="tiny" x="236" y="360">前低/失败线</text>
+
+    <path class="price" d="M44 132 L84 84 L124 176 L164 232 L204 164 L244 260 L284 144 L336 104"/>
+    <circle class="dot-orange" cx="164" cy="232" r="9"/>
+    <text class="tiny" x="180" y="238">破防</text>
+    <circle class="dot-blue" cx="284" cy="144" r="9"/>
+    <text class="tiny" x="236" y="116">收盘突破压力</text>
+    <path class="future" d="M284 144 C312 196 328 232 348 256"/>
+    <text class="tiny" x="232" y="292">后面还没验证：可能回踩，也可能跌回</text>
+
+    <rect class="tag-blue" x="36" y="408" width="320" height="76" rx="8"/>
+    <text class="label" x="196" y="436" text-anchor="middle" fill="#1d4ed8">结论：普通确认</text>
+    <text class="small" x="196" y="464" text-anchor="middle">只能轻仓试错，等待后续确认</text>
+  </g>
+
+  <!-- panel 3 -->
+  <g transform="translate(944 172)">
+    <rect class="panel-green" x="0" y="0" width="392" height="560" rx="10"/>
+    <text class="txt" x="28" y="40">C. 稳健修复：考虑接回</text>
+    <text class="small" x="28" y="68">突破压力位后，回踩不破，再次向上。</text>
+
+    <line class="guard" x1="36" y1="208" x2="356" y2="208"/>
+    <text class="tiny" x="260" y="198">原防守位</text>
+    <line class="pressure" x1="132" y1="152" x2="356" y2="152"/>
+    <text class="tiny" x="228" y="142">反弹压力位</text>
+    <line class="fail" x1="36" y1="340" x2="356" y2="340"/>
+    <text class="tiny" x="236" y="360">前低/失败线</text>
+
+    <path class="price" d="M44 132 L84 84 L124 176 L164 232 L204 164 L244 260 L284 144 L324 188 L356 112"/>
+    <circle class="dot-orange" cx="164" cy="232" r="9"/>
+    <text class="tiny" x="180" y="238">破防</text>
+    <circle class="dot-blue" cx="284" cy="144" r="9"/>
+    <text class="tiny" x="220" y="120">普通确认</text>
+    <circle class="dot-green" cx="356" cy="112" r="9"/>
+    <text class="tiny" x="236" y="96">回踩守住后再上</text>
+    <circle class="dot-green" cx="324" cy="188" r="8"/>
+    <text class="tiny" x="232" y="216">回踩未跌回弱势区</text>
+
+    <rect class="tag-green" x="36" y="408" width="320" height="76" rx="8"/>
+    <text class="label" x="196" y="436" text-anchor="middle" fill="#15803d">结论：稳健确认</text>
+    <text class="small" x="196" y="464" text-anchor="middle">可以考虑接回，但仍要设新防守</text>
+  </g>
+
+  <!-- bottom flow -->
+  <g transform="translate(120 780)">
+    <rect class="panel" x="0" y="0" width="1160" height="76" rx="8"/>
+    <text class="txt" x="28" y="32">判断顺序</text>
+    <text class="small" x="160" y="32">① 破原防守位 → ② 等反弹失败形成压力位 → ③ 看能否收盘突破压力位 → ④ 看突破后回踩是否守住 → ⑤ 决定不接 / 试错 / 接回。</text>
+    <text class="tiny" x="160" y="56">注意：重新站回原防守位只是修复的早期信号；真正更关键的是突破“破防后反弹失败形成的小高点”。</text>
+  </g>
+
+  <text class="tiny" x="64" y="884">学习用途，不构成投资建议。这里的“接回”是结构训练概念，不是对任何真实标的的买卖建议。</text>
+</svg>

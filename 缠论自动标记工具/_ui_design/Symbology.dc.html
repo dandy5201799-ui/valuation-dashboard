@@ -1,0 +1,291 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #1f7d50; } a:hover { color: #16653f; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .row { display:grid; grid-template-columns:150px 1fr 1fr 1fr; gap:0; border-bottom:1px solid #ece9e0; }
+    .cell { padding:12px 14px; border-left:1px solid #ece9e0; }
+    .lbl { padding:12px 14px; }
+    .st-h { font-size:10px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; }
+    .desc { font-size:11.5px; line-height:1.5; color:#3a3730; margin-top:6px; }
+    .spec { font-size:10px; color:#9c9788; margin-top:5px; line-height:1.5; }
+    .ruleid { font-size:9.5px; color:#a19c8c; margin-top:3px; }
+  </style>
+</helmet>
+
+<div style="width:1440px;min-height:1180px;background:#f6f5f0;font-family:'IBM Plex Sans',-apple-system,'PingFang SC',sans-serif;color:#1c1f26;padding:36px 40px 48px 40px;">
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
+    <div style="font-size:20px;font-weight:700;">符号系统规范</div>
+    <div class="mono" style="font-size:11px;color:#a19c8c;">规则版本 v0.5 · 供实现对照，单一事实来源</div>
+  </div>
+  <div style="font-size:12.5px;color:#8b8677;margin-bottom:10px;">三态贯穿所有标记类型：<b style="color:#1f7d50;">确认</b>＝实心 / 实线 / 品牌色；<b style="color:#946009;">候选</b>＝空心 / 虚线 / 琥珀色；<b style="color:#8b8677;">已失效</b>＝空心 / 虚线 / 灰色 / 降低不透明度。</div>
+  <div class="mono" style="font-size:10.5px;color:#a19c8c;margin-bottom:22px;line-height:1.7;">文字对比强化色（均衍生自候选琥珀 #b8790a，仅用于深色文字/描边以满足对比度，不是新增色板）：#946009 中枢标签与图例强调文字 · #8a5c07 线段中枢（背景级）边框 · #7a4d06 独立模式提示文字</div>
+
+  <div style="background:#ffffff;border:1px solid #e2ddd0;border-radius:10px;overflow:hidden;">
+
+    <div class="row" style="background:#fbfaf6;">
+      <div class="lbl"></div>
+      <div class="cell st-h" style="color:#1f7d50;">确认 CONFIRMED</div>
+      <div class="cell st-h" style="color:#946009;">候选 CANDIDATE</div>
+      <div class="cell st-h" style="color:#8b8677;">已失效 FAILED</div>
+    </div>
+
+    <!-- 分型 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">分型</div><div class="ruleid">顶/底 · R1 / O-F01</div></div>
+      <div class="cell">
+        <svg width="70" height="28" viewBox="0 0 70 28"><polygon points="35,4 47,24 23,24" fill="#3a3730"/></svg>
+        <div class="desc">实心三角，顶朝上/底朝下</div><div class="spec">fill #3a3730 · opacity 1</div>
+      </div>
+      <div class="cell">
+        <svg width="70" height="28" viewBox="0 0 70 28"><polygon points="35,4 47,24 23,24" fill="none" stroke="#b8790a" stroke-width="1.4" stroke-dasharray="3 2"/><text x="35" y="20" text-anchor="middle" font-size="9" fill="#b8790a">?</text></svg>
+        <div class="desc">空心虚线三角，带"?"</div><div class="spec">stroke #b8790a · dash 3 2</div>
+      </div>
+      <div class="cell">
+        <svg width="70" height="28" viewBox="0 0 70 28"><polygon points="35,4 47,24 23,24" fill="none" stroke="#9c9788" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.55"/></svg>
+        <div class="desc">空心虚线三角，淡化</div><div class="spec">stroke #9c9788 · opacity 0.55</div>
+      </div>
+    </div>
+
+    <!-- 笔 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">笔</div><div class="ruleid">操作级最小结构</div></div>
+      <div class="cell">
+        <svg width="80" height="24" viewBox="0 0 80 24"><line x1="6" y1="18" x2="74" y2="6" stroke="#3a3730" stroke-width="1.6"/></svg>
+        <div class="desc">实线，宽度 1.6px</div><div class="spec">stroke #3a3730 · width 1.6</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="24" viewBox="0 0 80 24"><line x1="6" y1="18" x2="74" y2="6" stroke="#b8790a" stroke-width="1.6" stroke-dasharray="4 3"/></svg>
+        <div class="desc">虚线，尚缺右侧确认证据</div><div class="spec">stroke #b8790a · dash 4 3</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="24" viewBox="0 0 80 24"><line x1="6" y1="18" x2="74" y2="6" stroke="#9c9788" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.55"/></svg>
+        <div class="desc">虚线淡化，已被后续结构取代</div><div class="spec">stroke #9c9788 · opacity 0.55</div>
+      </div>
+    </div>
+
+    <!-- 线段 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">线段</div><div class="ruleid">背景级 · 特征序列分型</div></div>
+      <div class="cell">
+        <svg width="80" height="24" viewBox="0 0 80 24"><line x1="6" y1="18" x2="74" y2="6" stroke="#1c1f26" stroke-width="2.6"/></svg>
+        <div class="desc">粗实线，比"笔"更重</div><div class="spec">stroke #1c1f26 · width 2.6</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="24" viewBox="0 0 80 24"><line x1="6" y1="18" x2="74" y2="6" stroke="#b8790a" stroke-width="2.6" stroke-dasharray="5 3"/></svg>
+        <div class="desc">粗虚线，等待特征序列分型</div><div class="spec">stroke #b8790a · dash 5 3</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="24" viewBox="0 0 80 24"><line x1="6" y1="18" x2="74" y2="6" stroke="#9c9788" stroke-width="2.2" stroke-dasharray="5 3" opacity="0.55"/></svg>
+        <div class="desc">粗虚线淡化</div><div class="spec">stroke #9c9788 · opacity 0.55</div>
+      </div>
+    </div>
+
+    <!-- 笔中枢 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">笔中枢</div><div class="ruleid">操作级 · R4</div></div>
+      <div class="cell">
+        <svg width="80" height="30" viewBox="0 0 80 30"><rect x="6" y="6" width="68" height="18" fill="rgba(184,121,10,0.09)" stroke="#b8790a" stroke-width="1.5"/></svg>
+        <div class="desc">实线边框，ZG/ZD 标注</div><div class="spec">stroke #b8790a · width 1.5</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="30" viewBox="0 0 80 30"><rect x="6" y="6" width="68" height="18" fill="rgba(184,121,10,0.05)" stroke="#b8790a" stroke-width="1.3" stroke-dasharray="4 3"/></svg>
+        <div class="desc">虚线边框，三段重叠尚未成立</div><div class="spec">stroke #b8790a · dash 4 3</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="30" viewBox="0 0 80 30"><rect x="6" y="6" width="68" height="18" fill="rgba(156,151,136,0.08)" stroke="#9c9788" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/></svg>
+        <div class="desc">虚线边框淡化，依赖对象已改判</div><div class="spec">stroke #9c9788 · opacity 0.6</div>
+      </div>
+    </div>
+
+    <!-- 线段中枢 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">线段中枢</div><div class="ruleid">背景级 · R4</div></div>
+      <div class="cell">
+        <svg width="80" height="30" viewBox="0 0 80 30"><rect x="6" y="4" width="68" height="22" fill="rgba(138,92,7,0.06)" stroke="#8a5c07" stroke-width="2.2"/></svg>
+        <div class="desc">粗实线边框，更深的琥珀色</div><div class="spec">stroke #8a5c07 · width 2.2</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="30" viewBox="0 0 80 30"><rect x="6" y="4" width="68" height="22" fill="rgba(138,92,7,0.04)" stroke="#8a5c07" stroke-width="2" stroke-dasharray="6 3"/></svg>
+        <div class="desc">粗虚线边框</div><div class="spec">stroke #8a5c07 · dash 6 3</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="30" viewBox="0 0 80 30"><rect x="6" y="4" width="68" height="22" fill="rgba(156,151,136,0.06)" stroke="#9c9788" stroke-width="1.8" stroke-dasharray="6 3" opacity="0.55"/></svg>
+        <div class="desc">粗虚线淡化</div><div class="spec">stroke #9c9788 · opacity 0.55</div>
+      </div>
+    </div>
+
+    <!-- 背驰 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">背驰</div><div class="ruleid">R6 · MACD 面积比</div></div>
+      <div class="cell">
+        <svg width="40" height="28" viewBox="0 0 40 28"><rect x="8" y="8" width="16" height="16" fill="#b8790a" transform="rotate(45 16 16)"/><text x="16" y="19" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">背</text></svg>
+        <div class="desc">实心菱形</div><div class="spec">fill #b8790a</div>
+      </div>
+      <div class="cell">
+        <svg width="40" height="28" viewBox="0 0 40 28"><rect x="8" y="8" width="16" height="16" fill="none" stroke="#b8790a" stroke-width="1.4" stroke-dasharray="2 2" transform="rotate(45 16 16)"/><text x="16" y="19" text-anchor="middle" font-size="8" fill="#b8790a" font-weight="700">背?</text></svg>
+        <div class="desc">空心虚线菱形，力度减弱未成背驰</div><div class="spec">stroke #b8790a · dash 2 2</div>
+      </div>
+      <div class="cell">
+        <svg width="40" height="28" viewBox="0 0 40 28"><rect x="8" y="8" width="16" height="16" fill="none" stroke="#9c9788" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.55" transform="rotate(45 16 16)"/></svg>
+        <div class="desc">空心虚线淡化</div><div class="spec">stroke #9c9788 · opacity 0.55</div>
+      </div>
+    </div>
+
+    <!-- 买点 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">买点</div><div class="ruleid">1B / 2B / 3B · R7-R9</div></div>
+      <div class="cell">
+        <svg width="36" height="28" viewBox="0 0 36 28"><circle cx="18" cy="14" r="12" fill="#1f9d63"/><text x="18" y="18" text-anchor="middle" font-size="10" fill="#fff" font-weight="700" font-family="IBM Plex Mono,monospace">3B</text></svg>
+        <div class="desc">实心绿圆，白字</div><div class="spec">fill #1f9d63</div>
+      </div>
+      <div class="cell">
+        <svg width="36" height="28" viewBox="0 0 36 28"><circle cx="18" cy="14" r="12" fill="#fff" stroke="#b8790a" stroke-width="1.4" stroke-dasharray="2 3"/><text x="18" y="18" text-anchor="middle" font-size="10" fill="#b8790a" font-weight="700" font-family="IBM Plex Mono,monospace">3B</text></svg>
+        <div class="desc">空心虚线，琥珀字，未达确认条件</div><div class="spec">stroke #b8790a · dash 2 3</div>
+      </div>
+      <div class="cell">
+        <svg width="36" height="28" viewBox="0 0 36 28"><circle cx="18" cy="14" r="12" fill="#fff" stroke="#9c9788" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.55"/><text x="18" y="18" text-anchor="middle" font-size="10" fill="#9c9788" font-weight="700" font-family="IBM Plex Mono,monospace" opacity="0.55">3B</text></svg>
+        <div class="desc">空心虚线灰字，已被反向价格击穿</div><div class="spec">stroke #9c9788 · opacity 0.55</div>
+      </div>
+    </div>
+
+    <!-- 卖点 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">卖点</div><div class="ruleid">1S / 2S / 3S · R7-R9</div></div>
+      <div class="cell">
+        <svg width="36" height="28" viewBox="0 0 36 28"><circle cx="18" cy="14" r="12" fill="#d1453a"/><text x="18" y="18" text-anchor="middle" font-size="10" fill="#fff" font-weight="700" font-family="IBM Plex Mono,monospace">3S</text></svg>
+        <div class="desc">实心红圆，白字</div><div class="spec">fill #d1453a</div>
+      </div>
+      <div class="cell">
+        <svg width="36" height="28" viewBox="0 0 36 28"><circle cx="18" cy="14" r="12" fill="#fff" stroke="#b8790a" stroke-width="1.4" stroke-dasharray="2 3"/><text x="18" y="18" text-anchor="middle" font-size="10" fill="#b8790a" font-weight="700" font-family="IBM Plex Mono,monospace">3S</text></svg>
+        <div class="desc">空心虚线，琥珀字</div><div class="spec">stroke #b8790a · dash 2 3</div>
+      </div>
+      <div class="cell">
+        <svg width="36" height="28" viewBox="0 0 36 28"><circle cx="18" cy="14" r="12" fill="#fff" stroke="#9c9788" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.55"/><text x="18" y="18" text-anchor="middle" font-size="10" fill="#9c9788" font-weight="700" font-family="IBM Plex Mono,monospace" opacity="0.55">3S</text></svg>
+        <div class="desc">空心虚线灰字</div><div class="spec">stroke #9c9788 · opacity 0.55</div>
+      </div>
+    </div>
+
+    <!-- 防守/失败线 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">防守 / 失败线</div><div class="ruleid">跟随所属信号状态</div></div>
+      <div class="cell">
+        <svg width="80" height="20" viewBox="0 0 80 20"><line x1="4" y1="10" x2="76" y2="10" stroke="#b23b30" stroke-width="1.4" stroke-dasharray="2 3"/></svg>
+        <div class="desc">红色虚线，信号确认后的有效防守位</div><div class="spec">stroke #b23b30 · dash 2 3</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="20" viewBox="0 0 80 20"><line x1="4" y1="10" x2="76" y2="10" stroke="#b8790a" stroke-width="1.2" stroke-dasharray="2 3"/></svg>
+        <div class="desc">琥珀虚线，候选信号的假设防守位</div><div class="spec">stroke #b8790a · dash 2 3</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="20" viewBox="0 0 80 20"><line x1="4" y1="10" x2="76" y2="10" stroke="#9c9788" stroke-width="1" stroke-dasharray="1 3" opacity="0.55"/></svg>
+        <div class="desc">灰色细虚线，已被击穿的历史失败线</div><div class="spec">stroke #9c9788 · opacity 0.55</div>
+      </div>
+    </div>
+
+    <!-- 支撑/压力 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">支撑 / 压力</div><div class="ruleid">当前中枢上下沿</div></div>
+      <div class="cell">
+        <svg width="80" height="20" viewBox="0 0 80 20"><line x1="4" y1="10" x2="76" y2="10" stroke="#b8790a" stroke-width="1.4" stroke-dasharray="5 3"/></svg>
+        <div class="desc">琥珀虚线，当前中枢的有效边界</div><div class="spec">stroke #b8790a · dash 5 3</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="20" viewBox="0 0 80 20"><line x1="4" y1="10" x2="76" y2="10" stroke="#b8790a" stroke-width="1" stroke-dasharray="2 4" opacity="0.7"/></svg>
+        <div class="desc">细虚线，中枢仍在延伸、边界可能改变</div><div class="spec">stroke #b8790a · opacity 0.7</div>
+      </div>
+      <div class="cell">
+        <svg width="80" height="20" viewBox="0 0 80 20"><line x1="4" y1="10" x2="76" y2="10" stroke="#9c9788" stroke-width="1" stroke-dasharray="2 4" opacity="0.5"/></svg>
+        <div class="desc">灰色细虚线，旧中枢边界仅供参考</div><div class="spec">stroke #9c9788 · opacity 0.5</div>
+      </div>
+    </div>
+
+    <!-- 阶段带 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">阶段带</div><div class="ruleid">由已确认结构派生</div></div>
+      <div class="cell" style="grid-column: span 3; border-left:none; display:flex; align-items:center; gap:18px;">
+        <svg width="46" height="24" viewBox="0 0 46 24"><rect x="2" y="4" width="42" height="16" rx="3" fill="#eceae3" stroke="#d8d3c5"/></svg>
+        <div class="desc" style="margin:0;">中枢期 · #eceae3 边框 #d8d3c5</div>
+        <svg width="46" height="24" viewBox="0 0 46 24"><rect x="2" y="4" width="42" height="16" rx="3" fill="rgba(31,157,99,0.16)" stroke="#1f9d63"/></svg>
+        <div class="desc" style="margin:0;">向上离开 · rgba(31,157,99,.16)</div>
+        <svg width="46" height="24" viewBox="0 0 46 24"><rect x="2" y="4" width="42" height="16" rx="3" fill="rgba(209,69,58,0.14)" stroke="#d1453a"/></svg>
+        <div class="desc" style="margin:0;">向下离开 · rgba(209,69,58,.14)</div>
+        <div class="spec" style="margin:0;color:#a19c8c;">仅由确认结构派生，不存在候选 / 已失效状态；高度 36pt 常驻显示</div>
+      </div>
+    </div>
+
+    <!-- 中枢共用标尺区间条 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">中枢列表 · 共用标尺区间条</div><div class="ruleid">侧栏中枢列表 · 相邻中枢相对位置</div></div>
+      <div class="cell" style="grid-column: span 3; border-left:none;">
+        <div style="max-width:340px;">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
+            <div class="mono" style="font-size:11.5px;font-weight:600;">05-30 ~ 07-23</div>
+            <div class="mono" style="font-size:10px;color:#9c9788;">42.32–43.68</div>
+          </div>
+          <div style="position:relative;height:9px;background:#f0eee6;border-radius:3px;margin-top:4px;">
+            <div style="position:absolute;left:66.4%;width:27.2%;top:0;height:9px;background:rgba(184,121,10,0.32);border:1px solid #b8790a;border-radius:3px;"></div>
+          </div>
+        </div>
+        <div class="desc">日期区间与方向打头，去掉"笔中枢·ZG/ZD"前缀；区间条使用所有中枢共用的价格标尺（同一侧栏内基准一致），连续几行的条位置高低即为中枢的相对走势——同 R5 相邻中枢 ZD/ZG 比较逻辑。</div>
+        <div class="spec">bar fill rgba(184,121,10,0.32) · border #b8790a · track #f0eee6 · 状态点与可点击跳转沿用原有"笔中枢"行为，仅去除前缀文字</div>
+      </div>
+    </div>
+
+    <!-- 信号列表 · 当前生效 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">信号列表 · 当前生效</div><div class="ruleid">侧栏信号列表 · 强调此刻应关注的一条</div></div>
+      <div class="cell" style="grid-column: span 3; border-left:none;">
+        <div style="max-width:260px;display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;background:#eaf6ef;border-left:3px solid #1f9d63;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#1f9d63;flex-shrink:0;"></span>
+          <div style="min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="font-size:12.5px;font-weight:600;color:#1f7d50;">1B 买点 · 37.68</div>
+              <span style="font-size:9px;font-weight:700;color:#ffffff;background:#1f9d63;border-radius:3px;padding:1px 5px;">当前</span>
+            </div>
+            <div class="mono" style="font-size:10.5px;color:#9c9788;">10-13 · 已确认</div>
+          </div>
+        </div>
+        <div class="desc">左侧 3px 色条 + 浅底（品牌绿 6% 透明度量级）+ "当前"小标签；时间顺序不变，不置顶。仅用于价格仍在其防守位/失败线一侧、判断尚未失效的那一条信号。</div>
+        <div class="spec">border-left #1f9d63 3px · background #eaf6ef · tag fill #1f9d63 / text #ffffff</div>
+      </div>
+    </div>
+
+    <!-- MACD A/C 面积高亮 -->
+    <div class="row">
+      <div class="lbl"><div style="font-weight:700;font-size:12.5px;">MACD · A/C 面积高亮</div><div class="ruleid">R6 · 选中背驰/力度证据时展开</div></div>
+      <div class="cell" style="grid-column: span 3; border-left:none;">
+        <svg width="360" height="70" viewBox="0 0 360 70">
+          <line x1="0" y1="35" x2="360" y2="35" stroke="#e2ddd0" stroke-width="1"/>
+          <rect x="14" y="6" width="86" height="58" fill="rgba(28,31,38,0.05)" stroke="#9c9788" stroke-width="1" stroke-dasharray="3 2"/>
+          <rect x="20" y="8" width="8" height="27" fill="#d1453a" opacity="0.85"/><rect x="30" y="12" width="8" height="23" fill="#d1453a" opacity="0.85"/><rect x="40" y="18" width="8" height="17" fill="#d1453a" opacity="0.85"/><rect x="50" y="24" width="8" height="11" fill="#d1453a" opacity="0.85"/><rect x="60" y="29" width="8" height="6" fill="#d1453a" opacity="0.85"/><rect x="70" y="32" width="8" height="3" fill="#d1453a" opacity="0.85"/><rect x="80" y="34" width="8" height="1" fill="#d1453a" opacity="0.85"/>
+          <text x="57" y="18" text-anchor="middle" font-size="9" font-weight="700" fill="#7a4d06" font-family="IBM Plex Sans,sans-serif">A</text>
+          <text x="57" y="60" text-anchor="middle" font-size="9" fill="#7a4d06" font-family="IBM Plex Mono,monospace">面积 4.92</text>
+          <rect x="230" y="6" width="86" height="58" fill="rgba(28,31,38,0.05)" stroke="#b23b30" stroke-width="1.4"/>
+          <rect x="236" y="18" width="8" height="17" fill="#d1453a" opacity="0.85"/><rect x="246" y="24" width="8" height="11" fill="#d1453a" opacity="0.85"/><rect x="256" y="29" width="8" height="6" fill="#d1453a" opacity="0.85"/><rect x="266" y="32" width="8" height="3" fill="#d1453a" opacity="0.85"/><rect x="276" y="33" width="8" height="2" fill="#d1453a" opacity="0.85"/><rect x="286" y="34" width="8" height="1" fill="#d1453a" opacity="0.85"/><rect x="296" y="34.5" width="8" height="0.5" fill="#d1453a" opacity="0.85"/>
+          <text x="273" y="18" text-anchor="middle" font-size="9" font-weight="700" fill="#b23b30" font-family="IBM Plex Sans,sans-serif">C</text>
+          <text x="273" y="60" text-anchor="middle" font-size="9" fill="#b23b30" font-family="IBM Plex Mono,monospace">面积 2.68 · 比值 0.54</text>
+        </svg>
+        <div class="desc">默认状态 MACD 压至约 60px 作为背景 context；选中背驰或力度证据（如「力度 0.42／0.54」）时，MACD 区展开并高亮参照段 A、离开段 C 对应的柱状面积区间，各自标注面积数值与比值，使力度数字可被追溯验证。真实案例见 Divergence 画板（2025-10-13 一买对应的底背驰，areaA≈4.92 / areaC≈2.68 / ratio≈0.54，来自 chan-algo.js computeBeichi 输出）。</div>
+        <div class="spec">A 段描边 #9c9788 dash 3 2（参照，未定局）· C 段描边 #b23b30 实线（离开，已成立）· 柱状颜色沿用 MACD 红绿三态</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论严格学习03：笔的成立条件示例</title>
+<style>
+:root{--bg:#f6f8fb;--panel:#fff;--ink:#172033;--muted:#64748b;--line:#d8e2ef;--blue:#2563eb;--red:#dc2626;--green:#16a34a;--orange:#f59e0b;--purple:#7c3aed}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.wrap{width:min(1240px,calc(100vw - 32px));margin:22px auto 44px}.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 34px rgba(15,23,42,.07)}.hero{padding:18px 20px;margin-bottom:14px}.badge{display:inline-flex;border-radius:999px;background:#eff6ff;color:var(--blue);font-size:13px;font-weight:900;padding:5px 10px;margin-bottom:8px}h1{font-size:30px;line-height:1.15;margin:0 0 8px}p{margin:0;color:var(--muted);line-height:1.75}.layout{display:grid;grid-template-columns:1.35fr .65fr;gap:14px}.card{padding:16px}.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}button{font:inherit;min-height:40px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;color:var(--ink);padding:0 14px;font-weight:850;cursor:pointer}button.on{background:var(--blue);border-color:var(--blue);color:#fff}.chart{border:1px solid var(--line);border-radius:12px;background:linear-gradient(#fff,#fbfdff);overflow:hidden}canvas{display:block;width:100%;height:570px}.side h2{font-size:20px;margin:0 0 10px}.rule{border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;padding:11px 12px;margin:10px 0;line-height:1.7}.rule b{color:#334155}.result{border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px;line-height:1.75;font-weight:760}.list{display:grid;gap:8px;margin-top:12px}.item{border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:11px;line-height:1.65}.item b{display:block;margin-bottom:4px}.note{margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:14px;color:var(--muted);line-height:1.75}.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:13px}.dot{display:inline-flex;align-items:center;gap:5px}.dot:before{content:"";width:10px;height:10px;border-radius:50%;background:#94a3b8}.dot.top:before{background:var(--red)}.dot.bottom:before{background:var(--green)}.dot.stroke:before{background:var(--blue)}.dot.bad:before{background:var(--purple)}@media(max-width:940px){.layout{grid-template-columns:1fr}canvas{height:520px}}
+</style>
+<style>
+.dot.zone:before{background:#f59e0b}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <span class="badge">严格学习 03</span>
+    <h1>笔：不是两个分型随便一连</h1>
+    <p>先有处理过包含关系的 K 线，再有顶分型/底分型。现在才判断：相邻的一个顶和一个底，是否能构成一笔。</p>
+  </section>
+
+  <section class="layout">
+    <div class="card">
+      <div class="controls">
+        <button id="validUp" class="on">成立：向上一笔</button>
+        <button id="validDown">成立：向下一笔</button>
+        <button id="tooClose">不成立：距离不够</button>
+        <button id="sameType">不成立：同类分型</button>
+      </div>
+      <div class="chart"><canvas id="cv"></canvas></div>
+      <div class="legend">
+        <span class="dot">灰色：处理后的K线</span>
+        <span class="dot bottom">绿色：底分型的底</span>
+        <span class="dot top">红色：顶分型的顶</span>
+        <span class="dot stroke">蓝线：成立的一笔</span>
+        <span class="dot zone">浅色区：两端分型各自占用的3根K线</span>
+        <span class="dot bad">紫色：不成立原因</span>
+      </div>
+    </div>
+
+    <aside class="card side">
+      <h2 id="title">成立：向上一笔</h2>
+      <p id="intro">先底分型，后顶分型，中间有至少一根不属于两端分型的 K 线。</p>
+      <div class="rule"><b>条件一：</b><span>必须是一顶一底，不能两个顶连两个顶，也不能两个底连两个底。</span></div>
+      <div class="rule"><b>条件二：</b><span>必须是相邻的顶和底，中间不能还有另一个有效顶/底把它们隔开。</span></div>
+      <div class="rule"><b>条件三：</b><span>顶和底之间至少有一根 K 线不属于两端分型，避免两个分型共用 K 线。</span></div>
+      <div class="result" id="result">这是一笔：底分型的底连接到顶分型的顶。</div>
+      <div class="list">
+        <div class="item"><b>向上一笔</b><span>底分型 → 上升K线 → 顶分型。</span></div>
+        <div class="item"><b>向下一笔</b><span>顶分型 → 下降K线 → 底分型。</span></div>
+        <div class="item"><b>下一步</b><span>至少三笔，并且前三笔有重叠，才开始谈线段。</span></div>
+      </div>
+      <p class="note">这一页仍然只讲“笔”。不要急着用它判断买卖点；笔只是线段、中枢、走势类型的下一级零件。</p>
+    </aside>
+  </section>
+</main>
+
+<script>
+const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+let mode="validUp";
+const cases={
+  validUp:{title:"成立：向上一笔",intro:"底分型占用第1-3根，顶分型占用第5-7根，中间第4根是独立K线。",result:"这是一笔：第4根不属于底分型，也不属于顶分型，所以底和顶之间有一根独立K线。",line:["bottom",1,"top",5],bad:null,bars:[
+    {d:"1",o:9.2,h:10.2,l:8.0,c:9.7},{d:"2",o:7.1,h:8.1,l:5.2,c:5.8},{d:"3",o:8.0,h:9.2,l:7.0,c:8.8},{d:"4",o:8.9,h:10.4,l:8.2,c:10.0},{d:"5",o:10.1,h:11.2,l:9.4,c:10.9},{d:"6",o:10.8,h:12.3,l:10.2,c:11.6},{d:"7",o:10.2,h:11.0,l:8.8,c:9.1}]},
+  validDown:{title:"成立：向下一笔",intro:"顶分型占用第1-3根，底分型占用第5-7根，中间第4根是独立K线。",result:"这是一笔：第4根不属于顶分型，也不属于底分型，所以顶和底之间有一根独立K线。",line:["top",1,"bottom",5],bad:null,bars:[
+    {d:"1",o:7.2,h:8.4,l:6.8,c:7.9},{d:"2",o:10.8,h:12.0,l:10.0,c:11.4},{d:"3",o:9.8,h:10.5,l:8.7,c:9.0},{d:"4",o:8.8,h:9.4,l:7.5,c:8.0},{d:"5",o:7.8,h:8.5,l:6.6,c:7.1},{d:"6",o:6.7,h:7.4,l:5.1,c:5.8},{d:"7",o:7.2,h:8.3,l:6.2,c:7.9}]},
+  tooClose:{title:"不成立：距离不够",intro:"底分型占用第1-3根，顶分型占用第3-5根，两边共用了第3根。",result:"这不宜算一笔：两端分型覆盖区直接连在一起，而且共用第3根；中间没有任何一根独立K线。",line:["bottom",1,"top",3],bad:"没有独立K线",bars:[
+    {d:"1",o:9.0,h:10.0,l:8.0,c:9.4},{d:"2",o:7.2,h:8.3,l:5.0,c:5.8},{d:"3",o:8.8,h:10.2,l:7.1,c:9.6},{d:"4",o:9.6,h:11.4,l:8.2,c:8.7},{d:"5",o:8.1,h:9.0,l:6.8,c:7.2}]},
+  sameType:{title:"不成立：同类分型",intro:"两个顶之间不能直接连成一笔；两个底之间也不能直接连成一笔。",result:"这不构成一笔。笔必须是一顶一底；如果两个同类分型相邻，需要按规则保留更有意义的那个，再等反向分型。",line:["top",1,"top",4],bad:"两个顶不能成笔",bars:[
+    {d:"1",o:7.0,h:8.2,l:6.2,c:7.8},{d:"2",o:9.8,h:11.2,l:9.0,c:10.5},{d:"3",o:8.4,h:9.3,l:7.2,c:8.0},{d:"4",o:8.8,h:10.0,l:7.6,c:9.7},{d:"5",o:10.1,h:12.0,l:9.4,c:11.2},{d:"6",o:9.2,h:10.4,l:8.1,c:8.6}]}
+};
+function setup(){const r=cv.getBoundingClientRect(),dpr=devicePixelRatio||1;cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);return r}
+function y(v,g){return g.t+(g.max-v)*(g.h-g.t-g.b)/(g.max-g.min)}
+function x(i,n,g){return g.l+70+i*((g.w-g.l-g.rr-140)/(n-1))}
+function draw(){const r=setup(),g={w:r.width,h:r.height,t:54,b:64,l:68,rr:38,min:4,max:13};const c=cases[mode];ctx.clearRect(0,0,r.width,r.height);grid(g);caption(g);drawCoverage(g,c);c.bars.forEach((b,i)=>drawCandle(g,x(i,c.bars.length,g),b));markFractals(g,c);drawCandidate(g,c)}
+function grid(g){ctx.save();ctx.strokeStyle="#e8eef7";ctx.fillStyle="#7c8798";ctx.font="12px sans-serif";ctx.textAlign="right";ctx.textBaseline="middle";for(let v=4;v<=13;v++){const yy=y(v,g);ctx.beginPath();ctx.moveTo(g.l,yy);ctx.lineTo(g.w-g.rr,yy);ctx.stroke();ctx.fillText(String(v),g.l-10,yy)}ctx.strokeStyle="#d8e2ef";ctx.strokeRect(g.l,g.t,g.w-g.l-g.rr,g.h-g.t-g.b);ctx.restore()}
+function caption(g){ctx.save();ctx.fillStyle="#172033";ctx.font="900 16px sans-serif";ctx.textAlign="left";ctx.fillText("判断对象：已经处理包含关系、并标出分型后的 K 线序列",g.l,32);ctx.restore()}
+function drawCandle(g,x0,b){ctx.save();const up=b.c>=b.o,col=up?"#dc2626":"#16a34a";ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(x0,y(b.h,g));ctx.lineTo(x0,y(b.l,g));ctx.stroke();const top=Math.min(y(b.o,g),y(b.c,g)),bot=Math.max(y(b.o,g),y(b.c,g));ctx.globalAlpha=.76;ctx.fillRect(x0-17,top,34,Math.max(4,bot-top));ctx.globalAlpha=1;ctx.fillStyle="#334155";ctx.font="900 13px sans-serif";ctx.textAlign="center";ctx.fillText("第"+b.d+"根",x0,g.h-g.b+32);ctx.restore()}
+function drawCoverage(g,c){const n=c.bars.length;ctx.save();if(mode==="validUp"||mode==="validDown"){cover(g,n,0,2,mode==="validUp"?"底分型占用1-3":"顶分型占用1-3","#16a34a");cover(g,n,4,6,mode==="validUp"?"顶分型占用5-7":"底分型占用5-7","#dc2626");cover(g,n,3,3,"第4根独立K线","#f59e0b",.18)}else if(mode==="tooClose"){cover(g,n,0,2,"底分型占用1-3","#16a34a");cover(g,n,2,4,"顶分型占用3-5","#dc2626");cover(g,n,2,2,"共用第3根","#7c3aed",.2)}ctx.restore()}
+function cover(g,n,a,b,text,color,alpha=.1){const xa=x(a,n,g),xb=x(b,n,g),left=xa-38,w=xb-xa+76,top=g.t+24,h=g.h-g.t-g.b-30;ctx.save();ctx.fillStyle=color;ctx.globalAlpha=alpha;round(left,top,w,h,12);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=color;ctx.setLineDash([7,5]);ctx.stroke();ctx.setLineDash([]);bubble(left+w/2,top+10,text,color,color==="#16a34a"?"#f0fdf4":color==="#dc2626"?"#fef2f2":color==="#f59e0b"?"#fff7ed":"#f5f3ff");ctx.restore()}
+function markFractals(g,c){const n=c.bars.length;if(mode==="validUp"||mode==="tooClose"){mark(g,x(1,n,g),y(c.bars[1].l,g),"底","#16a34a");mark(g,x(mode==="validUp"?5:3,n,g),y(c.bars[mode==="validUp"?5:3].h,g),"顶","#dc2626")}else if(mode==="validDown"){mark(g,x(1,n,g),y(c.bars[1].h,g),"顶","#dc2626");mark(g,x(5,n,g),y(c.bars[5].l,g),"底","#16a34a")}else{mark(g,x(1,n,g),y(c.bars[1].h,g),"顶1","#dc2626");mark(g,x(4,n,g),y(c.bars[4].h,g),"顶2","#dc2626")}}
+function drawCandidate(g,c){const n=c.bars.length,[aType,ai,bType,bi]=c.line,pa=aType==="top"?c.bars[ai].h:c.bars[ai].l,pb=bType==="top"?c.bars[bi].h:c.bars[bi].l;ctx.save();ctx.strokeStyle=c.bad?"#7c3aed":"#2563eb";ctx.lineWidth=3;ctx.setLineDash(c.bad?[8,6]:[]);ctx.beginPath();ctx.moveTo(x(ai,n,g),y(pa,g));ctx.lineTo(x(bi,n,g),y(pb,g));ctx.stroke();ctx.setLineDash([]);if(c.bad)bubble((x(ai,n,g)+x(bi,n,g))/2,(y(pa,g)+y(pb,g))/2-38,c.bad,"#7c3aed","#f5f3ff");else bubble((x(ai,n,g)+x(bi,n,g))/2,(y(pa,g)+y(pb,g))/2-38,mode==="validUp"?"向上一笔":"向下一笔","#2563eb","#eff6ff");ctx.restore()}
+function mark(g,x0,y0,text,color){ctx.save();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x0,y0,10,0,Math.PI*2);ctx.fill();bubble(x0,y0-48,text,color,color==="#dc2626"?"#fef2f2":"#f0fdf4");ctx.restore()}
+function bubble(x0,y0,text,color,bg){ctx.save();ctx.font="900 12px sans-serif";const w=ctx.measureText(text).width+18,h=26;ctx.fillStyle=bg;ctx.strokeStyle=color;round(x0-w/2,y0,w,h,8);ctx.fill();ctx.stroke();ctx.fillStyle=color;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(text,x0,y0+h/2);ctx.restore()}
+function round(x0,y0,w,h,r){ctx.beginPath();ctx.moveTo(x0+r,y0);ctx.arcTo(x0+w,y0,x0+w,y0+h,r);ctx.arcTo(x0+w,y0+h,x0,y0+h,r);ctx.arcTo(x0,y0+h,x0,y0,r);ctx.arcTo(x0,y0,x0+w,y0,r);ctx.closePath()}
+function render(){const c=cases[mode];document.getElementById("title").textContent=c.title;document.getElementById("intro").textContent=c.intro;document.getElementById("result").textContent=c.result;["validUp","validDown","tooClose","sameType"].forEach(id=>document.getElementById(id).classList.toggle("on",id===mode));draw()}
+["validUp","validDown","tooClose","sameType"].forEach(id=>document.getElementById(id).onclick=()=>{mode=id;render()});
+window.addEventListener("resize",draw);
+render();
+</script>
+</body>
+</html>

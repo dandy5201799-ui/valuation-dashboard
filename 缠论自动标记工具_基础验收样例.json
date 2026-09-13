@@ -1,0 +1,37 @@
+{
+  "version": "0.1",
+  "status": "specification_examples_not_engine_verified",
+  "data_kind": "synthetic_interval_unit_cases_not_market_OHLC",
+  "interval_order": ["low", "high"],
+  "index_base": 0,
+  "cases": [
+    {"id":"K01","operation":"merge_pair","direction":"up","input":[[8,12],[9,11]],"expected":[9,12],"rule":"O-K04"},
+    {"id":"K02","operation":"merge_pair","direction":"down","input":[[8,12],[9,11]],"expected":[8,11],"rule":"O-K04"},
+    {"id":"K03","operation":"merge_pair","direction":"up","input":[[8,12],[8,12]],"expected":[8,12],"rule":"E-K02"},
+    {"id":"K04","operation":"normalize_with_direction","direction":"up","input":[[0,10],[2,8],[1,9]],"expected":[[2,10],[1,9]],"rule":"O-K03","note":"Original second and third contain; merged first pair and third do not. Do not merge all three."},
+    {"id":"K05","operation":"startup_state","input":[[0,10],[2,8]],"expected":"insufficient_context","rule":"E-K05"},
+    {"id":"F01","operation":"fractal_geometry","input":[[1,3],[2,4],[1,3]],"expected":"top","rule":"O-F01"},
+    {"id":"F02","operation":"fractal_geometry","input":[[2,4],[1,3],[2,4]],"expected":"bottom","rule":"O-F01"},
+    {"id":"F03","operation":"fractal_geometry","input":[[1,3],[2,4],[3,5]],"expected":"none","rule":"O-F01"},
+    {"id":"F04","operation":"fractal_geometry","input":[[1,3],[0,4],[1,3]],"expected":"unnormalized_input","rule":"E-F02","note":"Highest high alone is insufficient; middle contains neighbors."},
+    {"id":"F05","operation":"fractal_geometry","input":[[1,3],[2,4]],"expected":"insufficient_context","rule":"E-F02"},
+    {"id":"F06","operation":"fractal_freeze","geometry":"top","dependencies_stable":[true,true,false],"expected":"candidate","rule":"E-F03"},
+    {"id":"B01","operation":"pen_distance_only","centers":[1,4],"expected":{"independent_count":0,"eligible":false},"rule":"O-B01"},
+    {"id":"B02","operation":"pen_distance_only","centers":[1,5],"expected":{"independent_count":1,"eligible":true},"rule":"O-B01","note":"Distance pass does not assert a complete pen."},
+    {"id":"B03","operation":"pen_price_only","bottom_center":[5,10],"top_center":[6,9],"expected":false,"rule":"O-B02","note":"Top price 9 exceeds bottom price 5 but not bottom center high 10."},
+    {"id":"B04","operation":"pen_price_only","bottom_center":[5,10],"top_center":[8,12],"expected":true,"rule":"O-B02"},
+    {"id":"X01","operation":"segment_seed_overlap_only","vertices":[0,5,3,7],"expected":{"intersection":[3,5],"eligible":true},"rule":"O-X01","note":"Seed overlap only; does not assert confirmed segment end."},
+    {"id":"X02","operation":"segment_seed_overlap_only","vertices":[0,3,4,7],"expected":"invalid_pen_directions","rule":"O-X01","note":"Must reject before testing overlap: prices do not alternate directions."},
+    {"id":"X03","operation":"feature_gap_only","input":[[1,3],[4,6]],"expected":true,"rule":"O-X02"},
+    {"id":"X04","operation":"feature_gap_only","input":[[1,3],[3,6]],"expected":false,"rule":"O-X02","note":"Closed intervals touch; not an empty intersection."},
+    {"id":"X05","operation":"segment_seed_overlap_only","vertices":[5,10,0,3],"expected":{"intersection":null,"eligible":false},"rule":"O-X01","note":"Valid alternating pen directions, but the first and third ranges are disjoint. Does not qualify as an upward segment seed."}
+  ],
+  "pending_full_structure_cases": [
+    "B05: nested short opposite fractals and candidate elimination ordering",
+    "B06: freezing policy under later endpoint replacement",
+    "X: case-one standard feature reversal and failed pen destruction pair",
+    "X: case-two pending and completed second-feature reversal pair",
+    "X: lesson-78 internal extreme differs from structural endpoint",
+    "X: lesson-81 complete corrected geometry with point7 >= point5 and point7 < point5"
+  ]
+}

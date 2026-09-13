@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="980" viewBox="0 0 1480 980">
+  <defs>
+    <style>
+      .bg { fill: #f6f8fc; }
+      .panel { fill: #ffffff; stroke: #d9e2ef; stroke-width: 2; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 36px; font-weight: 850; fill: #172033; }
+      .sub { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 18px; fill: #667085; }
+      .head { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 17px; font-weight: 850; fill: #334155; }
+      .state { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 22px; font-weight: 850; fill: #172033; }
+      .txt { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 17px; font-weight: 720; fill: #334155; }
+      .small { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 15px; font-weight: 700; fill: #64748b; }
+      .tiny { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 13px; font-weight: 700; fill: #64748b; }
+      .box { fill: #ffffff; stroke: #d9e2ef; stroke-width: 2; }
+      .green { fill: #f0fdf4; stroke: #16a34a; }
+      .orange { fill: #fff7ed; stroke: #f59e0b; }
+      .red { fill: #fef2f2; stroke: #dc2626; }
+      .blue { fill: #eff6ff; stroke: #2563eb; }
+      .purple { fill: #f5f3ff; stroke: #7c3aed; }
+      .gray { fill: #f8fafc; stroke: #94a3b8; }
+      .arrow { stroke: #94a3b8; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .rule { stroke: #e2e8f0; stroke-width: 2; }
+      .up { fill: none; stroke: #16a34a; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .risk { fill: none; stroke: #f59e0b; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 7 7; }
+      .break { fill: none; stroke: #dc2626; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .range { fill: none; stroke: #2563eb; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .down { fill: none; stroke: #dc2626; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .guard { stroke: #f59e0b; stroke-width: 3; stroke-dasharray: 8 7; }
+      .dot { stroke: #ffffff; stroke-width: 3; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1480" height="980"/>
+
+  <text class="title" x="58" y="64">五种结构状态对应的操作动作图</text>
+  <text class="sub" x="58" y="98">先识别结构，再决定动作：趋势里顺势，风险处收紧，破位后观察，震荡里看边界，下降中先规避。</text>
+
+  <rect class="panel" x="46" y="132" width="1388" height="742" rx="24"/>
+
+  <!-- Column headers -->
+  <text class="head" x="88" y="178">结构状态</text>
+  <text class="head" x="396" y="178">图形证据</text>
+  <text class="head" x="704" y="178">判断含义</text>
+  <text class="head" x="1020" y="178">学习者动作</text>
+
+  <line class="rule" x1="78" y1="198" x2="1402" y2="198"/>
+
+  <!-- Row 1 -->
+  <rect class="box green" x="78" y="224" width="250" height="102" rx="14"/>
+  <text class="state" x="104" y="264">上升趋势延续</text>
+  <text class="small" x="104" y="294">高点抬高，低点抬高</text>
+
+  <rect class="box" x="358" y="224" width="270" height="102" rx="14"/>
+  <path class="up" d="M382 292 L420 268 L458 280 L504 246 L548 260 L600 232"/>
+  <line class="guard" x1="376" y1="285" x2="610" y2="285"/>
+  <circle class="dot" cx="420" cy="268" r="6" fill="#16a34a"/>
+  <circle class="dot" cx="504" cy="246" r="6" fill="#16a34a"/>
+  <circle class="dot" cx="548" cy="260" r="6" fill="#16a34a"/>
+
+  <rect class="box green" x="670" y="224" width="280" height="102" rx="14"/>
+  <text class="txt" x="692" y="260">旧趋势仍有效</text>
+  <text class="small" x="692" y="290">不要因为单日大涨就卖飞</text>
+
+  <rect class="box gray" x="992" y="224" width="370" height="102" rx="14"/>
+  <text class="txt" x="1016" y="258">继续持有 / 顺势观察</text>
+  <text class="small" x="1016" y="286">防守位随新低点确认后上移</text>
+
+  <!-- Row 2 -->
+  <rect class="box orange" x="78" y="350" width="250" height="102" rx="14"/>
+  <text class="state" x="104" y="390">可能到尾声</text>
+  <text class="small" x="104" y="420">风险变大，但没确认反转</text>
+
+  <rect class="box" x="358" y="350" width="270" height="102" rx="14"/>
+  <path class="risk" d="M382 420 L420 392 L458 404 L504 368 L550 382 L598 358 L612 410"/>
+  <line class="guard" x1="376" y1="426" x2="610" y2="426"/>
+  <circle class="dot" cx="598" cy="358" r="7" fill="#f59e0b"/>
+  <circle class="dot" cx="612" cy="410" r="7" fill="#f59e0b"/>
+
+  <rect class="box orange" x="670" y="350" width="280" height="102" rx="14"/>
+  <text class="txt" x="692" y="386">只是预警，不是结论</text>
+  <text class="small" x="692" y="416">创新高乏力 / 新高后快回落</text>
+
+  <rect class="box gray" x="992" y="350" width="370" height="102" rx="14"/>
+  <text class="txt" x="1016" y="384">不追高，收紧防守</text>
+  <text class="small" x="1016" y="414">等跌破防守或修复创新高</text>
+
+  <!-- Row 3 -->
+  <rect class="box red" x="78" y="476" width="250" height="102" rx="14"/>
+  <text class="state" x="104" y="516">有效破位</text>
+  <text class="small" x="104" y="546">旧上升结构受损</text>
+
+  <rect class="box" x="358" y="476" width="270" height="102" rx="14"/>
+  <path class="break" d="M382 524 L426 490 L468 508 L514 474 L558 492 L606 560"/>
+  <line class="guard" x1="376" y1="524" x2="610" y2="524"/>
+  <circle class="dot" cx="606" cy="560" r="8" fill="#dc2626"/>
+  <text class="tiny" x="458" y="548">收盘/后续在防守位下方</text>
+
+  <rect class="box red" x="670" y="476" width="280" height="102" rx="14"/>
+  <text class="txt" x="692" y="512">旧趋势先判受损</text>
+  <text class="small" x="692" y="542">但还不等于下降趋势成立</text>
+
+  <rect class="box gray" x="992" y="476" width="370" height="102" rx="14"/>
+  <text class="txt" x="1016" y="510">减仓 / 退出观察</text>
+  <text class="small" x="1016" y="540">不急着抄底，等右侧结构</text>
+
+  <!-- Row 4 -->
+  <rect class="box blue" x="78" y="602" width="250" height="102" rx="14"/>
+  <text class="state" x="104" y="642">震荡区间</text>
+  <text class="small" x="104" y="672">上下都走不出去</text>
+
+  <rect class="box" x="358" y="602" width="270" height="102" rx="14"/>
+  <rect x="382" y="626" width="220" height="54" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2" stroke-dasharray="8 7"/>
+  <path class="range" d="M390 670 L430 628 L470 675 L512 632 L558 672 L596 630"/>
+  <line x1="382" y1="626" x2="602" y2="626" stroke="#2563eb" stroke-width="3"/>
+  <line x1="382" y1="680" x2="602" y2="680" stroke="#16a34a" stroke-width="3"/>
+
+  <rect class="box blue" x="670" y="602" width="280" height="102" rx="14"/>
+  <text class="txt" x="692" y="638">方向不明，边界重要</text>
+  <text class="small" x="692" y="668">上沿压力，下沿承接</text>
+
+  <rect class="box gray" x="992" y="602" width="370" height="102" rx="14"/>
+  <text class="txt" x="1016" y="636">低吸高抛要更谨慎</text>
+  <text class="small" x="1016" y="666">更稳妥是等有效突破/跌破</text>
+
+  <!-- Row 5 -->
+  <rect class="box purple" x="78" y="728" width="250" height="102" rx="14"/>
+  <text class="state" x="104" y="768">转入下降结构</text>
+  <text class="small" x="104" y="798">更低高点 + 更低低点</text>
+
+  <rect class="box" x="358" y="728" width="270" height="102" rx="14"/>
+  <path class="down" d="M384 760 L430 734 L476 776 L522 752 L566 800 L606 782"/>
+  <line class="guard" x1="376" y1="754" x2="610" y2="754"/>
+  <circle class="dot" cx="522" cy="752" r="7" fill="#dc2626"/>
+  <circle class="dot" cx="566" cy="800" r="8" fill="#dc2626"/>
+
+  <rect class="box purple" x="670" y="728" width="280" height="102" rx="14"/>
+  <text class="txt" x="692" y="764">旧上升思维失效</text>
+  <text class="small" x="692" y="794">反弹更像反抽，不是恢复</text>
+
+  <rect class="box gray" x="992" y="728" width="370" height="102" rx="14"/>
+  <text class="txt" x="1016" y="762">规避 / 等新底部结构</text>
+  <text class="small" x="1016" y="792">只做更低级别反弹也要设防守</text>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M330 275 L354 275"/>
+  <path class="arrow" d="M630 275 L664 275"/>
+  <path class="arrow" d="M952 275 L986 275"/>
+  <path class="arrow" d="M330 401 L354 401"/>
+  <path class="arrow" d="M630 401 L664 401"/>
+  <path class="arrow" d="M952 401 L986 401"/>
+  <path class="arrow" d="M330 527 L354 527"/>
+  <path class="arrow" d="M630 527 L664 527"/>
+  <path class="arrow" d="M952 527 L986 527"/>
+  <path class="arrow" d="M330 653 L354 653"/>
+  <path class="arrow" d="M630 653 L664 653"/>
+  <path class="arrow" d="M952 653 L986 653"/>
+  <path class="arrow" d="M330 779 L354 779"/>
+  <path class="arrow" d="M630 779 L664 779"/>
+  <path class="arrow" d="M952 779 L986 779"/>
+
+  <!-- Footer -->
+  <rect x="72" y="902" width="1336" height="48" rx="16" fill="#ffffff" stroke="#d9e2ef" stroke-width="2"/>
+  <text class="txt" x="102" y="932">复习口诀：</text>
+  <text class="txt" x="200" y="932">上涨看防守，尾声看风险，破位先观察，震荡看边界，下降先规避。学习用途，不构成投资建议。</text>
+</svg>

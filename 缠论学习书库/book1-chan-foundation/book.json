@@ -1,0 +1,25 @@
+{
+  "title": "缠论结构基础",
+  "description": "从 K 线包含、分型、笔、线段、中枢到背驰和买卖点的结构学习书。",
+  "author": "Codex × wps",
+  "language": "zh-Hans",
+  "root": ".",
+  "styles": {
+    "website": "styles/website.css",
+    "pdf": "styles/pdf.css"
+  },
+  "plugins": [],
+  "pluginsConfig": {},
+  "readme_path": "index.md",
+  "release_date": "2026-09-13",
+  "cover_image": "assets/cover.svg",
+  "cover_alt": "封面：缠论结构基础",
+  "outputs": {
+    "print_html": "exported/book1-chan-foundation-print.html",
+    "pdf": "exported/book1-chan-foundation.pdf"
+  },
+  "title_page_lines": [
+    "从 K 线到结构，而不是凭感觉画线",
+    "学习草稿，非交易建议"
+  ]
+}

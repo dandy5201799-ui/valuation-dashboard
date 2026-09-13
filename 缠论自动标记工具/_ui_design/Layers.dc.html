@@ -1,0 +1,175 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #1f7d50; } a:hover { color: #16653f; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .card { background:#ffffff; border:1px solid #e2ddd0; border-radius:10px; }
+    .h2 { font-size:14px; font-weight:700; margin-bottom:4px; }
+    .sub { font-size:11.5px; color:#8b8677; margin-bottom:14px; }
+    .toggle { width:32px; height:19px; border-radius:10px; position:relative; flex-shrink:0; }
+    .toggle .knob { position:absolute; top:2px; width:15px; height:15px; border-radius:50%; background:#fff; }
+    .kbd { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:20px; padding:0 5px; border:1px solid #d8d3c5; border-bottom-width:2px; border-radius:5px; background:#fbfaf6; font-size:11px; font-weight:600; font-family:'IBM Plex Mono',monospace; }
+  </style>
+</helmet>
+
+<div style="width:1440px;min-height:1240px;background:#f6f5f0;font-family:'IBM Plex Sans',-apple-system,'PingFang SC',sans-serif;color:#1c1f26;padding:36px 40px 48px 40px;">
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;">
+    <div style="font-size:20px;font-weight:700;">图层预设 · 阶段带 / 概览 · 快捷键</div>
+    <div class="mono" style="font-size:11px;color:#a19c8c;">交互规格参考</div>
+  </div>
+
+  <!-- ===== 图层三组预设 ===== -->
+  <div class="h2">图层三组预设</div>
+  <div class="sub">9 个独立开关在全开时会互相遮盖；改为三组一键切换，展开后才看到组内单项开关。默认三组全开。</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:32px;">
+
+    <div class="card" style="padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-weight:700;font-size:13px;">结构</div>
+        <div class="toggle" style="background:#1f9d63;"><div class="knob" style="right:2px;"></div></div>
+      </div>
+      <div style="font-size:11.5px;color:#9c9788;margin-bottom:10px;">笔 / 线段 / 笔中枢 / 线段中枢</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#8b8677;font-weight:600;margin-bottom:10px;">
+        展开单项 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8b8677" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px;border-top:1px solid #f0eee6;">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;"><span>笔</span><div class="toggle" style="background:#1f9d63;"><div class="knob" style="right:2px;"></div></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;"><span>线段</span><div class="toggle" style="background:#d8d3c5;"><div class="knob" style="left:2px;"></div></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;"><span>笔中枢</span><div class="toggle" style="background:#1f9d63;"><div class="knob" style="right:2px;"></div></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;"><span>线段中枢</span><div class="toggle" style="background:#1f9d63;"><div class="knob" style="right:2px;"></div></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-weight:700;font-size:13px;">买卖点</div>
+        <div class="toggle" style="background:#1f9d63;"><div class="knob" style="right:2px;"></div></div>
+      </div>
+      <div style="font-size:11.5px;color:#9c9788;margin-bottom:10px;">买卖点（1/2/3类）/ 背驰</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#8b8677;font-weight:600;margin-bottom:10px;">
+        展开单项 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8b8677" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px;border-top:1px solid #f0eee6;">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;"><span>买卖点</span><div class="toggle" style="background:#1f9d63;"><div class="knob" style="right:2px;"></div></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;"><span>背驰</span><div class="toggle" style="background:#1f9d63;"><div class="knob" style="right:2px;"></div></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-weight:700;font-size:13px;color:#a19c8c;">防守压力</div>
+        <div class="toggle" style="background:#d8d3c5;"><div class="knob" style="left:2px;"></div></div>
+      </div>
+      <div style="font-size:11.5px;color:#9c9788;margin-bottom:10px;">防守 / 失败线 / 支撑压力</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#8b8677;font-weight:600;margin-bottom:10px;">
+        展开单项 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8b8677" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px;border-top:1px solid #f0eee6;">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#a19c8c;"><span>防守 / 失败线</span><div class="toggle" style="background:#d8d3c5;"><div class="knob" style="left:2px;"></div></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#a19c8c;"><span>支撑 / 压力</span><div class="toggle" style="background:#d8d3c5;"><div class="knob" style="left:2px;"></div></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== 阶段带细节 ===== -->
+  <div class="h2">阶段带 · 只渲染当前视窗内的段</div>
+  <div class="sub">641 根压进一屏时，离开段会被压成几像素的细丝；改为常驻 36pt + 只画视窗内的段，任何缩放下都保留可读宽度。窄到放不下文字时只画色块，文字移到左侧结构导航。</div>
+
+  <div class="card" style="padding:18px;margin-bottom:32px;">
+    <div style="display:flex;gap:28px;">
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:700;color:#8b8677;margin-bottom:8px;">缩小到全局（旧方案会失真）</div>
+        <svg width="100%" height="36" viewBox="0 0 620 36"><rect width="620" height="36" fill="#f6f5f0"/>
+          <rect x="0" y="4" width="24" height="28" fill="#eceae3"/><rect x="24" y="4" width="3" height="28" fill="rgba(31,157,99,0.5)"/><rect x="27" y="4" width="41" height="28" fill="#eceae3"/><rect x="68" y="4" width="2" height="28" fill="rgba(209,69,58,0.5)"/><rect x="70" y="4" width="90" height="28" fill="#eceae3"/><rect x="160" y="4" width="1" height="28" fill="rgba(31,157,99,0.5)"/><rect x="161" y="4" width="459" height="28" fill="#eceae3"/>
+        </svg>
+        <div style="font-size:11px;color:#b23b30;margin-top:6px;">离开段被压成 1-3px 细丝，看起来"全是中枢"</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:700;color:#8b8677;margin-bottom:8px;">只画视窗内的段（新方案）· 左端常驻"阶段"标签</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;font-weight:700;color:#8b8677;flex:0 0 auto;">阶段</span>
+          <svg width="100%" height="36" viewBox="0 0 620 36" style="flex:1;"><rect width="620" height="36" fill="#f6f5f0"/>
+            <rect x="0" y="4" width="180" height="28" rx="4" fill="#eceae3" stroke="#d8d3c5"/><text x="90" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#7a766a">中枢期</text>
+            <rect x="184" y="4" width="240" height="28" rx="4" fill="rgba(31,157,99,0.16)" stroke="#1f9d63"/><text x="304" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#1f7d50">向上离开</text>
+            <rect x="428" y="4" width="192" height="28" rx="4" fill="#eceae3" stroke="#d8d3c5"/><text x="524" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#7a766a">中枢期</text>
+          </svg>
+        </div>
+        <div style="font-size:11px;color:#1f7d50;margin-top:6px;">视窗内固定 3 段，缩放不改变可读宽度；彩色语义带，与下方灰度概览条区分角色</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Minimap 细节 ===== -->
+  <div class="h2">底部概览 (minimap)</div>
+  <div class="sub">全局视野交给概览条：不再使用阶段配色，改为纯灰度的价格缩略曲线 + 当前视窗框，与上方彩色的阶段带在视觉上明确区分角色——一个是位置条，一个是语义带。视图范围文字（如"2025-04-14 ~ 2025-10-27 · 131 根"）与缩放控件（−/100%/+/⌘0）合并到概览条这一行，工具栏不再重复缩放入口。拖拽框可平移，拖拽边缘可缩放。</div>
+
+  <div class="card" style="padding:18px;margin-bottom:32px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:11px;color:#8b8677;">全局概览 · 2024-01-19 ~ 2026-09-11 · 视图 2025-04-14 ~ 2025-10-27 · 131 根</div>
+      <div style="display:flex;align-items:center;gap:2px;background:#ece9e0;border-radius:7px;padding:2px;">
+        <div class="kbd" style="border:none;background:transparent;">−</div>
+        <div style="font-size:10.5px;font-weight:700;padding:0 4px;">100%</div>
+        <div class="kbd" style="border:none;background:transparent;">+</div>
+        <div style="font-size:10px;font-weight:700;padding:0 6px;border-left:1px solid #d8d3c5;margin-left:2px;">⌘0 全局</div>
+      </div>
+    </div>
+    <svg width="100%" height="60" viewBox="0 0 1320 60">
+      <rect x="10" y="10" width="64" height="40" fill="#eceae3"/><rect x="76" y="10" width="80" height="40" fill="#eceae3"/><rect x="156" y="10" width="165" height="40" fill="#eceae3"/><rect x="321" y="10" width="165" height="40" fill="#eceae3"/><rect x="486" y="10" width="84" height="40" fill="#eceae3"/><rect x="570" y="10" width="62" height="40" fill="#eceae3"/><rect x="632" y="10" width="74" height="40" fill="#eceae3"/><rect x="706" y="10" width="76" height="40" fill="#eceae3"/><rect x="782" y="10" width="76" height="40" fill="#eceae3"/><rect x="858" y="10" width="105" height="40" fill="#eceae3"/><rect x="963" y="10" width="76" height="40" fill="#eceae3"/><rect x="1039" y="10" width="138" height="40" fill="#eceae3"/><rect x="1177" y="10" width="97" height="40" fill="#eceae3"/><rect x="1274" y="10" width="29" height="40" fill="#eceae3"/><rect x="1303" y="10" width="17" height="40" fill="#eceae3"/>
+      <path d="M10,42 L60,38 L110,30 L200,24 L280,16 L360,20 L440,26 L520,22 L600,18 L680,24 L760,30 L840,20 L920,14 L1000,18 L1080,22 L1160,16 L1240,20 L1310,24" fill="none" stroke="#8b8677" stroke-width="1.2"/>
+      <rect x="605" y="10" width="270" height="40" fill="rgba(28,31,38,0.07)" stroke="#1c1f26" stroke-width="1.4" stroke-dasharray="4 2"/>
+      <rect x="596" y="26" width="9" height="8" rx="2" fill="#1c1f26"/><rect x="875" y="26" width="9" height="8" rx="2" fill="#1c1f26"/>
+      <text x="740" y="34" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1f26" font-family="IBM Plex Sans,sans-serif">当前主图视窗</text>
+    </svg>
+    <div style="display:flex;gap:24px;margin-top:8px;font-size:11px;color:#8b8677;">
+      <span>拖拽框内部 → 平移主图</span>
+      <span>拖拽框边缘手柄 → 缩放主图</span>
+      <span>点击框外 → 跳转到该区间</span>
+    </div>
+  </div>
+
+  <!-- ===== 快捷键 ===== -->
+  <div class="h2">键盘 &amp; 触控板</div>
+  <div class="sub">Mac 客户端优先支持键盘与触控板操作，鼠标按钮作为兜底。</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card" style="padding:18px;">
+      <div style="font-size:12px;font-weight:700;color:#8b8677;margin-bottom:12px;">键盘</div>
+      <div style="display:flex;flex-direction:column;gap:11px;font-size:12.5px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>逐根移动</span><span><span class="kbd">←</span> <span class="kbd">→</span></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>跳到上 / 下一个分型</span><span><span class="kbd">⇧</span><span class="kbd">←</span> <span class="kbd">⇧</span><span class="kbd">→</span></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>跳到上 / 下一个中枢</span><span><span class="kbd">⌘</span><span class="kbd">←</span> <span class="kbd">⌘</span><span class="kbd">→</span></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>切换检查器</span><span><span class="kbd">⌘</span><span class="kbd">I</span></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>回到全局视野</span><span><span class="kbd">⌘</span><span class="kbd">0</span></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>播放 / 暂停（复盘模式）</span><span><span class="kbd">space</span></span></div>
+      </div>
+    </div>
+    <div class="card" style="padding:18px;">
+      <div style="font-size:12px;font-weight:700;color:#8b8677;margin-bottom:12px;">触控板</div>
+      <div style="display:flex;flex-direction:column;gap:11px;font-size:12.5px;">
+        <div style="display:flex;justify-content:space-between;"><span>连续缩放</span><span style="color:#8b8677;">双指捏合</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>平移</span><span style="color:#8b8677;">双指滑动</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>选中标记</span><span style="color:#8b8677;">单指点击</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>概览条取景</span><span style="color:#8b8677;">拖拽框选</span></div>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f0eee6;font-size:11px;color:#9c9788;line-height:1.6;">−/+/全局 三个离散按钮保留作为兜底，位于底部概览条一行内，不再放在工具栏。</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

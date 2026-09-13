@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论严格学习04：线段成立条件示例</title>
+<style>
+:root{--bg:#f6f8fb;--panel:#fff;--ink:#172033;--muted:#64748b;--line:#d8e2ef;--blue:#2563eb;--red:#dc2626;--green:#16a34a;--orange:#f59e0b;--purple:#7c3aed}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.wrap{width:min(1240px,calc(100vw - 32px));margin:22px auto 44px}.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 34px rgba(15,23,42,.07)}.hero{padding:18px 20px;margin-bottom:14px}.badge{display:inline-flex;border-radius:999px;background:#eff6ff;color:var(--blue);font-size:13px;font-weight:900;padding:5px 10px;margin-bottom:8px}h1{font-size:30px;line-height:1.15;margin:0 0 8px}p{margin:0;color:var(--muted);line-height:1.75}.layout{display:grid;grid-template-columns:1.35fr .65fr;gap:14px}.card{padding:16px}.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}button{font:inherit;min-height:40px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;color:var(--ink);padding:0 14px;font-weight:850;cursor:pointer}button.on{background:var(--blue);border-color:var(--blue);color:#fff}.chart{border:1px solid var(--line);border-radius:12px;background:linear-gradient(#fff,#fbfdff);overflow:hidden}canvas{display:block;width:100%;height:570px}.side h2{font-size:20px;margin:0 0 10px}.rule{border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;padding:11px 12px;margin:10px 0;line-height:1.7}.rule b{color:#334155}.result{border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px;line-height:1.75;font-weight:760}.list{display:grid;gap:8px;margin-top:12px}.item{border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:11px;line-height:1.65}.item b{display:block;margin-bottom:4px}.note{margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:14px;color:var(--muted);line-height:1.75}.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:13px}.dot{display:inline-flex;align-items:center;gap:5px}.dot:before{content:"";width:10px;height:10px;border-radius:50%;background:var(--blue)}.dot.overlap:before{background:var(--orange)}.dot.break:before{background:var(--purple)}.dot.point:before{background:#334155}@media(max-width:940px){.layout{grid-template-columns:1fr}canvas{height:520px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <span class="badge">严格学习 04</span>
+    <h1>线段：至少三笔，而且前三笔要有重叠</h1>
+    <p>笔只是更小的结构零件。线段不是任意三笔相连，而是连续三笔之间要形成共同重叠区，才开始有线段意义。</p>
+  </section>
+
+  <section class="layout">
+    <div class="card">
+      <div class="controls">
+        <button id="validUp" class="on">成立：向上线段</button>
+        <button id="validDown">成立：向下线段</button>
+        <button id="noOverlap">不成立：三笔无重叠</button>
+        <button id="broken">线段被破坏</button>
+      </div>
+      <div class="chart"><canvas id="cv"></canvas></div>
+      <div class="legend">
+        <span class="dot point">黑点：笔的端点</span>
+        <span class="dot">蓝线：笔</span>
+        <span class="dot overlap">橙色：前三笔重叠区</span>
+        <span class="dot break">紫色：破坏线段的后续笔</span>
+      </div>
+    </div>
+
+    <aside class="card side">
+      <h2 id="title">成立：向上线段</h2>
+      <p id="intro">连续前三笔之间有共同重叠区，所以可以形成一个向上线段。</p>
+      <div class="rule"><b>条件一：</b><span>线段至少由三笔组成，少于三笔不能叫线段。</span></div>
+      <div class="rule"><b>条件二：</b><span>不是任意三笔都行，前三笔必须有重叠部分。</span></div>
+      <div class="rule"><b>条件三：</b><span>线段成立后，后面要看有没有被新的笔破坏。</span></div>
+      <div class="result" id="result">前三笔有重叠区，线段成立。</div>
+      <div class="list">
+        <div class="item"><b>笔</b><span>顶底之间的一段最小结构运动。</span></div>
+        <div class="item"><b>线段</b><span>由至少三笔组成，并且前三笔要有重叠。</span></div>
+        <div class="item"><b>下一步</b><span>多个线段之间发生重叠，才会进入中枢。</span></div>
+      </div>
+      <p class="note">这一节先只学“线段成立”。更严格的线段破坏和重新划分，后面还会单独练。</p>
+    </aside>
+  </section>
+</main>
+
+<script>
+const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+let mode="validUp";
+const cases={
+  validUp:{title:"成立：向上线段",intro:"连续前三笔之间有共同重叠区，所以可以形成一个向上线段。",result:"前三笔的价格范围有共同交集，大约在 8.2 到 10.2 之间，所以线段成立。",pts:[[0,6],[1,11],[2,8.2],[3,12],[4,9.4]],overlap:[8.2,10.2],break:null},
+  validDown:{title:"成立：向下线段",intro:"连续前三笔之间有共同重叠区，所以可以形成一个向下线段。",result:"前三笔的价格范围有共同交集，大约在 7.8 到 10.4 之间，所以线段成立。",pts:[[0,12],[1,7],[2,10.4],[3,6],[4,8.4]],overlap:[7.8,10.4],break:null},
+  noOverlap:{title:"不成立：三笔无重叠",intro:"虽然有连续三笔，但前三笔没有共同重叠区。",result:"这不能按标准线段处理。它只是连续三笔，不代表线段已经成立。",pts:[[0,5],[1,8],[2,9],[3,12],[4,13]],overlap:null,break:null},
+  broken:{title:"线段被破坏",intro:"先有一个成立的向上线段，后面出现一笔向下打穿关键重叠关系。",result:"前面线段成立，但后续紫色向下一笔破坏了原来的向上线段，需要进入新的线段划分。",pts:[[0,6],[1,11],[2,8.2],[3,12],[4,9.4],[5,12.6],[6,7.4]],overlap:[8.2,10.2],break:[5,6]}
+};
+function setup(){const r=cv.getBoundingClientRect(),dpr=devicePixelRatio||1;cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);return r}
+function x(i,g,n){return g.l+70+i*((g.w-g.l-g.rr-140)/(n-1))}
+function y(v,g){return g.t+(g.max-v)*(g.h-g.t-g.b)/(g.max-g.min)}
+function draw(){const r=setup(),g={w:r.width,h:r.height,t:54,b:62,l:68,rr:38,min:4,max:14};const c=cases[mode];ctx.clearRect(0,0,r.width,r.height);grid(g);caption(g);if(c.overlap)drawOverlap(g,c);drawPens(g,c);drawPoints(g,c);if(mode==="noOverlap")drawNoOverlap(g,c);if(c.break)drawBreak(g,c)}
+function grid(g){ctx.save();ctx.strokeStyle="#e8eef7";ctx.fillStyle="#7c8798";ctx.font="12px sans-serif";ctx.textAlign="right";ctx.textBaseline="middle";for(let v=4;v<=14;v++){const yy=y(v,g);ctx.beginPath();ctx.moveTo(g.l,yy);ctx.lineTo(g.w-g.rr,yy);ctx.stroke();ctx.fillText(String(v),g.l-10,yy)}ctx.strokeStyle="#d8e2ef";ctx.strokeRect(g.l,g.t,g.w-g.l-g.rr,g.h-g.t-g.b);ctx.restore()}
+function caption(g){ctx.save();ctx.fillStyle="#172033";ctx.font="900 16px sans-serif";ctx.textAlign="left";ctx.fillText("判断对象：已经划分好的连续笔",g.l,32);ctx.restore()}
+function drawPens(g,c){ctx.save();ctx.lineWidth=3;ctx.strokeStyle="#2563eb";ctx.beginPath();c.pts.forEach(([i,v],j)=>{const xx=x(i,g,c.pts.length);if(j)ctx.lineTo(xx,y(v,g));else ctx.moveTo(xx,y(v,g))});ctx.stroke();ctx.restore()}
+function drawPoints(g,c){ctx.save();c.pts.forEach(([i,v],j)=>{const xx=x(i,g,c.pts.length),yy=y(v,g);ctx.fillStyle="#334155";ctx.beginPath();ctx.arc(xx,yy,7,0,Math.PI*2);ctx.fill();bubble(xx,yy+(j%2? -42:22),`P${j+1} ${v}`,"#334155","#f8fafc")});ctx.restore()}
+function drawOverlap(g,c){ctx.save();const top=y(c.overlap[1],g),bottom=y(c.overlap[0],g);ctx.fillStyle="rgba(245,158,11,.16)";ctx.fillRect(g.l,top,g.w-g.l-g.rr,bottom-top);ctx.strokeStyle="#f59e0b";ctx.lineWidth=2;ctx.setLineDash([8,5]);ctx.beginPath();ctx.moveTo(g.l,top);ctx.lineTo(g.w-g.rr,top);ctx.moveTo(g.l,bottom);ctx.lineTo(g.w-g.rr,bottom);ctx.stroke();ctx.setLineDash([]);bubble(g.w-g.rr-130,top+8,`前三笔重叠区 ${c.overlap[0]}-${c.overlap[1]}`,"#b45309","#fff7ed");ctx.restore()}
+function drawNoOverlap(g,c){ctx.save();const ranges=[[5,8],[8,9],[9,12]],ys=ranges.map(r=>[y(r[1],g),y(r[0],g)]);const labels=["第1笔范围","第2笔范围","第3笔范围"];ys.forEach((r,i)=>{ctx.fillStyle=`rgba(${i===0?"37,99,235":i===1?"22,163,74":"220,38,38"},.08)`;ctx.fillRect(g.l,r[0],g.w-g.l-g.rr,r[1]-r[0]);bubble(g.l+110,r[0]+8,labels[i],"#64748b","#fff")});bubble(g.w/2,94,"三笔范围没有共同交集","#7c3aed","#f5f3ff");ctx.restore()}
+function drawBreak(g,c){const [a,b]=c.break;ctx.save();ctx.strokeStyle="#7c3aed";ctx.lineWidth=4;ctx.setLineDash([9,5]);ctx.beginPath();ctx.moveTo(x(a,g,c.pts.length),y(c.pts[a][1],g));ctx.lineTo(x(b,g,c.pts.length),y(c.pts[b][1],g));ctx.stroke();ctx.setLineDash([]);bubble((x(a,g,c.pts.length)+x(b,g,c.pts.length))/2,y(c.pts[b][1],g)-38,"后续笔破坏原线段","#7c3aed","#f5f3ff");ctx.restore()}
+function bubble(x0,y0,text,color,bg){ctx.save();ctx.font="900 12px sans-serif";const w=ctx.measureText(text).width+18,h=26;ctx.fillStyle=bg;ctx.strokeStyle=color;round(x0-w/2,y0,w,h,8);ctx.fill();ctx.stroke();ctx.fillStyle=color;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(text,x0,y0+h/2);ctx.restore()}
+function round(x0,y0,w,h,r){ctx.beginPath();ctx.moveTo(x0+r,y0);ctx.arcTo(x0+w,y0,x0+w,y0+h,r);ctx.arcTo(x0+w,y0+h,x0,y0+h,r);ctx.arcTo(x0,y0+h,x0,y0,r);ctx.arcTo(x0,y0,x0+w,y0,r);ctx.closePath()}
+function render(){const c=cases[mode];document.getElementById("title").textContent=c.title;document.getElementById("intro").textContent=c.intro;document.getElementById("result").textContent=c.result;Object.keys(cases).forEach(id=>document.getElementById(id).classList.toggle("on",id===mode));draw()}
+Object.keys(cases).forEach(id=>document.getElementById(id).onclick=()=>{mode=id;render()});
+window.addEventListener("resize",draw);
+render();
+</script>
+</body>
+</html>

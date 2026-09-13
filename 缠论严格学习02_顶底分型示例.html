@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论严格学习02：顶底分型示例</title>
+<style>
+:root{--bg:#f6f8fb;--panel:#fff;--ink:#172033;--muted:#64748b;--line:#d8e2ef;--blue:#2563eb;--red:#dc2626;--green:#16a34a;--orange:#f59e0b;--purple:#7c3aed}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.wrap{width:min(1240px,calc(100vw - 32px));margin:22px auto 44px}.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 34px rgba(15,23,42,.07)}.hero{padding:18px 20px;margin-bottom:14px}.badge{display:inline-flex;border-radius:999px;background:#eff6ff;color:var(--blue);font-size:13px;font-weight:900;padding:5px 10px;margin-bottom:8px}h1{font-size:30px;line-height:1.15;margin:0 0 8px}p{margin:0;color:var(--muted);line-height:1.75}.layout{display:grid;grid-template-columns:1.35fr .65fr;gap:14px}.card{padding:16px}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}button{font:inherit;min-height:40px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;color:var(--ink);padding:0 14px;font-weight:850;cursor:pointer}button.on{background:var(--blue);border-color:var(--blue);color:#fff}.chart{border:1px solid var(--line);border-radius:12px;background:linear-gradient(#fff,#fbfdff);overflow:hidden}canvas{display:block;width:100%;height:570px}.side h2{font-size:20px;margin:0 0 10px}.rule{border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;padding:11px 12px;margin:10px 0;line-height:1.7}.rule b{color:#334155}.result{border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px;line-height:1.75;font-weight:760}.list{display:grid;gap:8px;margin-top:12px}.item{border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:11px;line-height:1.65}.item b{display:block;margin-bottom:4px}.note{margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:14px;color:var(--muted);line-height:1.75}.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:13px}.dot{display:inline-flex;align-items:center;gap:5px}.dot:before{content:"";width:10px;height:10px;border-radius:50%;background:#94a3b8}.dot.top:before{background:var(--red)}.dot.bottom:before{background:var(--green)}.dot.bad:before{background:var(--purple)}@media(max-width:940px){.layout{grid-template-columns:1fr}canvas{height:520px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <span class="badge">严格学习 02</span>
+    <h1>顶分型 / 底分型：三根处理后的K线才判断</h1>
+    <p>前一步已经处理完包含关系。现在只拿“处理后的相邻三根 K 线”判断：中间那根是否同时满足高点和低点条件。</p>
+  </section>
+
+  <section class="layout">
+    <div class="card">
+      <div class="controls">
+        <button id="topBtn" class="on">顶分型成立</button>
+        <button id="bottomBtn">底分型成立</button>
+        <button id="fakeBtn">看似高点但不成立</button>
+      </div>
+      <div class="chart"><canvas id="cv"></canvas></div>
+      <div class="legend">
+        <span class="dot">灰色：参与判断的三根K线</span>
+        <span class="dot top">红色：顶分型的顶</span>
+        <span class="dot bottom">绿色：底分型的底</span>
+        <span class="dot bad">紫色：不成立的原因</span>
+      </div>
+    </div>
+
+    <aside class="card side">
+      <h2 id="title">顶分型成立</h2>
+      <p id="intro">中间 K 线的高点最高，低点也最高。</p>
+      <div class="rule"><b>顶分型：</b><span>第二根 K 线的高点是三根里最高，低点也是三根里最高。</span></div>
+      <div class="rule"><b>底分型：</b><span>第二根 K 线的低点是三根里最低，高点也是三根里最低。</span></div>
+      <div class="result" id="result">这组成立顶分型，真正有意义的是顶分型的最高点。</div>
+      <div class="list">
+        <div class="item"><b>先决条件</b><span>这三根必须是已经处理过包含关系之后的相邻 K 线。</span></div>
+        <div class="item"><b>判断重点</b><span>不能只看高点或低点一个条件，要同时看高、低两个条件。</span></div>
+        <div class="item"><b>下一步</b><span>顶分型和底分型交替出现，并满足距离条件后，才可能连成一笔。</span></div>
+      </div>
+      <p class="note">这一节只判断分型是否成立，不急着连笔。下一节再讲：哪些顶底分型之间能构成一笔。</p>
+    </aside>
+  </section>
+</main>
+
+<script>
+const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+let mode="top";
+const cases={
+  top:{title:"顶分型成立",intro:"中间 K 线的高点最高，低点也最高。",result:"这组成立顶分型。真正有意义的是中间 K 线的最高点，也就是这个分型的顶。",bars:[{d:"A",o:7.0,h:8.0,l:5.0,c:6.6},{d:"B",o:8.5,h:10.0,l:7.0,c:9.2},{d:"C",o:7.2,h:8.6,l:5.8,c:6.1}],mark:"top"},
+  bottom:{title:"底分型成立",intro:"中间 K 线的低点最低，高点也最低。",result:"这组成立底分型。真正有意义的是中间 K 线的最低点，也就是这个分型的底。",bars:[{d:"A",o:8.8,h:10.0,l:7.0,c:9.5},{d:"B",o:6.6,h:8.2,l:5.0,c:5.8},{d:"C",o:8.1,h:9.4,l:6.4,c:9.0}],mark:"bottom"},
+  fake:{title:"看似高点但不成立",intro:"中间 K 线虽然高点最高，但低点不是最高。",result:"这组不成立顶分型。因为顶分型要求中间 K 线不只高点最高，低点也必须最高。这里只满足了一半。",bars:[{d:"A",o:7.0,h:8.2,l:6.0,c:7.8},{d:"B",o:8.6,h:10.0,l:5.2,c:8.1},{d:"C",o:7.4,h:8.8,l:6.4,c:7.0}],mark:"fake"}
+};
+function setup(){const r=cv.getBoundingClientRect(),dpr=devicePixelRatio||1;cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);return r}
+function y(v,g){return g.t+(g.max-v)*(g.h-g.t-g.b)/(g.max-g.min)}
+function draw(){const r=setup(),g={w:r.width,h:r.height,t:54,b:54,l:68,rr:38,min:4,max:11};const c=cases[mode];ctx.clearRect(0,0,r.width,r.height);grid(g);drawTriplet(g,c.bars);drawRelations(g,c);drawCaption(g,c)}
+function grid(g){ctx.save();ctx.strokeStyle="#e8eef7";ctx.fillStyle="#7c8798";ctx.font="12px sans-serif";ctx.textAlign="right";ctx.textBaseline="middle";for(let v=4;v<=11;v++){const yy=y(v,g);ctx.beginPath();ctx.moveTo(g.l,yy);ctx.lineTo(g.w-g.rr,yy);ctx.stroke();ctx.fillText(String(v),g.l-10,yy)}ctx.strokeStyle="#d8e2ef";ctx.strokeRect(g.l,g.t,g.w-g.l-g.rr,g.h-g.t-g.b);ctx.restore()}
+function drawTriplet(g,bars){const xs=[g.w*.28,g.w*.5,g.w*.72];bars.forEach((b,i)=>drawCandle(g,xs[i],b,i===1));}
+function drawCandle(g,x,b,focus){ctx.save();const up=b.c>=b.o,col=up?"#dc2626":"#16a34a",w=focus?48:38;ctx.strokeStyle=focus?"#f59e0b":col;ctx.fillStyle=focus?"#f59e0b":col;ctx.lineWidth=focus?3:2.2;ctx.beginPath();ctx.moveTo(x,y(b.h,g));ctx.lineTo(x,y(b.l,g));ctx.stroke();const top=Math.min(y(b.o,g),y(b.c,g)),bot=Math.max(y(b.o,g),y(b.c,g));ctx.globalAlpha=focus?.9:.72;ctx.fillRect(x-w/2,top,w,Math.max(4,bot-top));ctx.globalAlpha=1;ctx.fillStyle="#334155";ctx.font="900 14px sans-serif";ctx.textAlign="center";ctx.fillText("第"+b.d+"根",x,g.h-g.b+28);ctx.font="800 12px sans-serif";ctx.fillStyle=focus?"#b45309":"#64748b";ctx.fillText("高 "+b.h,x,y(b.h,g)-10);ctx.fillText("低 "+b.l,x,y(b.l,g)+18);ctx.restore()}
+function drawRelations(g,c){const bars=c.bars,xs=[g.w*.28,g.w*.5,g.w*.72],mid=bars[1];ctx.save();ctx.lineWidth=2.2;if(c.mark==="top"){markPoint(xs[1],y(mid.h,g),"顶", "#dc2626");compareLine(g,mid.h,"中间高点最高","#dc2626",28);compareLine(g,mid.l,"中间低点也最高","#dc2626",52)}else if(c.mark==="bottom"){markPoint(xs[1],y(mid.l,g),"底","#16a34a");compareLine(g,mid.l,"中间低点最低","#16a34a",28);compareLine(g,mid.h,"中间高点也最低","#16a34a",52)}else{markPoint(xs[1],y(mid.h,g),"不成立","#7c3aed");compareLine(g,mid.h,"高点最高：满足","#7c3aed",28);compareLine(g,mid.l,"低点不是最高：失败","#7c3aed",52)}ctx.restore()}
+function compareLine(g,v,text,color,offset){ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(g.l+24,y(v,g));ctx.lineTo(g.w-g.rr-24,y(v,g));ctx.stroke();ctx.setLineDash([]);bubble(g.w-g.rr-138,y(v,g)-offset,text,color,color==="#dc2626"?"#fef2f2":color==="#16a34a"?"#f0fdf4":"#f5f3ff");ctx.restore()}
+function markPoint(x,yy,text,color){ctx.save();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,yy,10,0,Math.PI*2);ctx.fill();bubble(x,yy-50,text,color,color==="#dc2626"?"#fef2f2":color==="#16a34a"?"#f0fdf4":"#f5f3ff");ctx.restore()}
+function drawCaption(g,c){ctx.save();ctx.fillStyle="#172033";ctx.font="900 16px sans-serif";ctx.textAlign="left";ctx.fillText("判断对象：处理包含关系后的相邻三根 K 线",g.l,32);ctx.restore()}
+function bubble(x,y0,text,color,bg){ctx.save();ctx.font="900 12px sans-serif";const w=ctx.measureText(text).width+18,h=26;ctx.fillStyle=bg;ctx.strokeStyle=color;round(x-w/2,y0,w,h,8);ctx.fill();ctx.stroke();ctx.fillStyle=color;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(text,x,y0+h/2);ctx.restore()}
+function round(x,y0,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y0);ctx.arcTo(x+w,y0,x+w,y0+h,r);ctx.arcTo(x+w,y0+h,x,y0+h,r);ctx.arcTo(x,y0+h,x,y0,r);ctx.arcTo(x,y0,x+w,y0,r);ctx.closePath()}
+function render(){const c=cases[mode];document.getElementById("title").textContent=c.title;document.getElementById("intro").textContent=c.intro;document.getElementById("result").textContent=c.result;document.getElementById("topBtn").classList.toggle("on",mode==="top");document.getElementById("bottomBtn").classList.toggle("on",mode==="bottom");document.getElementById("fakeBtn").classList.toggle("on",mode==="fake");draw()}
+document.getElementById("topBtn").onclick=()=>{mode="top";render()};
+document.getElementById("bottomBtn").onclick=()=>{mode="bottom";render()};
+document.getElementById("fakeBtn").onclick=()=>{mode="fake";render()};
+window.addEventListener("resize",draw);
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="940" viewBox="0 0 1480 940">
+  <defs>
+    <style>
+      .bg { fill: #f6f8fc; }
+      .panel { fill: #ffffff; stroke: #d9e2ef; stroke-width: 2; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 36px; font-weight: 850; fill: #172033; }
+      .sub { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 18px; fill: #667085; }
+      .txt { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 17px; font-weight: 730; fill: #334155; }
+      .small { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 15px; font-weight: 700; fill: #64748b; }
+      .tiny { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 13px; font-weight: 750; fill: #64748b; }
+      .axis { stroke: #e2e8f0; stroke-width: 1.5; }
+      .up { fill: #dc2626; stroke: #dc2626; stroke-width: 2; }
+      .down { fill: #16a34a; stroke: #16a34a; stroke-width: 2; }
+      .wick-up { stroke: #dc2626; stroke-width: 3; }
+      .wick-down { stroke: #16a34a; stroke-width: 3; }
+      .swing { fill: none; stroke: #64748b; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 9 8; }
+      .guard { stroke: #f59e0b; stroke-width: 4; stroke-dasharray: 9 7; }
+      .guard-zone { fill: rgba(245, 158, 11, .13); stroke: #f59e0b; stroke-width: 2; }
+      .trigger { stroke: #2563eb; stroke-width: 4; stroke-dasharray: 8 7; }
+      .buy { stroke: #16a34a; stroke-width: 4; }
+      .invalid { stroke: #dc2626; stroke-width: 4; stroke-dasharray: 8 7; }
+      .dot { stroke: #ffffff; stroke-width: 4; }
+      .dot-wait { fill: #f59e0b; }
+      .dot-buy { fill: #16a34a; }
+      .dot-risk { fill: #dc2626; }
+      .dot-blue { fill: #2563eb; }
+      .box { fill: #ffffff; stroke-width: 2; }
+      .box-orange { stroke: #f59e0b; }
+      .box-green { stroke: #16a34a; }
+      .box-blue { stroke: #2563eb; }
+      .box-red { stroke: #dc2626; }
+      .box-gray { stroke: #94a3b8; }
+      .label-bg { fill: #ffffff; stroke-width: 2; }
+      .arrow { stroke: #94a3b8; stroke-width: 2.4; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1480" height="940"/>
+
+  <text class="title" x="56" y="64">真实 K 线里：从“观察区”到“确认点”</text>
+  <text class="sub" x="56" y="100">防守位附近只说明风险位置清楚；真正入手确认，要看 K 线是否收回、转强，并突破回调小高点。</text>
+
+  <rect class="panel" x="48" y="132" width="1384" height="620" rx="24"/>
+
+  <!-- Chart frame -->
+  <rect x="96" y="176" width="1268" height="488" rx="16" fill="#ffffff" stroke="#d9e2ef" stroke-width="2"/>
+  <line class="axis" x1="128" y1="260" x2="1332" y2="260"/>
+  <line class="axis" x1="128" y1="356" x2="1332" y2="356"/>
+  <line class="axis" x1="128" y1="452" x2="1332" y2="452"/>
+  <line class="axis" x1="128" y1="548" x2="1332" y2="548"/>
+
+  <!-- Defensive zone -->
+  <rect class="guard-zone" x="128" y="500" width="1204" height="48" rx="8"/>
+  <line class="guard" x1="128" y1="524" x2="1332" y2="524"/>
+  <text class="small" x="144" y="492">防守区：到这里先观察，不是自动买</text>
+
+  <!-- Pullback small high / trigger -->
+  <line class="trigger" x1="688" y1="420" x2="1332" y2="420"/>
+  <text class="small" x="704" y="410">回调小高点：收盘突破这里，才叫普通确认</text>
+
+  <!-- Invalid line -->
+  <line class="invalid" x1="128" y1="568" x2="1332" y2="568"/>
+  <text class="small" x="144" y="590">失效线：有效跌破防守区，不买，计划取消</text>
+
+  <!-- Candles: x, high y, low y, open y, close y -->
+  <!-- Uptrend left -->
+  <g>
+    <line class="wick-up" x1="168" y1="472" x2="168" y2="552"/>
+    <rect class="up" x="154" y="496" width="28" height="36"/>
+    <line class="wick-up" x1="224" y1="392" x2="224" y2="508"/>
+    <rect class="up" x="210" y="424" width="28" height="60"/>
+    <line class="wick-down" x1="280" y1="416" x2="280" y2="536"/>
+    <rect class="down" x="266" y="452" width="28" height="48"/>
+    <line class="wick-up" x1="336" y1="324" x2="336" y2="472"/>
+    <rect class="up" x="322" y="356" width="28" height="76"/>
+    <line class="wick-down" x1="392" y1="364" x2="392" y2="524"/>
+    <rect class="down" x="378" y="408" width="28" height="76"/>
+    <line class="wick-up" x1="448" y1="252" x2="448" y2="424"/>
+    <rect class="up" x="434" y="292" width="28" height="96"/>
+  </g>
+
+  <!-- Pullback to defensive zone -->
+  <g>
+    <line class="wick-down" x1="512" y1="320" x2="512" y2="496"/>
+    <rect class="down" x="498" y="356" width="28" height="108"/>
+    <line class="wick-down" x1="568" y1="396" x2="568" y2="536"/>
+    <rect class="down" x="554" y="432" width="28" height="72"/>
+    <line class="wick-down" x1="624" y1="460" x2="624" y2="560"/>
+    <rect class="down" x="610" y="492" width="28" height="40"/>
+    <line class="wick-up" x1="680" y1="448" x2="680" y2="552"/>
+    <rect class="up" x="666" y="472" width="28" height="36"/>
+    <line class="wick-up" x1="736" y1="416" x2="736" y2="524"/>
+    <rect class="up" x="722" y="452" width="28" height="44"/>
+  </g>
+
+  <!-- Test high and second pullback -->
+  <g>
+    <line class="wick-down" x1="792" y1="396" x2="792" y2="528"/>
+    <rect class="down" x="778" y="424" width="28" height="68"/>
+    <line class="wick-up" x1="848" y1="408" x2="848" y2="536"/>
+    <rect class="up" x="834" y="456" width="28" height="44"/>
+    <line class="wick-up" x1="904" y1="376" x2="904" y2="508"/>
+    <rect class="up" x="890" y="420" width="28" height="56"/>
+  </g>
+
+  <!-- Confirmation breakout -->
+  <g>
+    <line class="wick-up" x1="960" y1="336" x2="960" y2="476"/>
+    <rect class="up" x="946" y="388" width="28" height="64"/>
+    <line class="wick-up" x1="1016" y1="312" x2="1016" y2="436"/>
+    <rect class="up" x="1002" y="356" width="28" height="56"/>
+    <line class="wick-down" x1="1072" y1="340" x2="1072" y2="456"/>
+    <rect class="down" x="1058" y="368" width="28" height="44"/>
+    <line class="wick-up" x1="1128" y1="300" x2="1128" y2="420"/>
+    <rect class="up" x="1114" y="340" width="28" height="56"/>
+    <line class="wick-up" x1="1184" y1="264" x2="1184" y2="388"/>
+    <rect class="up" x="1170" y="304" width="28" height="56"/>
+  </g>
+
+  <!-- Swing skeleton -->
+  <path class="swing" d="M168 532 L224 392 L280 500 L336 324 L392 484 L448 252 L624 532 L736 416 L792 492 L904 420 L960 388 L1184 264"/>
+
+  <!-- Key dots -->
+  <circle class="dot dot-wait" cx="624" cy="532" r="12"/>
+  <text class="tiny" x="584" y="628">A：接近/刺破防守区</text>
+  <path class="arrow" d="M624 616 C624 596 624 568 624 544"/>
+
+  <circle class="dot dot-blue" cx="736" cy="416" r="11"/>
+  <text class="tiny" x="692" y="456">B：回调小高点</text>
+  <path class="arrow" d="M724 448 C724 436 728 428 736 420"/>
+
+  <circle class="dot dot-wait" cx="792" cy="492" r="11"/>
+  <text class="tiny" x="756" y="616">C：二次回落不破 A</text>
+  <path class="arrow" d="M792 604 C792 572 792 528 792 504"/>
+
+  <circle class="dot dot-buy" cx="960" cy="388" r="14"/>
+  <text class="txt" x="976" y="392">普通确认点</text>
+  <path class="arrow" d="M956 376 C956 356 960 340 980 328"/>
+
+  <circle class="dot dot-buy" cx="1128" cy="340" r="14"/>
+  <text class="txt" x="1144" y="344">稳健确认点</text>
+  <path class="arrow" d="M1118 352 C1096 372 1088 388 1076 412"/>
+
+  <!-- Bottom explanation cards -->
+  <rect class="box box-orange" x="96" y="788" width="280" height="92" rx="14"/>
+  <text class="txt" x="120" y="824">① 防守区附近</text>
+  <text class="small" x="120" y="852">只观察：还不知道会不会继续跌</text>
+
+  <rect class="box box-blue" x="404" y="788" width="280" height="92" rx="14"/>
+  <text class="txt" x="428" y="824">② 收回 + 小高点 B</text>
+  <text class="small" x="428" y="852">形成一个可验证的回调结构</text>
+
+  <rect class="box box-green" x="712" y="788" width="280" height="92" rx="14"/>
+  <text class="txt" x="736" y="824">③ 收盘突破 B</text>
+  <text class="small" x="736" y="852">普通确认：回调下降节奏被打断</text>
+
+  <rect class="box box-green" x="1020" y="788" width="324" height="92" rx="14"/>
+  <text class="txt" x="1044" y="824">④ 突破后回踩不破再上</text>
+  <text class="small" x="1044" y="852">稳健确认：更慢，但更可靠</text>
+
+  <rect x="96" y="700" width="1248" height="44" rx="14" fill="#ffffff" stroke="#d9e2ef" stroke-width="2"/>
+  <text class="txt" x="124" y="728">一句话：确认点不是“站回防守位”，而是“守住防守区后，收盘突破本轮回调小高点”；更稳健的是突破后回踩不破再向上。</text>
+</svg>

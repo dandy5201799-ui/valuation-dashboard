@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./chan-algo.js"></script>
+<script src="./chan-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #f6f5f0; }
+    * { box-sizing: border-box; }
+    ::selection { background: #dbe4ef; }
+    [data-chart-wrap="1"]::-webkit-scrollbar { height: 10px; }
+    [data-chart-wrap="1"]::-webkit-scrollbar-track { background: #f0eee6; border-radius: 999px; }
+    [data-chart-wrap="1"]::-webkit-scrollbar-thumb { background: #c8c2b5; border-radius: 999px; border: 2px solid #f0eee6; }
+  </style>
+</helmet>
+<div style="display:flex;height:100vh;width:100%;font-family:'IBM Plex Sans',sans-serif;background:#f6f5f0;color:#1c1f26;overflow:hidden;">
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;">
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:16px 24px 10px 24px;border-bottom:1px solid #e2ddd0;flex-wrap:wrap;">
+      <div style="display:flex;align-items:baseline;gap:12px;">
+        <div style="font-size:18px;font-weight:700;letter-spacing:0.2px;">缠论结构判断工作台</div>
+        <div style="font-size:13px;color:#8b8677;font-family:'IBM Plex Mono',monospace;">{{ symbolLine }}</div>
+      </div>
+      <div style="font-size:11px;color:#a19c8c;">{{ dataLine }}</div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 24px;border-bottom:1px solid #e2ddd0;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="font-size:11px;font-weight:700;color:#8b8677;">股票</span>
+          <input type="text" placeholder="代码/如 600036" value="{{ symbolInputValue }}" onInput="{{ onSymbolInput }}" onKeyDown="{{ onSymbolKeyDown }}" style="width:118px;height:28px;border:1px solid #e2ddd0;border-radius:6px;padding:0 8px;font-size:12px;font-family:'IBM Plex Mono',monospace;background:#ffffff;color:#1c1f26;" />
+          <button onClick="{{ onLoadClick }}" disabled="{{ loadDisabled }}" style="height:28px;border:none;background:{{ loadBtnBg }};color:#ffffff;font-size:12px;font-weight:600;border-radius:6px;padding:0 12px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">{{ loadBtnLabel }}</button>
+          <button onClick="{{ onRefreshClick }}" disabled="{{ refreshDisabled }}" title="刷新当前股票最新数据" style="width:28px;height:28px;border:none;background:#ece9e0;color:#1c1f26;font-size:14px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">⟳</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:#8b8677;">最近:</span>
+          <sc-for list="{{ recentChips }}" as="rc" hint-placeholder-count="3">
+            <button onClick="{{ rc.onClick }}" style="border:1px solid #e2ddd0;background:#ffffff;color:#3a3730;font-size:11px;padding:4px 8px;border-radius:999px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">{{ rc.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="font-size:11px;font-weight:700;color:#8b8677;">图表视图</span>
+          <div style="display:flex;gap:2px;background:#ece9e0;border-radius:8px;padding:2px;">
+            <sc-for list="{{ modeOptions }}" as="opt" hint-placeholder-count="3">
+              <button onClick="{{ opt.onClick }}" style="border:none;background:{{ opt.bg }};color:{{ opt.color }};font-size:12px;font-weight:600;padding:6px 11px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">{{ opt.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="font-size:11px;font-weight:700;color:#8b8677;">K线缩放</span>
+          <div style="display:flex;align-items:center;gap:2px;background:#ece9e0;border-radius:8px;padding:2px;">
+            <button onClick="{{ zoomOut }}" style="width:28px;height:28px;border:none;background:#ffffff;color:#1c1f26;font-size:16px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;line-height:1;">−</button>
+            <button onClick="{{ resetZoom }}" style="min-width:52px;height:28px;border:none;background:transparent;color:#3a3730;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Mono',monospace;">{{ zoomLabel }}</button>
+            <button onClick="{{ zoomIn }}" style="width:28px;height:28px;border:none;background:#ffffff;color:#1c1f26;font-size:16px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;line-height:1;">+</button>
+            <button onClick="{{ fitAll }}" style="height:28px;border:none;background:#ffffff;color:#1c1f26;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;padding:0 8px;">全局</button>
+          </div>
+        </div>
+      </div>
+      <div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;padding-top:2px;">
+        <span style="font-size:11px;font-weight:700;color:#8b8677;padding:6px 2px 0 0;">标记层</span>
+        <sc-for list="{{ layerChips }}" as="chip" hint-placeholder-count="8">
+          <button onClick="{{ chip.toggle }}" style="border:1px solid {{ chip.border }};background:{{ chip.bg }};color:{{ chip.color }};font-size:11.5px;font-weight:500;padding:5px 9px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'IBM Plex Sans',sans-serif;">
+            <span style="width:7px;height:7px;border-radius:50%;background:{{ chip.dot }};display:inline-block;"></span>{{ chip.label }}
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ hasLoadError }}" hint-placeholder-val="{{ false }}">
+        <div style="flex-basis:100%;font-size:11.5px;color:#d1453a;padding-left:2px;">{{ loadErrorText }}</div>
+      </sc-if>
+      <sc-if value="{{ isLoadingSymbol }}" hint-placeholder-val="{{ false }}">
+        <div style="flex-basis:100%;font-size:11.5px;color:#8b8677;padding-left:2px;">{{ loadingText }}</div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px 24px 32px 24px;display:flex;flex-direction:column;gap:16px;">
+        <sc-for list="{{ panels }}" as="panel" hint-placeholder-count="2">
+          <div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;">
+              <div style="display:flex;align-items:baseline;gap:8px;">
+                <div style="font-size:13px;font-weight:700;">{{ panel.title }}</div>
+                <div style="font-size:11.5px;color:#9c9788;">{{ panel.hint }}</div>
+              </div>
+              <div style="font-size:11px;color:#a19c8c;font-family:'IBM Plex Mono',monospace;">{{ panel.dateRange }}</div>
+            </div>
+            <div style="display:flex;gap:8px;margin:0 0 8px 0;flex-wrap:wrap;">
+              <sc-for list="{{ panel.summaryChips }}" as="chip" hint-placeholder-count="3">
+                <button onClick="{{ chip.onClick }}" style="border:none;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;background:{{ chip.bg }};color:{{ chip.color }};cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">{{ chip.text }}</button>
+              </sc-for>
+            </div>
+            <div data-chart-wrap="1" style="position:relative;background:#ffffff;border:1px solid #e2ddd0;border-radius:10px;padding:8px 6px 8px 6px;overflow-x:auto;overflow-y:hidden;">
+              <svg viewBox="0 0 {{ panel.vbW }} {{ panel.vbH }}" style="width:{{ panel.vbW }}px;max-width:none;height:{{ panel.vbH }}px;display:block;" onClick="{{ clearIfBg }}">
+
+                <sc-for list="{{ panel.gridlines }}" as="gl" hint-placeholder-count="4">
+                  <g>
+                    <line x1="{{ panel.marginLeft }}" y1="{{ gl.y }}" x2="{{ panel.gridX2 }}" y2="{{ gl.y }}" stroke="#f0eee6" stroke-width="1"></line>
+                    <text x="{{ panel.gridLabelX }}" y="{{ gl.y }}" dy="3.5" font-size="10.5" fill="#a19c8c" font-family="IBM Plex Mono,monospace">{{ gl.label }}</text>
+                  </g>
+                </sc-for>
+
+                <sc-for list="{{ panel.xTicks }}" as="tk" hint-placeholder-count="6">
+                  <line x1="{{ tk.x }}" y1="{{ panel.axisY }}" x2="{{ tk.x }}" y2="{{ panel.axisY2 }}" stroke="#e2ddd0" stroke-width="1"></line>
+                  <text x="{{ tk.x }}" y="{{ panel.tickY }}" font-size="10.5" fill="#7f796b" text-anchor="middle" font-family="IBM Plex Mono,monospace">{{ tk.label }}</text>
+                </sc-for>
+
+                <sc-for list="{{ panel.phaseBandRects }}" as="pb" hint-placeholder-count="4">
+                  <g onClick="{{ pb.onClick }}" onMouseEnter="{{ pb.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                    <rect x="{{ pb.x }}" y="{{ pb.y }}" width="{{ pb.w }}" height="{{ pb.h }}" fill="{{ pb.bg }}" stroke="{{ pb.stroke }}" stroke-width="1" stroke-dasharray="{{ pb.dash }}"></rect>
+                    <text x="{{ pb.tx }}" y="{{ pb.ty }}" font-size="11" fill="{{ pb.textColor }}" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="700">{{ pb.label }}</text>
+                  </g>
+                </sc-for>
+                <text x="{{ panel.gridLabelX }}" y="{{ panel.phaseLaneLabelY }}" font-size="10.5" fill="#8b8677" font-family="IBM Plex Sans,sans-serif" font-weight="700">阶段</text>
+
+                <sc-if value="{{ panel.focusRect }}" hint-placeholder-val="{{ null }}">
+                  <rect x="{{ panel.focusRect.x }}" y="{{ panel.marginTop }}" width="{{ panel.focusRect.w }}" height="{{ panel.plotH }}" fill="rgba(184,121,10,0.08)" stroke="#b8790a" stroke-width="1" stroke-dasharray="3 3"></rect>
+                </sc-if>
+                <sc-if value="{{ panel.linkOverlay }}" hint-placeholder-val="{{ null }}">
+                  <rect x="{{ panel.linkOverlay.x }}" y="{{ panel.marginTop }}" width="{{ panel.linkOverlay.w }}" height="{{ panel.plotH }}" fill="rgba(55,65,81,0.07)" stroke="#6b7280" stroke-width="1" stroke-dasharray="3 3"></rect>
+                </sc-if>
+
+                <sc-if value="{{ panel.leaveHighlight }}" hint-placeholder-val="{{ null }}">
+                  <g style="pointer-events:none;">
+                    <line x1="{{ panel.leaveHighlight.x1 }}" y1="{{ panel.leaveHighlight.y1 }}" x2="{{ panel.leaveHighlight.x2 }}" y2="{{ panel.leaveHighlight.y2 }}" stroke="{{ panel.leaveHighlight.color }}" stroke-width="8" stroke-linecap="round" opacity="0.20"></line>
+                  </g>
+                  <g onClick="{{ panel.leaveHighlight.onClick }}" style="cursor:pointer;">
+                    <rect x="{{ panel.leaveHighlight.capX }}" y="{{ panel.leaveHighlight.capY }}" width="{{ panel.leaveHighlight.capW }}" height="{{ panel.leaveHighlight.capH }}" rx="4" fill="{{ panel.leaveHighlight.color }}"></rect>
+                    <text x="{{ panel.leaveHighlight.capTx }}" y="{{ panel.leaveHighlight.capTy }}" font-size="11" fill="#ffffff" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="700">{{ panel.leaveHighlight.label }}</text>
+                  </g>
+                </sc-if>
+
+                <sc-if value="{{ layers.zhongshuXd }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.xdBoxes }}" as="zx" hint-placeholder-count="2">
+                    <g onClick="{{ zx.onClick }}" onMouseEnter="{{ zx.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <rect x="{{ zx.x }}" y="{{ zx.y }}" width="{{ zx.w }}" height="{{ zx.h }}" fill="{{ zx.fill }}" stroke="{{ zx.stroke }}" stroke-width="{{ zx.strokeW }}" stroke-dasharray="{{ zx.dash }}"></rect>
+                      <text x="{{ zx.labelX }}" y="{{ zx.labelY }}" font-size="10.5" fill="{{ zx.labelColor }}" font-family="IBM Plex Sans,sans-serif" font-weight="600">{{ zx.label }}</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+                <sc-if value="{{ layers.zhongshuBi }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.biBoxes }}" as="zb" hint-placeholder-count="2">
+                    <g onClick="{{ zb.onClick }}" onMouseEnter="{{ zb.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <rect x="{{ zb.x }}" y="{{ zb.y }}" width="{{ zb.w }}" height="{{ zb.h }}" fill="{{ zb.fill }}" stroke="{{ zb.stroke }}" stroke-width="{{ zb.strokeW }}" stroke-dasharray="{{ zb.dash }}"></rect>
+                      <text x="{{ zb.labelX }}" y="{{ zb.labelY }}" font-size="10.5" fill="{{ zb.labelColor }}" font-family="IBM Plex Sans,sans-serif" font-weight="700">{{ zb.label }}</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.xianduan }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.xdSegs }}" as="xd" hint-placeholder-count="2">
+                    <line x1="{{ xd.x1 }}" y1="{{ xd.y1 }}" x2="{{ xd.x2 }}" y2="{{ xd.y2 }}" stroke="{{ xd.color }}" stroke-width="{{ xd.w }}" stroke-linecap="round" onClick="{{ xd.onClick }}" onMouseEnter="{{ xd.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;"></line>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.bi }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.biSegs }}" as="bi" hint-placeholder-count="6">
+                    <line x1="{{ bi.x1 }}" y1="{{ bi.y1 }}" x2="{{ bi.x2 }}" y2="{{ bi.y2 }}" stroke="{{ bi.color }}" stroke-width="{{ bi.w }}" onClick="{{ bi.onClick }}" onMouseEnter="{{ bi.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;"></line>
+                  </sc-for>
+                </sc-if>
+
+                <sc-for list="{{ panel.candles }}" as="c" hint-placeholder-count="60">
+                  <g onClick="{{ c.onClick }}" onMouseEnter="{{ c.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                    <line x1="{{ c.wickX }}" y1="{{ c.wickY1 }}" x2="{{ c.wickX }}" y2="{{ c.wickY2 }}" stroke="{{ c.color }}" stroke-width="1"></line>
+                    <rect x="{{ c.x }}" y="{{ c.bodyY }}" width="{{ c.w }}" height="{{ c.bodyH }}" fill="{{ c.color }}"></rect>
+                  </g>
+                </sc-for>
+
+                <sc-if value="{{ layers.fenxing }}" hint-placeholder-val="{{ false }}">
+                  <sc-for list="{{ panel.fxMarkers }}" as="fx" hint-placeholder-count="6">
+                    <polygon points="{{ fx.points }}" fill="{{ fx.color }}" onClick="{{ fx.onClick }}" onMouseEnter="{{ fx.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;"></polygon>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.beichi }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.beichiMarkers }}" as="bc" hint-placeholder-count="1">
+                    <g opacity="{{ bc.opacity }}" onClick="{{ bc.onClick }}" onMouseEnter="{{ bc.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <rect x="{{ bc.x }}" y="{{ bc.y }}" width="14" height="14" fill="#c9820a" transform="{{ bc.rotate }}"></rect>
+                      <text x="{{ bc.tx }}" y="{{ bc.ty }}" font-size="10.5" fill="#ffffff" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="700">背</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.signals }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.sigMarkers }}" as="sig" hint-placeholder-count="3">
+                    <g opacity="{{ sig.opacity }}" onClick="{{ sig.onClick }}" onMouseEnter="{{ sig.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <circle cx="{{ sig.x }}" cy="{{ sig.y }}" r="{{ sig.r }}" fill="{{ sig.fill }}" stroke="{{ sig.stroke }}" stroke-width="1.4" stroke-dasharray="{{ sig.dash }}"></circle>
+                      <text x="{{ sig.x }}" y="{{ sig.y }}" dy="3.5" font-size="10.5" fill="{{ sig.textColor }}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-weight="700">{{ sig.label }}</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.sr }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ panel.srLines }}" as="sr" hint-placeholder-count="2">
+                    <g onClick="{{ sr.onClick }}" onMouseEnter="{{ sr.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <line x1="{{ sr.x1 }}" y1="{{ sr.y }}" x2="{{ panel.gridX2 }}" y2="{{ sr.y }}" stroke="{{ sr.color }}" stroke-width="1.2" stroke-dasharray="5 3"></line>
+                      <text x="{{ panel.gridLabelX }}" y="{{ sr.y }}" dy="-3" font-size="10.5" fill="{{ sr.color }}" font-family="IBM Plex Mono,monospace" font-weight="600">{{ sr.priceLabel }}</text>
+                    </g>
+                  </sc-for>
+                </sc-if>
+
+                <sc-if value="{{ layers.failure }}" hint-placeholder-val="{{ true }}">
+                  <sc-if value="{{ panel.failLine }}" hint-placeholder-val="{{ null }}">
+                    <g onClick="{{ panel.failLine.onClick }}" onMouseEnter="{{ panel.failLine.onHover }}" onMouseLeave="{{ clearHover }}" style="cursor:pointer;">
+                      <line x1="{{ panel.failLine.x1 }}" y1="{{ panel.failLine.y }}" x2="{{ panel.gridX2 }}" y2="{{ panel.failLine.y }}" stroke="#b23b30" stroke-width="1.4" stroke-dasharray="2 3"></line>
+                      <text x="{{ panel.failLine.x1 }}" y="{{ panel.failLine.y }}" dy="-4" font-size="10.5" fill="#b23b30" font-family="IBM Plex Sans,sans-serif" font-weight="700">{{ panel.failLine.label }}</text>
+                    </g>
+                  </sc-if>
+                </sc-if>
+
+              </svg>
+            </div>
+
+            <sc-if value="{{ panel.isDaily }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:4px;margin-top:8px;overflow-x:auto;padding-bottom:2px;">
+                <sc-for list="{{ stages }}" as="st" hint-placeholder-count="4">
+                  <button onClick="{{ st.onClick }}" style="flex-shrink:0;border:1px solid {{ st.border }};background:{{ st.bg }};color:{{ st.color }};font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;">{{ st.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ panel.isWeekly }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:1px;margin-top:6px;border-radius:4px;overflow:hidden;height:14px;">
+                <sc-for list="{{ panel.trendBands }}" as="tb" hint-placeholder-count="3">
+                  <div title="{{ tb.title }}" style="flex-grow:{{ tb.grow }};flex-basis:0;background:{{ tb.bg }};display:flex;align-items:center;justify-content:center;">
+                    <span style="font-size:9px;color:{{ tb.textColor }};font-weight:600;white-space:nowrap;overflow:hidden;">{{ tb.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ notReady }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:60px;color:#9c9788;font-size:13px;">正在计算分型 / 笔 / 中枢结构…</div>
+    </sc-if>
+
+  </div>
+
+  <div style="width:370px;flex-shrink:0;border-left:1px solid #e2ddd0;background:#ffffff;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;">
+
+    <sc-if value="{{ judgment }}" hint-placeholder-val="{{ null }}">
+      <div style="border:1.5px solid #1c1f26;border-radius:8px;padding:14px;background:#fff;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+          <div style="font-size:10.5px;font-weight:700;color:#8b8677;letter-spacing:0.5px;">当前判断</div>
+          <div style="font-size:10.5px;color:#a19c8c;">先看结论，再点图上标记看证据</div>
+        </div>
+        <div style="font-size:16px;font-weight:700;line-height:1.38;margin-bottom:12px;">{{ judgment.conclusion }}</div>
+        <div style="display:grid;grid-template-columns:84px 1fr;gap:7px 9px;font-size:12.5px;line-height:1.5;">
+          <div style="color:#8b8677;">数据新鲜度</div><div>{{ judgment.freshnessLine }}</div>
+          <div style="color:#8b8677;">当前动作</div><div style="font-weight:650;color:{{ judgment.currentColor }};">{{ judgment.currentLine }}</div>
+          <div style="color:#8b8677;">力度(A/C)</div><div style="font-weight:650;color:{{ judgment.strengthColor }};">{{ judgment.strengthLine }}</div>
+          <div style="color:#8b8677;">背景方向</div><div>{{ judgment.backgroundLine }}</div>
+          <div style="color:#8b8677;">转折风险</div><div>{{ judgment.reversalLine }}</div>
+          <div style="color:#8b8677;">确认条件</div><div>{{ judgment.confirmLine }}</div>
+          <div style="color:#8b8677;">失效条件</div><div style="color:#b23b30;font-weight:600;">{{ judgment.failLine }}</div>
+          <div style="color:#8b8677;">可达级别</div><div>{{ judgment.levelLine }}</div>
+          <div style="color:#8b8677;">下一步</div><div>{{ judgment.task }}</div>
+        </div>
+        <div style="margin-top:12px;padding:9px 10px;background:#f6f5f0;border-radius:6px;font-size:12.5px;line-height:1.5;font-weight:600;">{{ judgment.action }}</div>
+      </div>
+    </sc-if>
+
+    <div style="border-top:1px solid #e2ddd0;margin-top:2px;"></div>
+
+    <sc-if value="{{ selectedDetail }}" hint-placeholder-val="{{ null }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:{{ selectedDetail.statusBg }};color:{{ selectedDetail.statusColor }};">{{ selectedDetail.statusLabel }}</span>
+            <div style="font-size:14.5px;font-weight:700;">{{ selectedDetail.title }}</div>
+          </div>
+          <button onClick="{{ clearSelected }}" style="border:none;background:none;color:#9c9788;font-size:16px;cursor:pointer;line-height:1;padding:0;">×</button>
+        </div>
+        <div style="font-size:12px;color:#a19c8c;font-family:'IBM Plex Mono',monospace;margin-bottom:4px;">{{ selectedDetail.meta }}</div>
+        <div style="font-size:11.5px;color:#9c9788;margin-bottom:14px;">来源：{{ selectedDetail.source }}</div>
+
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#2f7d55;letter-spacing:0.4px;margin-bottom:4px;">已满足条件</div>
+          <div style="font-size:13px;line-height:1.6;color:#3a3730;">{{ selectedDetail.rule }}</div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#b8790a;letter-spacing:0.4px;margin-bottom:4px;">未满足 / 何时确认</div>
+          <div style="font-size:13px;line-height:1.6;color:#3a3730;">{{ selectedDetail.confirm }}</div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#b23b30;letter-spacing:0.4px;margin-bottom:4px;">何时失效</div>
+          <div style="font-size:13px;line-height:1.6;color:#3a3730;">{{ selectedDetail.invalidate }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#1c1f26;letter-spacing:0.4px;margin-bottom:4px;">操作含义</div>
+          <div style="font-size:13px;line-height:1.6;color:#3a3730;">{{ selectedDetail.action }}</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showActiveList }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:10.5px;font-weight:700;color:#8b8677;letter-spacing:0.5px;margin-bottom:8px;">当前活跃结构</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <sc-for list="{{ activeRows }}" as="row" hint-placeholder-count="4">
+            <div onClick="{{ row.onClick }}" style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:8px 10px;background:#f6f5f0;border-radius:6px;cursor:pointer;">
+              <span style="color:#8b8677;">{{ row.label }}</span>
+              <span style="font-weight:600;color:{{ row.color }};font-family:'IBM Plex Mono',monospace;">{{ row.value }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:14px;font-size:11.5px;color:#a19c8c;">点击任意一行可查看判断依据、确认条件与失效条件。</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showLegend }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:10.5px;font-weight:700;color:#8b8677;letter-spacing:0.5px;margin-bottom:8px;">状态图例</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:12px;">
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1f9d63;margin-right:8px;"></span>确认 —— 实线 / 实心 / 明确标签</div>
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:1.5px dashed #1f9d63;margin-right:8px;"></span>候选 —— 虚线 / 空心 / 带"?"</div>
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b9b5aa;margin-right:8px;"></span>失效 —— 灰色淡化，可追溯</div>
+        </div>
+        <div style="font-size:10.5px;font-weight:700;color:#8b8677;letter-spacing:0.5px;margin-bottom:8px;">标记图例</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <sc-for list="{{ legendRows }}" as="lg" hint-placeholder-count="9">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <span style="width:16px;height:16px;border-radius:4px;background:{{ lg.swatch }};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700;">{{ lg.mark }}</span>
+              <div>
+                <div style="font-size:12.5px;font-weight:600;">{{ lg.label }}</div>
+                <div style="font-size:11px;color:#9c9788;">{{ lg.desc }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{ hover }}" hint-placeholder-val="{{ null }}">
+    <div style="position:absolute;left:{{ hover.x }}px;top:{{ hover.y }}px;transform:translate(-50%,-130%);background:#1c1f26;color:#fff;font-size:11.5px;padding:6px 9px;border-radius:6px;pointer-events:none;white-space:nowrap;font-family:'IBM Plex Mono',monospace;z-index:50;">{{ hover.text }}</div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    daily: null,
+    weekly: null,
+    dataMeta: null,
+    mode: 'daily',
+    chartZoom: 1,
+    layers: { fenxing: false, bi: true, xianduan: false, zhongshuBi: true, zhongshuXd: true, beichi: true, signals: true, sr: true, failure: true },
+    selected: null,
+    hover: null,
+    linkedRange: null,
+    focusRange: null,
+    symbolInput: '',
+    loading: false,
+    loadError: null,
+    recentSymbols: [],
+    activeSymbol: null,
+    candlesOverride: null,
+  };
+
+  componentDidMount() {
+    const dataMod = window.ChanData;
+    const algo = window.ChanAlgo;
+    this.algo = algo;
+    this.dataMod = dataMod;
+
+    let recentSymbols = [];
+    try {
+      const raw = localStorage.getItem('chan_recent_symbols');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) recentSymbols = parsed;
+      }
+    } catch (e) { recentSymbols = []; }
+    this.setState({ recentSymbols });
+
+    // B5: 首次打开直接用内置离线数据，不发网络请求，保证 file:// 下立刻有图。
+    const meta = dataMod.dataMeta || null;
+    const norm = meta ? this.normalizeCode(meta.symbol) : null;
+    this.applyCandles(dataMod.dailyCandles, meta, norm ? { code: norm.code, name: (meta && meta.name) || norm.pure } : null);
+  }
+
+  // B6: componentDidMount 与「加载成功」都走同一个 applyCandles，避免两套逻辑。
+  applyCandles(candles, meta, symbolInfo) {
+    const algo = this.algo;
+    const dataMod = this.dataMod;
+    const daily = this.buildStruct(candles, algo);
+    const weeklyCandles = dataMod.aggregateWeekly(candles, 5);
+    const weekly = this.buildStruct(weeklyCandles, algo);
+    this.setState({
+      daily, weekly,
+      dataMeta: meta || null,
+      activeSymbol: symbolInfo || null,
+      candlesOverride: symbolInfo ? candles : null,
+      selected: null,
+      focusRange: null,
+      linkedRange: null,
+      loading: false,
+      loadError: null,
+    });
+  }
+
+  // B2: 代码规范化。
+  normalizeCode(input) {
+    if (input == null) return null;
+    const raw = String(input).trim();
+    if (!raw) return null;
+    const prefixed = raw.match(/^(sh|sz|bj)(\d{6})$/i);
+    if (prefixed) return { code: prefixed[1].toLowerCase() + prefixed[2], pure: prefixed[2] };
+    if (/^\d{6}$/.test(raw)) {
+      let prefix = null;
+      if (raw[0] === '6') prefix = 'sh';
+      else if (raw[0] === '0' || raw[0] === '3') prefix = 'sz';
+      else if (raw[0] === '4' || raw[0] === '8') prefix = 'bj';
+      if (!prefix) return null;
+      return { code: prefix + raw, pure: raw };
+    }
+    return null;
+  }
+
+  // B1: K线接口。
+  async fetchKline(code) {
+    const url = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${code},day,,,900,qfq`;
+    let resp;
+    try {
+      resp = await fetch(url);
+    } catch (e) {
+      throw new Error('网络请求失败');
+    }
+    if (!resp || !resp.ok) throw new Error('网络请求失败');
+    let json;
+    try {
+      json = await resp.json();
+    } catch (e) {
+      throw new Error('代码不存在');
+    }
+    const bucket = json && json.data && json.data[code];
+    const arr = bucket && (bucket.qfqday || bucket.day || bucket.qfqweek);
+    if (!arr || !arr.length) throw new Error('代码不存在');
+    return arr;
+  }
+
+  // B1: 名称接口，GBK 解码，失败降级为代码本身。
+  async fetchName(code) {
+    try {
+      const resp = await fetch(`https://qt.gtimg.cn/q=${code}`);
+      if (!resp || !resp.ok) return null;
+      const buf = await resp.arrayBuffer();
+      const text = new TextDecoder('gbk').decode(buf);
+      const m = text.match(/="([^"]*)"/);
+      if (!m) return null;
+      const parts = m[1].split('~');
+      return parts[1] || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // B3: 接口数据 -> {i, date, open, close, high, low, volume}，夹紧修正 + 连续重编号。
+  parseCandles(rawArr) {
+    const out = [];
+    for (const item of rawArr || []) {
+      if (!item || item.length < 5) continue;
+      const date = item[0];
+      const open = parseFloat(item[1]);
+      const close = parseFloat(item[2]);
+      const high = parseFloat(item[3]);
+      const low = parseFloat(item[4]);
+      const volumeRaw = item[5] != null ? parseFloat(item[5]) : 0;
+      if ([open, close, high, low].some((v) => Number.isNaN(v))) continue;
+      const lowFixed = Math.min(low, open, close);
+      const highFixed = Math.max(high, open, close);
+      out.push({ date, open, close, high: highFixed, low: lowFixed, volume: Number.isNaN(volumeRaw) ? 0 : volumeRaw });
+    }
+    out.forEach((c, idx) => { c.i = idx; });
+    return out;
+  }
+
+  // B4: 「最近」记忆列表，file:// 下 localStorage 可能抛异常，读写均需 try/catch。
+  rememberSymbol(code, name) {
+    let list = this.state.recentSymbols || [];
+    list = [{ code, name }, ...list.filter((s) => s.code !== code)].slice(0, 8);
+    this.setState({ recentSymbols: list });
+    try {
+      localStorage.setItem('chan_recent_symbols', JSON.stringify(list));
+    } catch (e) { /* file:// 下可能抛异常，降级为不记忆 */ }
+  }
+
+  async loadSymbol(explicitCode) {
+    const raw = (explicitCode != null ? explicitCode : (this.state.symbolInput || '')).trim();
+    if (!raw) return;
+    const norm = this.normalizeCode(raw);
+    if (!norm) { this.setState({ loadError: '无法识别的代码' }); return; }
+    this.setState({ loading: true, loadError: null });
+    try {
+      const rawArr = await this.fetchKline(norm.code);
+      const candles = this.parseCandles(rawArr);
+      if (candles.length < 120) throw new Error('数据不足以做结构分析（需≥120根）');
+      const name = await this.fetchName(norm.code);
+      const resolvedName = name || norm.pure;
+      const meta = {
+        symbol: norm.pure,
+        name: resolvedName,
+        market: norm.code.slice(0, 2).toUpperCase(),
+        timeframe: '1d',
+        begin: candles[0].date,
+        end: candles[candles.length - 1].date,
+        source: '腾讯证券 fqkline 接口',
+        adjustment: '前复权',
+      };
+      this.applyCandles(candles, meta, { code: norm.code, name: resolvedName });
+      this.rememberSymbol(norm.code, resolvedName);
+      this.setState({ symbolInput: '' });
+    } catch (e) {
+      const msg = (e && e.message) ? e.message : '加载失败';
+      this.setState({ loading: false, loadError: msg });
+    }
+  }
+
+  refreshCurrent() {
+    if (!this.state.activeSymbol || this.state.loading) return;
+    this.loadSymbol(this.state.activeSymbol.code);
+  }
+
+  buildStruct(candles, algo) {
+    const merged = algo.mergeInclusion(candles);
+    const fenxing = algo.findFenxing(merged);
+    const bi = algo.buildBi(fenxing);
+    const xianduan = algo.buildXianduan(bi);
+    const zs = algo.buildAllZhongshu(xianduan, bi);
+    const biCenters = zs.bi;
+    const xdCenters = zs.xianduan;
+    const trendBi = algo.computeTrendSegments(biCenters);
+    const trendXd = algo.computeTrendSegments(xdCenters);
+    const strengthBi = algo.computeTrendStrength(biCenters, candles, bi);
+    const beichi = algo.computeBeichi(biCenters, candles, bi);
+    const signals = algo.deriveSignals(biCenters, beichi);
+    const sr = algo.supportResistance(biCenters);
+    const fail = algo.failureLine(signals, bi);
+    return { candles, merged, fenxing, bi, xianduan, biCenters, xdCenters, trendBi, trendXd, strengthBi, beichi, signals, sr, fail };
+  }
+
+  annotateSignals(signals, objects, candles) {
+    return (signals || []).map((sig) => {
+      const stopPrice = sig.boundary != null ? sig.boundary : sig.price;
+      let failed = sig.status === 'failed';
+      let failedAt = null;
+      if (!failed) {
+        for (let k = sig.idx + 1; k < candles.length; k++) {
+          const c = candles[k];
+          if (sig.dir === 'buy' && c.close < stopPrice) { failed = true; failedAt = c.date; break; }
+          if (sig.dir === 'sell' && c.close > stopPrice) { failed = true; failedAt = c.date; break; }
+        }
+      }
+      const baseStatus = sig.status || 'confirmed';
+      return { ...sig, stopPrice, stopFromIdx: sig.idx, confirmedAt: baseStatus === 'candidate' ? null : sig.date, failedAt, status: failed ? 'failed' : baseStatus };
+    });
+  }
+
+  getCurrentSignal(annotatedSignals) {
+    const list = annotatedSignals || [];
+    const active = [...list].reverse().find((s) => s.status !== 'failed');
+    if (active) return active;
+    return list.length ? list[list.length - 1] : null;
+  }
+
+  recentBiStart(struct) {
+    const centers = struct.biCenters || [];
+    if (!centers.length) return 0;
+    const last = centers[centers.length - 1];
+    if (!last.memberIds || !last.memberIds.length) return 0;
+    const idx = (struct.bi || []).findIndex((b) => b.id === last.memberIds[0]);
+    return idx >= 0 ? idx : 0;
+  }
+
+  computeStages(daily) {
+    const { biCenters, bi, beichi, signals, trendBi } = daily;
+    if (!biCenters.length) return [];
+    const sigMap = { '1B': '一买触发', '2B': '二买确认', '3B': '突破延续', '1S': '一卖触发', '2S': '二卖确认', '3S': '破位延续' };
+    const trendMap = { up: '上涨延续', down: '下跌延续', range: '盘整整理', pending: '结构形成中' };
+    const events = [];
+    biCenters.forEach((zs) => {
+      const sigs = signals.filter((s) => s.zsId === zs.id);
+      const bcs = beichi.filter((b) => b.zsId === zs.id);
+      if (!sigs.length && !bcs.length) {
+        const trendSeg = trendBi.find((t) => t.centerId === zs.id);
+        const label = trendMap[trendSeg ? trendSeg.trend : 'pending'];
+        events.push({ idx: zs.startIdx, label: `${label} ${zs.startDate.slice(5)}`, kind: 'trend', primaryKind: 'zhongshu', primary: zs });
+      } else {
+        bcs.forEach((bc) => { if (!sigs.some((s) => s.idx === bc.idx)) events.push({ idx: bc.idx, label: `${bc.dir === 'up' ? '顶背驰' : '底背驰'} ${bc.date.slice(5)}`, kind: 'beichi', primaryKind: 'beichi', primary: bc }); });
+        sigs.forEach((sig) => events.push({ idx: sig.idx, label: `${sigMap[sig.type] || sig.type} ${sig.date.slice(5)}`, kind: sig.dir, primaryKind: 'signal', primary: sig }));
+      }
+    });
+    events.sort((a, b) => a.idx - b.idx);
+    const stages = events.map((ev) => ({ ...ev, startIdx: ev.idx }));
+    for (let i = 0; i < stages.length - 1; i++) stages[i].endIdx = stages[i + 1].startIdx - 1;
+    if (bi.length && stages.length) stages[stages.length - 1].endIdx = bi[bi.length - 1].end.idx;
+    return stages;
+  }
+
+  selectItem(kind, payload, level) { this.setState({ selected: { kind, payload, level } }); }
+  selectCandle(candle, level, candles) {
+    if (level === 'weekly' && this.state.daily) {
+      const startIdx = candle.i * 5;
+      const endIdx = Math.min(this.state.daily.candles.length - 1, startIdx + 4);
+      const start = this.state.daily.candles[startIdx];
+      const end = this.state.daily.candles[endIdx];
+      this.setState({
+        selected: { kind: 'candle', payload: candle, level },
+        linkedRange: start && end ? { startDate: start.date, endDate: end.date } : null,
+      });
+      return;
+    }
+    this.setState({ selected: { kind: 'candle', payload: candle, level }, focusRange: { startIdx: candle.i, endIdx: candle.i } });
+  }
+  clearSelected() { this.setState({ selected: null, focusRange: null }); }
+  hoverAt(e, text) {
+    this.setState({ hover: { x: e.clientX, y: e.clientY, text } });
+  }
+  clearHover() { this.setState({ hover: null }); }
+  setMode(m) { this.setState({ mode: m, linkedRange: m === 'link' ? this.state.linkedRange : null }); }
+  setZoom(nextZoom) {
+    const chartZoom = Math.max(0.1, Math.min(2.4, Math.round(nextZoom * 20) / 20));
+    this.setState({ chartZoom });
+  }
+  zoomBy(delta) { this.setZoom((this.state.chartZoom || 1) + delta); }
+  resetZoom() { this.setZoom(1); }
+  fitAll() { this.setZoom(0.1); }
+  toggleLayer(key) { this.setState((s) => ({ layers: { ...s.layers, [key]: !s.layers[key] } })); }
+  focusStage(stage) {
+    this.setState({ selected: { kind: stage.primaryKind, payload: stage.primary, level: 'daily' }, focusRange: { startIdx: stage.startIdx, endIdx: stage.endIdx } });
+  }
+
+  fmt(n) { return n.toFixed(2); }
+
+  backgroundInfo(struct) {
+    const list = struct.trendXd || [];
+    if (!list.length) {
+      return { label: '方向待确认', color: '#8b8677', statusText: '候选', line: '线段中枢尚未形成，背景方向暂不判定', source: '线段中枢' };
+    }
+    const t = list[list.length - 1];
+    const labelMap = { up: '上涨趋势', down: '下跌趋势', range: '震荡/盘整', pending: '方向待确认' };
+    const colorMap = { up: '#1f7d50', down: '#b23b30', range: '#7a766a', pending: '#8b8677' };
+    const statusText = t.status === 'confirmed' ? '确认' : '候选';
+    if (list.length === 1) {
+      return {
+        label: '方向待确认', color: '#8b8677', statusText,
+        line: `目前只有 1 个线段中枢（${t.startDate || ''}~${t.endDate || ''}），样本不足以判断趋势方向，暂按"方向待确认"处理`,
+        source: '线段中枢',
+      };
+    }
+    const label = labelMap[t.trend] || '方向待确认';
+    return { label, color: colorMap[t.trend] || '#7a766a', statusText, line: `线段中枢关系：${label}（${t.startDate || ''}~${t.endDate || ''}）`, source: '线段中枢' };
+  }
+
+  buildCurrentInfoForCenter(struct, center) {
+    const hasLeft = !!center.leaveObj;
+    const hasPullback = !!center.pullbackObj;
+    if (!hasLeft) {
+      return { label: '中枢内震荡', color: '#7a766a', line: `价格仍在笔中枢 [${this.fmt(center.zd)}, ${this.fmt(center.zg)}] 内震荡`, zone: [center.zd, center.zg], leaveDir: null, hasLeft, hasPullback };
+    }
+    const up = center.leaveDir === 'up';
+    const label = up ? '向上突破中枢' : '向下跌破中枢';
+    const color = up ? '#1f7d50' : '#b23b30';
+    let line;
+    if (!hasPullback) {
+      line = `当前：${up ? '向上' : '向下'}离开笔中枢 [${this.fmt(center.zd)}, ${this.fmt(center.zg)}]，尚未回踩确认`;
+    } else {
+      const sig3 = (struct.signals || []).find((s) => s.zsId === center.id && (s.type === '3B' || s.type === '3S'));
+      const success = sig3 && sig3.status !== 'failed';
+      line = success
+        ? `当前：${up ? '向上' : '向下'}离开笔中枢 [${this.fmt(center.zd)}, ${this.fmt(center.zg)}]，已回踩，三${up ? '买' : '卖'}成立`
+        : `当前：${up ? '向上' : '向下'}离开笔中枢 [${this.fmt(center.zd)}, ${this.fmt(center.zg)}]，回踩已回补中枢，突破失败`;
+    }
+    return { label, color, line, zone: [center.zd, center.zg], leaveDir: center.leaveDir, hasLeft, hasPullback };
+  }
+
+  trendInfo(struct) {
+    const background = this.backgroundInfo(struct);
+    const centers = struct.biCenters || [];
+    const last = centers[centers.length - 1];
+    const current = last
+      ? this.buildCurrentInfoForCenter(struct, last)
+      : { label: '方向待确认', color: '#8b8677', line: '尚无笔中枢，无法判断当前操作层状态', zone: null, leaveDir: null, hasLeft: false, hasPullback: false };
+    return { background, current };
+  }
+
+  strengthInfo(struct) {
+    const centers = struct.biCenters || [];
+    const zs = centers[centers.length - 1];
+    if (!zs) return { label: '力度不可比', color: '#8b8677', line: '尚无笔中枢，无法评估力度', status: 'insufficient' };
+    const s = (struct.strengthBi && struct.strengthBi.byCenter[zs.id]) || { status: 'insufficient', label: '力度不可比' };
+    if (s.status === 'comparable') {
+      const color = s.verdict === 'weak' ? '#b8790a' : s.verdict === 'strong' ? (s.dir === 'up' ? '#1f7d50' : '#b23b30') : '#7a766a';
+      return {
+        label: s.label, color, status: s.status, ratio: s.ratio, verdict: s.verdict, basis: s.basis,
+        A: s.A, C: s.C, areaA: s.areaA, areaC: s.areaC, detail: s.detail,
+        line: `${s.label}（离开段/进入段 MACD面积比 ${s.ratio.toFixed(2)}）`,
+      };
+    }
+    return { label: s.label, color: '#8b8677', line: s.label, status: s.status, reason: s.reason };
+  }
+
+  currentDivergenceInfo(struct) {
+    const centers = struct.biCenters || [];
+    const last = centers[centers.length - 1];
+    if (!last) return { label: '暂无', color: '#9c9788', line: '结构不足，不能判断当前背驰', current: null };
+    const current = (struct.beichi || []).find((b) => b.zsId === last.id);
+    if (current) {
+      return {
+        label: `${current.dir === 'up' ? '顶背驰' : '底背驰'}候选`,
+        color: '#c9820a',
+        line: `${current.date} 当前笔中枢离开段出现${current.dir === 'up' ? '顶背驰' : '底背驰'}候选，力度比 ${current.ratio}`,
+        current,
+      };
+    }
+    const s = this.strengthInfo(struct);
+    if (s.status === 'comparable' && s.verdict === 'weak') {
+      return { label: '力度减弱，未成背驰', color: '#b8790a', line: '力度减弱，未成背驰（减弱＝离开段面积小于进入段；背驰还需价格创新极值且完成确认）', current: null };
+    }
+    if (s.status === 'incomparable' || s.status === 'insufficient') {
+      return { label: '力度不可比，暂不判断背驰', color: '#9c9788', line: '力度不可比，暂不判断背驰', current: null };
+    }
+    return { label: '暂无当前背驰', color: '#9c9788', line: '当前笔中枢离开段没有背驰候选', current: null };
+  }
+
+  buildChartVM(struct, layers, vbW, vbH, level, opts) {
+    const { linkedRange, focusRange, recentBiStart } = opts;
+    const candles = struct.candles;
+    const marginLeft = 8, marginRight = 62, marginTop = 14, marginBottom = 66;
+    const plotW = vbW - marginLeft - marginRight;
+    const plotH = vbH - marginTop - marginBottom;
+    const gridX2 = vbW - marginRight;
+    const gridLabelX = vbW - marginRight + 6;
+    let lo = Math.min(...candles.map((c) => c.low));
+    let hi = Math.max(...candles.map((c) => c.high));
+    const pad = (hi - lo) * 0.06;
+    lo -= pad; hi += pad;
+    const step = plotW / candles.length;
+    const cw = Math.max(1.1, step * 0.62);
+    const idxToX = (idx) => marginLeft + idx * step + step / 2;
+    const priceToY = (p) => marginTop + ((hi - p) / (hi - lo)) * plotH;
+
+    const candleVMs = candles.map((c) => {
+      const up = c.close >= c.open;
+      const color = up ? '#1f9d63' : '#d1453a';
+      const bodyTop = priceToY(Math.max(c.open, c.close));
+      const bodyBot = priceToY(Math.min(c.open, c.close));
+      return {
+        x: idxToX(c.i) - cw / 2, w: cw, bodyY: bodyTop, bodyH: Math.max(1, bodyBot - bodyTop), wickX: idxToX(c.i), wickY1: priceToY(c.high), wickY2: priceToY(c.low), color,
+        onClick: () => this.selectCandle(c, level, candles),
+        onHover: (e) => this.hoverAt(e, `${level === 'weekly' ? '5日合成K' : '日K主图'} · ${c.date} · O ${this.fmt(c.open)} H ${this.fmt(c.high)} L ${this.fmt(c.low)} C ${this.fmt(c.close)}`),
+      };
+    });
+
+    const fxMarkers = struct.fenxing.map((fx) => {
+      const x = idxToX(fx.idx);
+      const y = fx.type === 'top' ? priceToY(fx.price) - 8 : priceToY(fx.price) + 8;
+      const points = fx.type === 'top' ? `${x - 5},${y + 8} ${x + 5},${y + 8} ${x},${y}` : `${x - 5},${y - 8} ${x + 5},${y - 8} ${x},${y}`;
+      return { points, color: '#6b7280', onClick: () => this.selectItem('fenxing', fx, level), onHover: (e) => this.hoverAt(e, `${fx.type === 'top' ? '顶分型' : '底分型'} · ${fx.date} · ${this.fmt(fx.price)}`) };
+    });
+
+    const biSegs = struct.bi.map((b, i) => {
+      const recent = i >= recentBiStart - 1;
+      return {
+        x1: idxToX(b.start.idx), y1: priceToY(b.start.price), x2: idxToX(b.end.idx), y2: priceToY(b.end.price),
+        color: recent ? '#3f4652' : '#cfcabd', w: recent ? 1.7 : 1,
+        onClick: () => this.selectItem('bi', b, level),
+        onHover: (e) => this.hoverAt(e, `笔·${b.dir === 'up' ? '向上' : '向下'} · ${b.start.date}~${b.end.date}`),
+      };
+    });
+
+    const xdSegs = struct.xianduan.map((xd) => {
+      const recent = xd.biRange[1] >= recentBiStart - 1;
+      return {
+        x1: idxToX(xd.startIdx), y1: priceToY(xd.startPrice), x2: idxToX(xd.endIdx), y2: priceToY(xd.endPrice),
+        color: recent ? '#2b3a55' : '#d8d5cc', w: recent ? 3 : 1.6,
+        onClick: () => this.selectItem('xianduan', xd, level),
+        onHover: (e) => this.hoverAt(e, `线段·${xd.dir === 'up' ? '向上' : '向下'}`),
+      };
+    });
+
+    const xdBoxes = (struct.xdCenters || []).map((zs) => {
+      const x = idxToX(zs.startIdx) - 4, w = idxToX(zs.endIdx) - idxToX(zs.startIdx) + 8;
+      const y = priceToY(zs.zg), h = Math.max(2, priceToY(zs.zd) - priceToY(zs.zg));
+      return {
+        x, y, w, h, fill: 'rgba(43,58,85,0.05)', stroke: '#8f9bb0', strokeW: 1, dash: '6 4',
+        label: w >= 90 ? '线段中枢' : '', labelColor: '#6b7280', labelX: x + 6, labelY: y + 13,
+        onClick: () => this.selectItem('zhongshu', zs, level),
+        onHover: (e) => this.hoverAt(e, `线段中枢（背景级） · ZG ${this.fmt(zs.zg)} / ZD ${this.fmt(zs.zd)}`),
+      };
+    });
+    const biBoxes = (struct.biCenters || []).map((zs, i) => {
+      const isLast = i === struct.biCenters.length - 1;
+      const x = idxToX(zs.startIdx) - 3, w = idxToX(zs.endIdx) - idxToX(zs.startIdx) + 6;
+      const y = priceToY(zs.zg), h = Math.max(2, priceToY(zs.zd) - priceToY(zs.zg));
+      return {
+        x, y, w, h,
+        fill: isLast ? 'rgba(43,58,85,0.10)' : 'rgba(200,196,184,0.14)',
+        stroke: isLast ? '#2b3a55' : '#d8d5cc', strokeW: isLast ? 1.4 : 1, dash: isLast ? '0' : '4 3',
+        label: isLast && w >= 90 ? `笔中枢 ${this.fmt(zs.zd)}–${this.fmt(zs.zg)}` : '', labelColor: '#2b3a55', labelX: x + 6, labelY: y + 13,
+        onClick: () => this.selectItem('zhongshu', zs, level),
+        onHover: (e) => this.hoverAt(e, `笔中枢（操作级） · ZG ${this.fmt(zs.zg)} / ZD ${this.fmt(zs.zd)}`),
+      };
+    });
+
+    const beichiMarkers = struct.beichi.map((bc, i) => {
+      const isLast = i === struct.beichi.length - 1;
+      const x = idxToX(bc.idx), yBase = priceToY(bc.price);
+      const y = bc.dir === 'up' ? yBase - 28 : yBase + 14;
+      return { x: x - 7, y, tx: x, ty: y + 10, rotate: `rotate(45 ${x} ${y + 7})`, opacity: isLast ? 1 : 0.35, onClick: () => this.selectItem('beichi', bc, level), onHover: (e) => this.hoverAt(e, `背驰 · 力度比 ${bc.ratio}`) };
+    });
+
+    const dirColor = (dir) => (dir === 'buy' ? '#1f9d63' : '#d1453a');
+    const annotatedSignals = this.annotateSignals(struct.signals, struct.bi, candles);
+    const sigMarkers = annotatedSignals.map((sig) => {
+      const x = idxToX(sig.idx), yBase = priceToY(sig.price);
+      const y = sig.dir === 'buy' ? yBase + 20 : yBase - 20;
+      const c = dirColor(sig.dir);
+      const isCandidate = sig.status === 'candidate';
+      const isFailed = sig.status === 'failed';
+      return {
+        x, y, r: isFailed ? 10 : 12,
+        label: sig.displayType || sig.type, textColor: isCandidate ? c : '#ffffff',
+        fill: isFailed ? '#c9c5b8' : (isCandidate ? 'none' : c),
+        stroke: isCandidate ? c : (isFailed ? '#b9b5aa' : c),
+        dash: isCandidate ? '3 2' : '0', opacity: isFailed ? 0.55 : 1,
+        onClick: () => this.selectItem('signal', sig, level),
+        onHover: (e) => this.hoverAt(e, `${sig.type} · ${sig.date || ''} · ${this.fmt(sig.price)} · ${isCandidate ? '候选' : isFailed ? '已失效' : '已确认'}${sig.conflictNote ? ' · 与背驰冲突需降级' : ''}`),
+      };
+    });
+
+    let srLines = [];
+    const lastCenter = struct.biCenters[struct.biCenters.length - 1];
+    if (lastCenter) {
+      srLines = [
+        { x1: idxToX(lastCenter.startIdx), y: priceToY(lastCenter.zg), color: '#b8790a', priceLabel: this.fmt(lastCenter.zg), onClick: () => this.selectItem('sr', { price: lastCenter.zg, type: 'resistance', center: lastCenter }, level), onHover: (e) => this.hoverAt(e, `压力位 · ${this.fmt(lastCenter.zg)}`) },
+        { x1: idxToX(lastCenter.startIdx), y: priceToY(lastCenter.zd), color: '#2f7d55', priceLabel: this.fmt(lastCenter.zd), onClick: () => this.selectItem('sr', { price: lastCenter.zd, type: 'support', center: lastCenter }, level), onHover: (e) => this.hoverAt(e, `支撑位 · ${this.fmt(lastCenter.zd)}`) },
+      ];
+    }
+
+    let failLine = null;
+    if (level === 'daily') {
+      const activeSig = this.getCurrentSignal(annotatedSignals);
+      if (activeSig) {
+        const stop = activeSig.stopPrice;
+        const lineName = activeSig.status === 'candidate' ? '候选失效线' : '失败线';
+        failLine = { x1: idxToX(activeSig.stopFromIdx || activeSig.idx), y: priceToY(stop), label: `${lineName} ${this.fmt(stop)}`, onClick: () => this.selectItem('failure', { price: stop, dir: activeSig.dir, signal: activeSig, label: activeSig.dir === 'buy' ? '跌破失效' : '涨破失效' }, level), onHover: (e) => this.hoverAt(e, `${lineName} · ${this.fmt(stop)}`) };
+      }
+    }
+
+    const gridlines = [0, 1, 2, 3].map((k) => { const price = hi - (k / 3) * (hi - lo); return { y: priceToY(price), label: this.fmt(price) }; });
+    const tickCount = Math.max(level === 'weekly' ? 5 : 8, Math.min(level === 'weekly' ? 14 : 28, Math.floor(plotW / 150)));
+    const xTicks = Array.from({ length: tickCount }, (_, k) => {
+      const idx = Math.min(candles.length - 1, Math.round((k / (tickCount - 1)) * (candles.length - 1)));
+      return { x: idxToX(idx), label: candles[idx].date.slice(5) };
+    });
+
+    // 附录A1：阶段带——中枢期(灰) + 离开段(实色，方向取 leaveDir，文字含力度)，两者互不重叠。
+    const bandX = (idx, side) => idxToX(Math.max(0, Math.min(candles.length - 1, idx))) + (side === 'end' ? step / 2 : -step / 2);
+    const laneY = vbH - 58, laneH = 22;
+    const strengthByCenterBi = (struct.strengthBi && struct.strengthBi.byCenter) || {};
+    const verdictSuffix = (zsId) => {
+      const s = strengthByCenterBi[zsId];
+      if (!s || s.status !== 'comparable') return '力度不可比';
+      return s.verdict === 'weak' ? '力度弱' : s.verdict === 'strong' ? '力度强' : '力度平';
+    };
+    const phaseBandRects = [];
+    (struct.trendBi || []).forEach((t) => {
+      const centerObj = (struct.biCenters || []).find((z) => z.id === t.centerId);
+      const zx1 = bandX(t.zoneStartIdx || 0, 'start');
+      const zx2 = bandX(t.zoneEndIdx || t.zoneStartIdx || 0, 'end');
+      const zw = Math.max(3, zx2 - zx1);
+      let zoneLabel = '';
+      if (zw >= 100 && centerObj) zoneLabel = `中枢 ${this.fmt(centerObj.zd)}–${this.fmt(centerObj.zg)}`;
+      else if (zw >= 42) zoneLabel = '中枢';
+      phaseBandRects.push({
+        x: zx1, y: laneY, w: zw, h: laneH, bg: '#efede6', stroke: '#cfcabd', dash: '0', textColor: '#6b6659',
+        tx: zx1 + zw / 2, ty: laneY + 14.5, label: zoneLabel,
+        onClick: () => (centerObj ? this.selectItem('zhongshu', centerObj, level) : null),
+        onHover: (e) => this.hoverAt(e, `中枢期 · ${t.startDate || ''}~${t.endDate || ''}`),
+      });
+      if (t.leaveStartIdx != null && t.leaveEndIdx != null) {
+        const lx1 = bandX(t.leaveStartIdx, 'start');
+        const lx2 = bandX(t.leaveEndIdx, 'end');
+        const lw = Math.max(3, lx2 - lx1);
+        const dir = t.leaveDir;
+        const color = dir === 'up' ? '#1f9d63' : '#d1453a';
+        const arrow = dir === 'up' ? '↑' : '↓';
+        const dirWord = dir === 'up' ? '上涨' : '下跌';
+        const suffix = verdictSuffix(t.centerId);
+        let label = '';
+        if (lw >= 120) label = `${arrow} ${dirWord} · ${suffix}`;
+        else if (lw >= 58) label = `${arrow} ${dirWord}`;
+        else if (lw >= 22) label = arrow;
+        const sInfo = strengthByCenterBi[t.centerId];
+        const dashed = sInfo && sInfo.status === 'comparable' && sInfo.verdict === 'weak';
+        phaseBandRects.push({
+          x: lx1, y: laneY, w: lw, h: laneH, bg: color, stroke: color, dash: dashed ? '4 3' : '0', textColor: '#ffffff',
+          tx: lx1 + lw / 2, ty: laneY + 14.5, label,
+          onClick: () => this.selectItem('trend', this.trendInfo(struct), level),
+          onHover: (e) => this.hoverAt(e, `${dir === 'up' ? '↑上涨' : '↓下跌'} · ${t.startDate || ''}~${t.endDate || ''} · 离开笔中枢 [${centerObj ? this.fmt(centerObj.zd) : ''}, ${centerObj ? this.fmt(centerObj.zg) : ''}] · ${suffix}`),
+        });
+      }
+    });
+
+    // 附录A2：在价格图上高亮最新一个离开段，减少视线在图表底部与价格区之间的往返。
+    let leaveHighlight = null;
+    const lastBiCenterForUi = struct.biCenters[struct.biCenters.length - 1];
+    if (lastBiCenterForUi && lastBiCenterForUi.leaveObj) {
+      const C = lastBiCenterForUi.leaveObj;
+      const hx1 = idxToX(C.start.idx), hy1 = priceToY(C.start.price);
+      const hx2 = idxToX(C.end.idx), hy2 = priceToY(C.end.price);
+      const dir = lastBiCenterForUi.leaveDir;
+      const color = dir === 'up' ? '#1f9d63' : '#d1453a';
+      const suffixUi = verdictSuffix(lastBiCenterForUi.id);
+      const capLabel = `${dir === 'up' ? '↑ 向上离开中枢' : '↓ 向下离开中枢'} · ${suffixUi}`;
+      const capH = 20;
+      const capW = Math.max(110, capLabel.length * 12 + 24);
+      let capTopY = dir === 'up' ? (hy2 - 22 - capH) : (hy2 + 22);
+      capTopY = Math.max(2, Math.min(vbH - capH - 2, capTopY));
+      let capX = hx2 - capW / 2;
+      capX = Math.max(marginLeft, Math.min(gridX2 - capW, capX));
+      leaveHighlight = {
+        x1: hx1, y1: hy1, x2: hx2, y2: hy2, color,
+        capX, capY: capTopY, capW, capH, capTx: capX + capW / 2, capTy: capTopY + capH / 2 + 4,
+        label: capLabel,
+        onClick: () => this.selectItem('trend', this.trendInfo(struct), level),
+      };
+    }
+
+    // 附录A3：图表上方的三枚一眼摘要胶囊。
+    const trendInfoObj = this.trendInfo(struct);
+    const strengthObjUi = this.strengthInfo(struct);
+    let curBg = '#f0eee6', curColor = '#7a766a';
+    if (trendInfoObj.current.leaveDir === 'up') { curBg = '#e6f4ec'; curColor = '#1f7d50'; }
+    else if (trendInfoObj.current.leaveDir === 'down') { curBg = '#fae9e7'; curColor = '#b23b30'; }
+    // 胶囊只给一句可读结论 + 具体比值，不重复"弱/动能减弱"这类同义词。
+    let stBg = '#f0eee6', stColor = '#8b8677';
+    let stText = strengthObjUi.status === 'incomparable' ? '不可比（无同向参照段）' : '不可比（动能过弱）';
+    if (strengthObjUi.status === 'comparable') {
+      const dirWord = (strengthObjUi.dir || (lastBiCenterForUi && lastBiCenterForUi.leaveDir)) === 'up' ? '上涨' : '下跌';
+      const ratioTxt = strengthObjUi.ratio != null ? ` ${strengthObjUi.ratio.toFixed(2)}` : '';
+      if (strengthObjUi.verdict === 'weak') { stBg = '#fdf1de'; stColor = '#9a5c04'; stText = `${dirWord}减弱${ratioTxt}`; }
+      else if (strengthObjUi.verdict === 'strong') {
+        const up = dirWord === '上涨';
+        stBg = up ? '#e6f4ec' : '#fae9e7'; stColor = up ? '#1f7d50' : '#b23b30'; stText = `${dirWord}增强${ratioTxt}`;
+      } else { stBg = '#f0eee6'; stColor = '#7a766a'; stText = `${dirWord}持平${ratioTxt}`; }
+    }
+    const summaryChips = [
+      { text: `背景 · ${trendInfoObj.background.label}`, bg: '#eef1f5', color: '#2b3a55', onClick: () => this.selectItem('trend', trendInfoObj, level) },
+      { text: `当前 · ${trendInfoObj.current.label}`, bg: curBg, color: curColor, onClick: () => this.selectItem('trend', trendInfoObj, level) },
+      { text: `力度 · ${stText}`, bg: stBg, color: stColor, onClick: () => this.selectItem('strength', strengthObjUi, level) },
+    ];
+
+    const trendLabelFull = { up: '上涨趋势', down: '下跌趋势', range: '盘整', pending: '构建中' };
+    const trendColorFull = { up: { bg: 'rgba(31,157,99,0.14)', text: '#1f7d50' }, down: { bg: 'rgba(209,69,58,0.14)', text: '#b23b30' }, range: { bg: '#eceae3', text: '#7a766a' }, pending: { bg: '#eceae3', text: '#a19c8c' } };
+    const trendBands = (struct.trendBi || []).map((t) => { const c = trendColorFull[t.trend] || trendColorFull.range; return { grow: Math.max(1, (t.zoneEndIdx || t.zoneStartIdx) - t.zoneStartIdx + 1), bg: c.bg, textColor: c.text, label: trendLabelFull[t.trend] || '盘整', title: `${t.startDate || ''} ~ ${t.endDate || ''}` }; });
+
+    let linkOverlay = null;
+    if (level === 'daily' && linkedRange) {
+      const sIdx = candles.findIndex((c) => c.date >= linkedRange.startDate);
+      const eIdx = candles.findIndex((c) => c.date >= linkedRange.endDate);
+      if (sIdx >= 0) { const x1 = idxToX(sIdx) - step / 2; const x2 = idxToX(eIdx >= 0 ? eIdx : candles.length - 1) + step / 2; linkOverlay = { x: x1, w: Math.max(4, x2 - x1) }; }
+    }
+    let focusRect = null;
+    if (level === 'daily' && focusRange) {
+      const x1 = idxToX(focusRange.startIdx) - step / 2, x2 = idxToX(focusRange.endIdx) + step / 2;
+      focusRect = { x: x1, w: Math.max(4, x2 - x1) };
+    }
+
+    return {
+      vbW, vbH, vbAspect: `${vbW} / ${vbH}`, marginLeft, marginTop, gridX2, gridLabelX, plotH, axisY: vbH - 22, axisY2: vbH - 17, tickY: vbH - 5,
+      phaseLaneLabelY: laneY + 14,
+      dateRange: `${candles[0].date} ~ ${candles[candles.length - 1].date}`,
+      candles: candleVMs, fxMarkers, biSegs, xdSegs, xdBoxes, biBoxes, beichiMarkers, sigMarkers, srLines, failLine, gridlines, xTicks,
+      trendBands, phaseBandRects, leaveHighlight, summaryChips, linkOverlay, focusRect,
+    };
+  }
+
+  computeJudgment(daily, weekly, dailyCandles) {
+    const trend = this.trendInfo(daily);
+    const strength = this.strengthInfo(daily);
+    const divergence = this.currentDivergenceInfo(daily);
+    const annotated = this.annotateSignals(daily.signals, daily.bi, dailyCandles);
+    const currentSignal = this.getCurrentSignal(annotated);
+    const lastCenter = daily.biCenters[daily.biCenters.length - 1];
+    const lastPen = daily.bi[daily.bi.length - 1];
+    const nameMap = { '1B': '一买', '2B': '二买', '3B': '三买', '1S': '一卖', '2S': '二卖', '3S': '三卖' };
+
+    // 数据新鲜度：最后一笔尚未封闭（provisional），其后有多少根K线还没有形成新的确认结构。
+    const nAfterLastPen = lastPen ? (dailyCandles.length - 1 - lastPen.end.idx) : (dailyCandles.length - 1);
+    const freshnessLine = nAfterLastPen <= 0 ? '结构已更新至最新K线' : `最后一笔未封闭，其后 ${nAfterLastPen} 根K线尚未形成新分型`;
+
+    let sigName = '暂无信号', statusSuffix = '', levelLine, confirmLine, failLineTxt;
+    if (currentSignal) {
+      const nm = nameMap[currentSignal.type] || currentSignal.type;
+      sigName = currentSignal.stage === 'leave' && currentSignal.displayType ? `${nm}（${currentSignal.displayType}观察）` : nm;
+      if (currentSignal.status === 'confirmed') {
+        statusSuffix = '已确认';
+        levelLine = '已达确认级别（笔中枢操作级）';
+        confirmLine = '结构已确认；继续跟踪失效条件，不代表结构不会再变化';
+      } else if (currentSignal.status === 'candidate') {
+        statusSuffix = '候选';
+        if (currentSignal.conflictNote) levelLine = currentSignal.conflictNote;
+        else if (currentSignal.stage === 'leave') levelLine = '当前仅到"突破观察"级别；回踩完成后可升级为确认三买/三卖';
+        else levelLine = '候选中，等待条件满足后确认';
+        confirmLine = currentSignal.needsCondition || '等待后续结构完成确认条件';
+      } else {
+        statusSuffix = '已证伪';
+        levelLine = '该信号已证伪，等待新的中枢与离开段';
+        confirmLine = '等待新的分型 / 笔 / 中枢重新形成';
+      }
+      failLineTxt = currentSignal.stopPrice != null
+        ? `${currentSignal.dir === 'buy' ? '收盘跌破' : '收盘涨破'} ${this.fmt(currentSignal.stopPrice)} 视为该判断失效${currentSignal.failedAt ? `，已在 ${currentSignal.failedAt} 触发` : ''}`
+        : '暂无明确防守位';
+    } else {
+      levelLine = '暂无信号，等待新的中枢与离开段';
+      confirmLine = lastCenter ? `等待价格离开中枢 [${this.fmt(lastCenter.zd)}, ${this.fmt(lastCenter.zg)}] 并完成回踩/反抽，或出现背驰信号` : '结构不足，等待笔中枢形成';
+      failLineTxt = lastCenter ? `跌破 ${this.fmt(lastCenter.zd)} 或涨破 ${this.fmt(lastCenter.zg)} 需重新判断` : '暂无';
+    }
+    // 同一中枢上若同时存在背驰类(1B/1S)与突破类(3B/3S)的未证伪信号，结论行必须同时呈现两种读法，
+    // 否则标题只显示其中一个，会让使用者忽略与之互斥的另一种可能。
+    const liveOnCenter = lastCenter
+      ? annotated.filter((s) => s.zsId === lastCenter.id && s.status !== 'failed')
+      : [];
+    const divergenceSig = liveOnCenter.find((s) => s.type === '1B' || s.type === '1S');
+    const breakoutSig = liveOnCenter.find((s) => s.type === '3B' || s.type === '3S');
+    let conclusion;
+    if (divergenceSig && breakoutSig) {
+      const dName = nameMap[divergenceSig.type] || divergenceSig.type;
+      const bName = nameMap[breakoutSig.type] || breakoutSig.type;
+      const dvWord = divergenceSig.type === '1S' ? '顶背驰' : '底背驰';
+      conclusion = `${trend.current.label}，但出现${dvWord}｜${dName}与${bName}两种读法冲突，均未确认`;
+    } else {
+      conclusion = `${trend.current.label}｜${sigName}${statusSuffix ? `（${statusSuffix}）` : ''}`;
+    }
+
+    let reversalLine;
+    if (divergence.current) reversalLine = divergence.line;
+    else if (currentSignal && currentSignal.status === 'candidate') reversalLine = '已有候选信号，但尚未完成确认，不能提前当作转折';
+    else if (currentSignal && currentSignal.status === 'failed') reversalLine = '最近信号已失败，按新结构重新评估';
+    else reversalLine = divergence.line;
+
+    // 「下一步」是要做的动作，不重复「确认条件」的原文，否则面板里三行讲同一件事。
+    let task;
+    if (currentSignal && currentSignal.status === 'candidate') {
+      if (divergenceSig && breakoutSig) {
+        task = `等下一段回踩走完：守住 ${this.fmt(breakoutSig.boundary != null ? breakoutSig.boundary : (lastCenter ? lastCenter.zg : 0))} 则偏向突破延续，跌回中枢则偏向背驰兑现`;
+      } else if (currentSignal.stage === 'leave') {
+        task = '等下一段回踩走完，再看是否守住中枢边界';
+      } else {
+        task = '跟踪回抽/反抽是否满足确认条件';
+      }
+    } else if (currentSignal && currentSignal.status === 'confirmed') {
+      task = '跟踪价格是否继续沿信号方向运行，关注失效条件';
+    } else {
+      task = '观察是否出现新的分型/笔离开当前区间';
+    }
+
+    let action;
+    if (!currentSignal) action = '尚未确认，不满足确认条件前不作操作结论';
+    else if (currentSignal.status === 'confirmed') action = '该判断已达确认级别；继续以失效条件为准跟踪，不等同交易指令';
+    else if (currentSignal.status === 'candidate') action = '尚未确认，不满足确认条件前不作操作结论';
+    else action = '已证伪，重新等待新的中枢与离开段';
+
+    return {
+      conclusion,
+      currentLine: trend.current.line,
+      currentColor: trend.current.color,
+      strengthLine: strength.line,
+      strengthColor: strength.color,
+      backgroundLine: trend.background.line,
+      freshnessLine,
+      reversalLine,
+      confirmLine,
+      failLine: failLineTxt,
+      levelLine,
+      task,
+      action,
+      annotated, currentSignal, trendInfo: trend, strengthInfo: strength, divergenceInfo: divergence,
+    };
+  }
+
+  renderVals() {
+    const { daily, weekly, dataMeta, mode, chartZoom, layers, selected, hover, linkedRange, focusRange, symbolInput, loading, loadError, recentSymbols, activeSymbol } = this.state;
+    const ready = !!(daily && weekly);
+
+    const recentChips = (recentSymbols || []).map((s) => {
+      const pure = (s.code || '').replace(/^(sh|sz|bj)/i, '');
+      return { code: s.code, label: `${s.name || pure}${pure}`, onClick: () => this.loadSymbol(s.code) };
+    });
+    const loadingCodeLabel = (symbolInput && symbolInput.trim()) || (activeSymbol && activeSymbol.code) || '';
+
+    const modeOptions = ['daily', 'link', 'weekly'].map((m) => ({ label: m === 'link' ? '双图对照' : m === 'weekly' ? '5日合成K' : '日K主图', bg: mode === m ? '#ffffff' : 'transparent', color: mode === m ? '#1c1f26' : '#8b8677', onClick: () => this.setMode(m) }));
+
+    const layerDefs = [
+      { key: 'fenxing', label: '分型', dot: '#6b7280' }, { key: 'bi', label: '笔', dot: '#3f4652' }, { key: 'xianduan', label: '线段', dot: '#2b3a55' },
+      { key: 'zhongshuBi', label: '笔中枢', dot: '#2b3a55' }, { key: 'zhongshuXd', label: '线段中枢', dot: '#8f9bb0' },
+      { key: 'beichi', label: '背驰', dot: '#c9820a' }, { key: 'signals', label: '买卖点', dot: '#1f9d63' },
+      { key: 'sr', label: '压力/支撑', dot: '#b8790a' }, { key: 'failure', label: '防守/失败线', dot: '#b23b30' },
+    ];
+    const layerChips = layerDefs.map((d) => { const on = layers[d.key]; return { ...d, toggle: () => this.toggleLayer(d.key), bg: on ? '#eef1f5' : '#ffffff', border: on ? '#c3cbd6' : '#e2ddd0', color: on ? '#2b3a55' : '#9c9788' }; });
+
+    let panels = [], stages = [], judgment = null, annotatedDaily = [];
+    if (ready) {
+      annotatedDaily = this.annotateSignals(daily.signals, daily.bi, daily.candles);
+      judgment = this.computeJudgment(daily, weekly, daily.candles);
+      stages = this.computeStages(daily).map((st) => {
+        const kindColor = { buy: '#1f9d63', sell: '#d1453a', beichi: '#b8790a', trend: '#6b7280' }[st.kind] || '#6b7280';
+        const active = focusRange && focusRange.startIdx === st.startIdx;
+        return { ...st, onClick: () => this.focusStage(st), bg: active ? kindColor : '#f6f5f0', color: active ? '#ffffff' : kindColor, border: active ? kindColor : '#e2ddd0' };
+      });
+
+      const wantWeekly = mode === 'link' || mode === 'weekly';
+      const wantDaily = mode === 'link' || mode === 'daily';
+      const dailyRecentStart = this.recentBiStart(daily);
+      const weeklyRecentStart = this.recentBiStart(weekly);
+      if (wantWeekly) {
+        const weeklyHeight = mode === 'weekly' ? 460 : 240;
+        const weeklyBase = mode === 'weekly' ? Math.max(1200, weekly.candles.length * 56 + 140) : Math.max(1100, weekly.candles.length * 46 + 120);
+        const weeklyWidth = Math.max(900, Math.round(weeklyBase * chartZoom));
+        const vm = this.buildChartVM(weekly, layers, weeklyWidth, weeklyHeight, 'weekly', { linkedRange: null, focusRange: null, recentBiStart: weeklyRecentStart });
+        panels.push({ ...vm, title: '5日合成K对照', hint: mode === 'link' ? '点击一根合成K，高亮对应日K区间' : '只作较大观察层参考，不等同严格级别', key: 'weekly', isWeekly: true });
+      }
+      if (wantDaily) {
+        const dailyHeight = mode === 'daily' ? 540 : 460;
+        const dailyBase = Math.max(mode === 'daily' ? 1800 : 1500, daily.candles.length * 14 + 160);
+        const dailyWidth = Math.max(900, Math.round(dailyBase * chartZoom));
+        const vm = this.buildChartVM(daily, layers, dailyWidth, dailyHeight, 'daily', { linkedRange, focusRange, recentBiStart: dailyRecentStart });
+        panels.push({ ...vm, title: '日K主图', hint: '在同一张K线上观察分型、笔、中枢、阶段与买卖点', key: 'daily', isDaily: true });
+      }
+    }
+
+    let selectedDetail = null;
+    if (selected) {
+      const d = this.explain(selected.kind, selected.payload);
+      if (d) selectedDetail = { ...d, meta: `${selected.level === 'weekly' ? '5日合成K' : '日K主图'} · ${d.meta}` };
+    }
+
+    let activeRows = [];
+    if (ready) {
+      const activeLevel = mode === 'weekly' ? 'weekly' : 'daily';
+      const activeStruct = activeLevel === 'weekly' ? weekly : daily;
+      const activeAnnotated = this.annotateSignals(activeStruct.signals, activeStruct.bi, activeStruct.candles);
+      const activeSig = this.getCurrentSignal(activeAnnotated);
+      const lastBi = activeStruct.bi[activeStruct.bi.length - 1];
+      const lastZs = activeStruct.biCenters[activeStruct.biCenters.length - 1];
+      const activeTrend = this.trendInfo(activeStruct);
+      const activeStrength = this.strengthInfo(activeStruct);
+      const activeDivergence = this.currentDivergenceInfo(activeStruct);
+      activeRows = [
+        { label: `${activeLevel === 'weekly' ? '合成K' : '主图'}当前`, value: activeTrend.current.label, color: activeTrend.current.color, onClick: () => this.selectItem('trend', activeTrend, activeLevel) },
+        { label: '背景方向', value: activeTrend.background.label, color: activeTrend.background.color, onClick: () => this.selectItem('trend', activeTrend, activeLevel) },
+        { label: '当前力度', value: activeStrength.label, color: activeStrength.color, onClick: () => this.selectItem('strength', activeStrength, activeLevel) },
+        { label: `${activeLevel === 'weekly' ? '合成K' : '主图'}最新笔中枢`, value: lastZs ? `${this.fmt(lastZs.zd)} ~ ${this.fmt(lastZs.zg)}` : '—', color: '#2b3a55', onClick: lastZs ? (() => this.selectItem('zhongshu', lastZs, activeLevel)) : null },
+        { label: '最新笔方向', value: lastBi ? (lastBi.dir === 'up' ? '向上' : '向下') : '—', color: lastBi && lastBi.dir === 'up' ? '#1f9d63' : '#d1453a', onClick: lastBi ? (() => this.selectItem('bi', lastBi, activeLevel)) : null },
+        { label: '最新信号', value: activeSig ? `${activeSig.displayType || activeSig.type}（${activeSig.status === 'candidate' ? '候选' : activeSig.status === 'failed' ? '失效' : '确认'}）` : '暂无', color: activeSig ? (activeSig.status === 'candidate' ? '#b8790a' : activeSig.status === 'failed' ? '#9c9788' : (activeSig.dir === 'buy' ? '#1f9d63' : '#d1453a')) : '#9c9788', onClick: activeSig ? (() => this.selectItem('signal', activeSig, activeLevel)) : null },
+        { label: '当前背驰', value: activeDivergence.label, color: activeDivergence.color, onClick: activeDivergence.current ? (() => this.selectItem('beichi', activeDivergence.current, activeLevel)) : (() => this.selectItem('strength', activeStrength, activeLevel)) },
+      ];
+    }
+
+    const legendRows = [
+      { swatch: '#6b7280', mark: '▲', label: '顶/底分型', desc: '默认隐藏，学习视图可开启' },
+      { swatch: '#3f4652', mark: '', label: '笔', desc: '深色=当前结构，浅灰=历史' },
+      { swatch: '#2b3a55', mark: '', label: '笔中枢（操作级）', desc: '实色高亮=最近中枢，其余为历史，虚线=历史边界' },
+      { swatch: '#8f9bb0', mark: '', label: '线段中枢（背景级）', desc: '虚线大框，代表更高一级背景方向' },
+      { swatch: '#7a766a', mark: '', label: '阶段带', desc: '灰=中枢期，绿/红=离开段（箭头为方向，文字含力度）' },
+      { swatch: '#c9820a', mark: '背', label: '背驰', desc: '最近一次为高亮，历史淡化' },
+      { swatch: '#1f9d63', mark: '1B', label: '买点（实心=确认）', desc: '空心虚线=候选，灰色=已失效' },
+      { swatch: '#d1453a', mark: '1S', label: '卖点（实心=确认）', desc: '空心虚线=候选，灰色=已失效' },
+      { swatch: '#b8790a', mark: '', label: '压力/支撑位', desc: '仅显示当前中枢的上下沿' },
+      { swatch: '#b23b30', mark: '', label: '防守/失败线', desc: '当前最相关信号的止损参考位' },
+    ];
+
+    return {
+      ready, notReady: !ready,
+      modeOptions, layerChips, layers, panels, stages, judgment,
+      zoomLabel: `${Math.round((chartZoom || 1) * 100)}%`,
+      zoomOut: () => this.zoomBy(-0.2),
+      zoomIn: () => this.zoomBy(0.2),
+      resetZoom: () => this.resetZoom(),
+      fitAll: () => this.fitAll(),
+      symbolLine: dataMeta ? `${dataMeta.name} · ${dataMeta.symbol}` : '招商银行 · 600036',
+      dataLine: dataMeta ? `真实历史${dataMeta.adjustment || ''}日K · ${dataMeta.begin}~${dataMeta.end} · ${dataMeta.source} · SPEC v0.4 · 笔中枢(操作级)+线段中枢(背景级)` : '真实行情加载中 · 非交易信号',
+      selectedDetail, showActiveList: !selected, showLegend: false,
+      activeRows, legendRows, hover,
+      clearSelected: () => this.clearSelected(),
+      clearIfBg: (e) => { if (e.target === e.currentTarget) this.clearSelected(); },
+      clearHover: () => this.clearHover(),
+      symbolInputValue: symbolInput || '',
+      onSymbolInput: (e) => this.setState({ symbolInput: e.target.value }),
+      // 兼容不同环境对回车键的命名（Enter / Return）与老式 keyCode。
+      onSymbolKeyDown: (e) => { if (e.key === 'Enter' || e.key === 'Return' || e.keyCode === 13) this.loadSymbol(); },
+      onLoadClick: () => this.loadSymbol(),
+      onRefreshClick: () => this.refreshCurrent(),
+      loadDisabled: !!loading,
+      refreshDisabled: !!loading || !activeSymbol,
+      loadBtnLabel: loading ? '加载中…' : '加载',
+      loadBtnBg: loading ? '#8b8677' : '#2b3a55',
+      recentChips,
+      hasLoadError: !!loadError,
+      loadErrorText: loadError || '',
+      isLoadingSymbol: !!loading,
+      loadingText: `正在获取 ${loadingCodeLabel} 行情…`,
+    };
+  }
+
+  explain(kind, payload) {
+    const f = this.fmt.bind(this);
+    const statusStyle = {
+      confirmed: { bg: '#e6f4ec', color: '#1f7d50', label: '已确认' },
+      candidate: { bg: '#fdf1de', color: '#b8790a', label: '候选' },
+      failed: { bg: '#f0eee6', color: '#8b8677', label: '已失效' },
+      neutral: { bg: '#eef1f5', color: '#2b3a55', label: '结构' },
+    };
+    switch (kind) {
+      case 'candle': {
+        const s = statusStyle.neutral;
+        return { title: 'K线', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${payload.date} · 收 ${f(payload.close)}`, source: '原始K线数据',
+          rule: `开 ${f(payload.open)} / 高 ${f(payload.high)} / 低 ${f(payload.low)} / 收 ${f(payload.close)}。`,
+          confirm: 'K线收盘后，该根K线数据固定；但它是否成为分型、笔端点，需要等待右侧结构确认。',
+          invalidate: '单根K线本身不谈失效；后续只会影响它在结构中的角色。',
+          action: '用来定位价格位置，不单独作为买卖依据。' };
+      }
+      case 'trend': {
+        const cur = payload.current, bg = payload.background;
+        const s = cur.hasLeft ? statusStyle.candidate : statusStyle.neutral;
+        return {
+          title: `当前 · ${cur.label}`,
+          statusBg: s.bg, statusColor: s.color, statusLabel: cur.hasLeft ? '候选/观察' : '结构',
+          meta: cur.zone ? `[${f(cur.zone[0])}, ${f(cur.zone[1])}]` : '暂无笔中枢区间',
+          source: '笔中枢（操作级）离开状态 + 线段中枢（背景级）关系',
+          rule: `当前：${cur.line}`,
+          confirm: `背景：${bg.line}`,
+          invalidate: cur.hasLeft ? '若价格重新回到中枢区间内，离开状态被否定，需要重新观察。' : '若价格向任一方向真正离开中枢，状态才会改变。',
+          action: '当前层回答"现在正在发生什么"，背景层回答"更大格局是什么"；两者分开看，不能用一个结论互相替代。',
+        };
+      }
+      case 'strength': {
+        const s = payload.status === 'comparable' ? (payload.verdict === 'weak' ? statusStyle.candidate : payload.verdict === 'strong' ? statusStyle.confirmed : statusStyle.neutral) : statusStyle.neutral;
+        return {
+          title: `力度 · ${payload.label}`,
+          statusBg: s.bg, statusColor: s.color, statusLabel: payload.status === 'comparable' ? '可比较' : '不可比',
+          meta: payload.status === 'comparable' && payload.A && payload.C ? `A:${payload.A.startDate}~${payload.A.endDate} / C:${payload.C.startDate}~${payload.C.endDate}` : '样本不足',
+          source: '中枢进入段(A) vs 离开段(C) 的 MACD 面积比',
+          rule: payload.status === 'comparable'
+            ? `进入段 A（${payload.A.startDate}~${payload.A.endDate}）面积 ${f(payload.areaA)}，离开段 C（${payload.C.startDate}~${payload.C.endDate}）面积 ${f(payload.areaC)}，比值 ${payload.ratio.toFixed(2)}。`
+            : (payload.reason || '同向参照段不足，或两段动能都过小，暂不能比较。'),
+          confirm: payload.status === 'comparable' ? '比较基于已走完的进入段与离开段，可直接引用。' : '需要出现同向参照段，且两段MACD动能都不过小，才能比较。',
+          invalidate: '若离开段继续延伸并刷新极值，比值会被重新计算，结论可能改变。',
+          action: '力度只是"趋势可能衰竭"的提示灯，不单独构成操作依据。',
+        };
+      }
+      case 'fenxing': {
+        const isTop = payload.type === 'top'; const s = statusStyle.neutral;
+        return { title: isTop ? '顶分型' : '底分型', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${payload.date} · ${f(payload.price)}`, source: '由三根处理后K线的高低点比较得出',
+          rule: `中间K线的最${isTop ? '高价同时高于左右两根' : '低价同时低于左右两根'}，形成局部${isTop ? '高点' : '低点'}。`,
+          confirm: '右侧一根K线收盘后即完成比较，分型成立。', invalidate: `若后续创出更${isTop ? '高的高点' : '低的低点'}，该分型被新的分型取代。`, action: '仅是最小结构单位，不单独构成操作依据。' };
+      }
+      case 'bi': {
+        const s = statusStyle.neutral;
+        return { title: `笔 · ${payload.dir === 'up' ? '向上' : '向下'}`, statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${payload.start.date} ~ ${payload.end.date} · 幅度 ${f(payload.range)}`, source: '连接一顶分型与一底分型',
+          rule: '两分型之间间隔足够的独立K线，是缠论最小的走势单位。', confirm: '两端分型都确认后，笔即成立。', invalidate: '若价格反向突破该笔起点价格，笔被延伸或替换。', action: '单独一笔不构成操作依据，需结合中枢与背驰判断。' };
+      }
+      case 'xianduan': {
+        const s = statusStyle[payload.status] || statusStyle.neutral;
+        const ev = payload.evidence || {};
+        return { title: `线段 · ${payload.dir === 'up' ? '向上' : '向下'}`, statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${f(payload.startPrice)} → ${f(payload.endPrice)}`, source: '由至少三笔重叠种子与特征序列分型推导',
+          rule: `起始三笔需有公共区间；随后按${payload.dir === 'up' ? '向下笔' : '向上笔'}作为特征序列检查线段结束。`,
+          confirm: payload.status === 'confirmed' ? `确认依据：${ev.featureCase === 'case1_no_gap' ? '第一类，无缺口特征序列分型。' : ev.featureCase === 'case2_gap' ? '第二类，缺口特征序列分型，且下一线段已验证。' : '特征序列结束证据。'}` : `尚未确认：${(payload.rejection_reasons || []).join('；') || '等待右侧特征序列证据'}`,
+          invalidate: '若后续特征序列缺口分支没有完成第二序列确认，或原方向恢复，需要重新划分后缀。',
+          action: '线段用于生成线段中枢（背景级）；候选线段不能作为严格中枢输入。' };
+      }
+      case 'zhongshu': {
+        const s = statusStyle[payload.status] || statusStyle.neutral;
+        const isXd = payload.level === 'xianduan';
+        return { title: isXd ? '线段中枢（背景级）' : '笔中枢（操作级）', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `ZG ${f(payload.zg)} / ZD ${f(payload.zd)}`, source: isXd ? '连续3个确认线段区间重叠' : '连续3个笔区间重叠',
+          rule: 'ZD=max(组成对象低点)，ZG=min(组成对象高点)，且 ZD<ZG 才是有效重叠区。',
+          confirm: payload.status === 'confirmed' ? '组成对象均已确认，且三段重叠成立。' : `尚非严格中枢：${(payload.rejection_reasons || []).join('；') || '依赖对象还不是确认结构'}`,
+          invalidate: '后续同级对象完全脱离 [ZD, ZG] 后，原中枢结束，并等待新中枢或扩张关系。',
+          action: isXd ? '线段中枢代表更大级别的背景方向，不直接给出操作点。' : '笔中枢边界可作为压力/支撑参考，是买卖点判断的直接依据层级。' };
+      }
+      case 'beichi': {
+        const s = statusStyle[payload.status] || statusStyle.candidate;
+        return { title: '背驰候选', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `力度比 ${payload.ratio}`, source: '比较中枢进入段(A)与离开段(C)力度',
+          rule: '使用MACD柱面积比较：C段（离开段）创新高/新低，但同向柱面积小于A段（进入段）。',
+          confirm: `当前${payload.status === 'confirmed' ? '已确认' : '仍为候选'}：${(payload.rejection_reasons || []).join('；') || '—'}。A面积 ${payload.areaA == null ? '—' : f(payload.areaA)}，C面积 ${payload.areaC == null ? '—' : f(payload.areaC)}。`,
+          invalidate: '若后续同向离开段继续增强并刷新极值，或中枢重划，该背驰候选失效。',
+          action: '背驰只是买卖点前置条件；未完成确认前不作为操作点。' };
+      }
+      case 'signal': {
+        const map = {
+          '1B': ['第一类买点', '底背驰后的理论转折信号，表示下跌力度开始衰竭，但仍要等待后续结构验证。', '背驰笔走完、出现底分型时确认。', '价格收盘跌破该低点并创出新低，一买失效。', '教学标记为理论买点；实际动作要结合仓位、级别和失败线。'],
+          '1S': ['第一类卖点', '顶背驰后的理论转折信号，表示上涨力度开始衰竭，但仍要等待后续结构验证。', '背驰笔走完、出现顶分型时确认。', '价格收盘涨破该高点并创出新高，一卖失效。', '教学标记为理论卖点；实际动作要结合仓位、级别和失败线。'],
+          '2B': ['第二类买点', '一买后的首次回抽不创新低，用来观察反转是否开始延续。', '回抽笔走完且未跌破一买位置时确认。', '回抽反而跌破一买位置，二买失效。', '比一买多了一次回抽验证，但仍不是无风险信号。'],
+          '2S': ['第二类卖点', '一卖后的首次反抽不创新高，用来观察转弱是否开始延续。', '反抽笔走完且未涨破一卖位置时确认。', '反抽涨破一卖位置，二卖失效。', '比一卖多了一次反抽验证，但仍需要看失败线。'],
+          '3B': ['第三类买点', '离开中枢上沿后回抽不回中枢，表示价格暂时摆脱原中枢。', '回抽笔走完仍站在中枢上沿之外时确认。', '回抽价格重新进入中枢区间，三买失效。', '教学标记为突破后回踩确认点，不代表自动满仓。'],
+          '3S': ['第三类卖点', '离开中枢下沿后反抽不回中枢，表示价格暂时脱离原中枢。', '反抽笔走完仍站在中枢下沿之外时确认。', '反抽价格重新进入中枢区间，三卖失效。', '教学标记为跌破后反抽确认点，不代表自动清仓。'],
+        };
+        const m = map[payload.type];
+        const status = payload.status || 'confirmed';
+        const s = statusStyle[status];
+        const confirmBase = status === 'candidate' ? (payload.needsCondition || m[2]) : m[2];
+        const confirmText = payload.conflictNote ? `${confirmBase}（${payload.conflictNote}）` : confirmBase;
+        const failText = payload.stopPrice != null ? `${m[3]} 本次参考线：${f(payload.stopPrice)}${payload.failedAt ? `，已在 ${payload.failedAt} 触发。` : '。'}` : m[3];
+        if (payload.stage === 'leave') {
+          const isBuy = payload.dir === 'buy';
+          return {
+            title: isBuy ? '向上突破观察点（三买前置）' : '向下破位观察点（三卖前置）',
+            statusBg: s.bg, statusColor: s.color, statusLabel: s.label,
+            meta: `${payload.date || ''} · ${f(payload.price)}`,
+            source: `来自中枢 ${payload.zsId || ''}`,
+            rule: isBuy ? '当前向上离开中枢上沿，但第三类买点要等回踩不回中枢后才成立。' : '当前向下离开中枢下沿，但第三类卖点要等反抽不回中枢后才成立。',
+            confirm: confirmText,
+            invalidate: failText,
+            action: '这是观察标记，不是确认买卖点；真正动作要等回踩/反抽完成。'
+          };
+        }
+        return { title: m[0] + (status === 'candidate' ? '（候选）' : ''), statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${payload.date || ''} · ${f(payload.price)}`, source: `来自中枢 ${payload.zsId || ''}`, rule: m[1], confirm: confirmText, invalidate: failText, action: status === 'failed' ? '该信号已失败，不作为操作依据，等待新结构。' : (status === 'candidate' ? '仅观察，不满足确认条件前不操作。' : m[4]) };
+      }
+      case 'sr': {
+        const s = statusStyle.neutral;
+        return { title: payload.type === 'resistance' ? '压力位' : '支撑位', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${f(payload.price)}`, source: '取自当前中枢边界',
+          rule: '当前中枢的上沿（压力）/下沿（支撑），用于观察价格是否离开或重新回到中枢。', confirm: payload.center ? `由 ${payload.center.startDate} ~ ${payload.center.endDate} 的中枢确认时同步确定。` : '由当前中枢确认时同步确定。', invalidate: '价格有效突破并站稳其外侧后，旧边界的意义会下降，并随新中枢形成而更新。', action: '作为观察价格能否突破/跌破的参考位，本身不是操作信号。' };
+      }
+      case 'failure': {
+        const s = statusStyle.neutral;
+        const sig = payload.signal;
+        const dirText = payload.dir === 'buy' ? '买点向下失败' : '卖点向上失败';
+        return { title: '防守位 / 失败线', statusBg: s.bg, statusColor: s.color, statusLabel: s.label, meta: `${f(payload.price)}`, source: sig ? `来自 ${sig.type} · ${sig.date || ''}` : '来自当前最相关买卖点/候选',
+          rule: sig && sig.status === 'candidate' ? '候选信号尚未确认，这条线表示候选条件被破坏的位置。' : '取对应买卖点的结构失效价格，作为该判断是否继续有效的参考线。',
+          confirm: sig && sig.confirmedAt ? `${sig.confirmedAt} 信号确认时同步设定。` : '信号确认或候选出现时同步设定。',
+          invalidate: `${payload.label || dirText}。这里判断的是结构是否失效，不等同机械交易指令。`,
+          action: '教学上用来训练“判断错了在哪里认错”，实际交易还需结合仓位和风控。' };
+      }
+      default: return null;
+    }
+  }
+}
+
+</script>
+</body>
+</html>

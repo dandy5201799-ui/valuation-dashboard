@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>缠论第三关：破位性质练习器</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --panel: #fff;
+      --ink: #162033;
+      --muted: #667085;
+      --line: #d9e2ef;
+      --blue: #2563eb;
+      --red: #dc2626;
+      --green: #16a34a;
+      --orange: #f59e0b;
+      --purple: #7c3aed;
+      --soft-blue: #eff6ff;
+      --soft-red: #fef2f2;
+      --soft-green: #f0fdf4;
+      --soft-orange: #fff7ed;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(37, 99, 235, .12), transparent 30%),
+        radial-gradient(circle at 86% 6%, rgba(245, 158, 11, .14), transparent 28%),
+        var(--bg);
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 36px));
+      margin: 28px auto 48px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid rgba(217, 226, 239, .95);
+      border-radius: 22px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, .08);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .intro, .rules, .trainer, .lesson {
+      padding: 24px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: var(--blue);
+      background: var(--soft-blue);
+      font-size: 13px;
+      font-weight: 850;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -.05em;
+      line-height: 1.12;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .rule {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rule:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .rule b { font-size: 15px; }
+    .rule span { color: var(--muted); line-height: 1.65; font-size: 14px; }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    select, button {
+      font: inherit;
+      min-height: 44px;
+      border-radius: 13px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 13px;
+      font-weight: 800;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .14);
+    }
+
+    button {
+      cursor: pointer;
+      padding: 0 16px;
+    }
+
+    button.primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    button.ghost { background: #f8fafc; }
+
+    .chart-wrap {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(#fff, #fbfdff);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 470px;
+    }
+
+    .floating {
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, .86);
+      border: 1px solid #d4deec;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 850;
+      backdrop-filter: blur(8px);
+    }
+
+    .pill.orange { color: #b45309; background: rgba(255, 247, 237, .92); }
+    .pill.blue { color: var(--blue); background: rgba(239, 246, 255, .92); }
+    .pill.purple { color: var(--purple); background: rgba(245, 243, 255, .92); }
+
+    .practice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    label {
+      color: #334155;
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .readonly {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      border: 1px solid #cbd5e1;
+      border-radius: 13px;
+      padding: 0 13px;
+      color: #b45309;
+      background: #fff;
+      font-weight: 850;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .answer {
+      display: none;
+      margin-top: 14px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      border: 1px solid #dbeafe;
+      background: #f8fbff;
+      line-height: 1.75;
+    }
+
+    .answer.show { display: block; }
+
+    .answer h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .result-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 10px;
+    }
+
+    .tag {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-weight: 850;
+      font-size: 13px;
+    }
+
+    .tag.ok { color: #15803d; background: var(--soft-green); }
+    .tag.bad { color: #b91c1c; background: var(--soft-red); }
+    .tag.info { color: #1d4ed8; background: var(--soft-blue); }
+    .tag.warn { color: #b45309; background: var(--soft-orange); }
+
+    .lesson {
+      margin-top: 18px;
+    }
+
+    .lesson h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+      letter-spacing: -.03em;
+    }
+
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .mini b {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .mini p {
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .hero, .toolbar, .practice-grid, .lesson-grid {
+        grid-template-columns: 1fr;
+      }
+      canvas { height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="card intro">
+        <div class="eyebrow">第三关 · 破位性质</div>
+        <h1>不是碰到防守位，就叫趋势坏了</h1>
+        <p>这一关只练“防守位被考验以后，到底算不算破位”。先不急着判断新趋势，只判断旧趋势是否受损：没破、假破、还是有效破。</p>
+      </div>
+      <div class="card rules">
+        <div class="rule-list">
+          <div class="rule">
+            <b>没有破位</b>
+            <span>右侧低点仍在防守位上方，或者只是靠近防守位。旧上升结构仍然成立。</span>
+          </div>
+          <div class="rule">
+            <b>假破位</b>
+            <span>盘中刺破防守位，但收盘收回；或者短暂跌破后迅速收回，并重新向上确认。</span>
+          </div>
+          <div class="rule">
+            <b>有效破位</b>
+            <span>收盘跌破防守位，且后续继续在防守位下方运行。旧上升结构受损，进入观察区。</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card trainer">
+      <div class="toolbar">
+        <select id="caseSelect" aria-label="选择练习案例"></select>
+        <button id="prevBtn" class="ghost" type="button">上一题</button>
+        <button id="nextBtn" class="ghost" type="button">下一题</button>
+        <button id="randomBtn" type="button">随机题</button>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="chart" width="1120" height="470"></canvas>
+        <div class="floating">
+          <span id="casePill" class="pill blue">案例</span>
+          <span class="pill orange">橙线：防守位</span>
+          <span class="pill purple">紫色区域：被考验的右侧走势</span>
+        </div>
+      </div>
+
+      <div class="practice-grid">
+        <div class="field">
+          <label>1. 本题给定防守位</label>
+          <div id="guardText" class="readonly">--</div>
+        </div>
+        <div class="field">
+          <label for="breakAnswer">2. 你判断的破位性质</label>
+          <select id="breakAnswer">
+            <option value="">先不看答案</option>
+            <option value="not_break">没有破位</option>
+            <option value="false_break">假破位/刺破后收回</option>
+            <option value="effective_break">有效破位</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="evidenceAnswer">3. 你主要依据哪一条？</label>
+          <select id="evidenceAnswer">
+            <option value="">先不看答案</option>
+            <option value="low_above">低点仍在防守位上方</option>
+            <option value="wick_reclaim">影线刺破但收盘收回</option>
+            <option value="close_reclaim">短暂收盘跌破，但很快收回并向上确认</option>
+            <option value="close_below">收盘跌破，并继续在防守位下方</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="revealBtn" class="primary" type="button">核对答案</button>
+        <button id="hideBtn" type="button">隐藏答案</button>
+        <button id="clearBtn" type="button">清空我的选择</button>
+      </div>
+
+      <div id="answerBox" class="answer" aria-live="polite"></div>
+    </section>
+
+    <section class="card lesson">
+      <h2>本关只回答一个问题：旧趋势有没有受损？</h2>
+      <div class="lesson-grid">
+        <div class="mini">
+          <b>不要只看最低价</b>
+          <p>最低价刺破一下，不代表结构一定坏。要看收盘是否回到防守位上方。</p>
+        </div>
+        <div class="mini">
+          <b>不要一破就喊下降</b>
+          <p>有效破位只说明旧上升趋势受损，下一步还要看是修复、横盘还是下降。</p>
+        </div>
+        <div class="mini">
+          <b>防守位会动态上移</b>
+          <p>守住旧防守位并创新高后，新的右侧低点才会升级为下一轮防守位。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function k(date, open, high, low, close) {
+      return { date, open, high, low, close };
+    }
+
+    const CASES = [
+      {
+        title: "A｜回调低点在防守位上方",
+        focus: "右侧只是靠近防守位，没有跌破。",
+        guard: 108.6,
+        answerBreak: "not_break",
+        answerEvidence: "low_above",
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 108.6, 100.7, 107.8),
+          k("07-09", 107.4, 108.2, 103.8, 104.6),
+          k("07-13", 104.8, 114.4, 104.3, 113.8),
+          k("07-17", 113.4, 114.2, 108.6, 109.3),
+          k("07-21", 109.8, 118.8, 109.5, 117.8),
+          k("07-25", 117.2, 117.6, 110.9, 112.4),
+          k("07-29", 112.8, 121.0, 112.2, 120.1)
+        ],
+        testFrom: 6,
+        reason: "右侧最低点 110.9 仍然高于防守位 108.6，所以旧上升趋势没有受损。这叫没有破位。"
+      },
+      {
+        title: "B｜影线刺破，但收盘收回",
+        focus: "盘中破过防守位，但收盘站回。",
+        guard: 108.6,
+        answerBreak: "false_break",
+        answerEvidence: "wick_reclaim",
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 108.6, 100.7, 107.8),
+          k("07-09", 107.4, 108.2, 103.8, 104.6),
+          k("07-13", 104.8, 114.4, 104.3, 113.8),
+          k("07-17", 113.4, 114.2, 108.6, 109.3),
+          k("07-21", 109.8, 118.8, 109.5, 117.8),
+          k("07-25", 117.0, 117.3, 107.7, 110.2),
+          k("07-29", 110.8, 116.4, 110.1, 115.7)
+        ],
+        testFrom: 6,
+        reason: "07-25 的最低价 107.7 刺破防守位 108.6，但收盘 110.2 回到防守位上方。单看这一段，更像假破位，而不是有效破位。"
+      },
+      {
+        title: "C｜短暂收盘跌破，随后快速收回",
+        focus: "跌破后很快收复，并向上确认。",
+        guard: 108.6,
+        answerBreak: "false_break",
+        answerEvidence: "close_reclaim",
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 108.6, 100.7, 107.8),
+          k("07-09", 107.4, 108.2, 103.8, 104.6),
+          k("07-13", 104.8, 114.4, 104.3, 113.8),
+          k("07-17", 113.4, 114.2, 108.6, 109.3),
+          k("07-21", 109.8, 118.8, 109.5, 117.8),
+          k("07-25", 117.0, 117.2, 107.2, 107.9),
+          k("07-29", 108.1, 113.6, 107.8, 112.9),
+          k("08-02", 113.2, 120.8, 112.7, 119.9)
+        ],
+        testFrom: 6,
+        reason: "07-25 收盘短暂跌到 108.6 下方，但之后很快收回，并继续上冲接近/突破前高。这类情况更适合归为假破位后的修复，而不是持续有效破位。"
+      },
+      {
+        title: "D｜收盘跌破，并连续在下方",
+        focus: "不是一下影线，而是收盘与后续都弱。",
+        guard: 108.6,
+        answerBreak: "effective_break",
+        answerEvidence: "close_below",
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 108.6, 100.7, 107.8),
+          k("07-09", 107.4, 108.2, 103.8, 104.6),
+          k("07-13", 104.8, 114.4, 104.3, 113.8),
+          k("07-17", 113.4, 114.2, 108.6, 109.3),
+          k("07-21", 109.8, 118.8, 109.5, 117.8),
+          k("07-25", 117.0, 117.2, 106.8, 107.4),
+          k("07-29", 107.2, 108.3, 105.9, 106.4),
+          k("08-02", 106.6, 107.9, 104.8, 105.6)
+        ],
+        testFrom: 6,
+        reason: "07-25 收盘 107.4 已经低于防守位 108.6，后面两根 K 线也继续在防守位下方运行。这是有效破位，旧上升趋势受损。"
+      },
+      {
+        title: "E｜跌破后回抽防守位失败",
+        focus: "跌破以后，防守位从支撑变成压力。",
+        guard: 108.6,
+        answerBreak: "effective_break",
+        answerEvidence: "close_below",
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 108.6, 100.7, 107.8),
+          k("07-09", 107.4, 108.2, 103.8, 104.6),
+          k("07-13", 104.8, 114.4, 104.3, 113.8),
+          k("07-17", 113.4, 114.2, 108.6, 109.3),
+          k("07-21", 109.8, 118.8, 109.5, 117.8),
+          k("07-25", 117.0, 117.2, 106.2, 107.0),
+          k("07-29", 107.3, 108.5, 105.8, 106.6),
+          k("08-02", 106.3, 107.0, 102.8, 103.4)
+        ],
+        testFrom: 6,
+        reason: "跌破后价格回抽到 108.5，但没能重新站上 108.6，随后继续走低。这里防守位已经从支撑变成压力，是有效破位。"
+      },
+      {
+        title: "F｜贴着防守位反复震荡",
+        focus: "靠近不等于跌破，含糊位置要少下结论。",
+        guard: 108.6,
+        answerBreak: "not_break",
+        answerEvidence: "low_above",
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 108.6, 100.7, 107.8),
+          k("07-09", 107.4, 108.2, 103.8, 104.6),
+          k("07-13", 104.8, 114.4, 104.3, 113.8),
+          k("07-17", 113.4, 114.2, 108.6, 109.3),
+          k("07-21", 109.8, 118.8, 109.5, 117.8),
+          k("07-25", 117.0, 117.2, 108.8, 109.4),
+          k("07-29", 109.6, 112.1, 108.9, 111.2),
+          k("08-02", 111.1, 113.4, 109.0, 112.6)
+        ],
+        testFrom: 6,
+        reason: "右侧几根 K 线都贴近防守位，但最低价仍在 108.6 上方，收盘也没有跌破。这里应先按没有破位处理。"
+      }
+    ];
+
+    const caseSelect = document.getElementById("caseSelect");
+    const chart = document.getElementById("chart");
+    const ctx = chart.getContext("2d");
+    const guardText = document.getElementById("guardText");
+    const breakAnswer = document.getElementById("breakAnswer");
+    const evidenceAnswer = document.getElementById("evidenceAnswer");
+    const revealBtn = document.getElementById("revealBtn");
+    const hideBtn = document.getElementById("hideBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const randomBtn = document.getElementById("randomBtn");
+    const answerBox = document.getElementById("answerBox");
+    const casePill = document.getElementById("casePill");
+
+    let current = 0;
+    let showingAnswer = false;
+
+    CASES.forEach((item, index) => {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = item.title;
+      caseSelect.appendChild(option);
+    });
+
+    function setupCanvas() {
+      const rect = chart.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      chart.width = Math.round(rect.width * ratio);
+      chart.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return { width: rect.width, height: rect.height };
+    }
+
+    function scales(c) {
+      const rect = chart.getBoundingClientRect();
+      const pad = { left: 58, right: 26, top: 58, bottom: 50 };
+      const values = c.data.flatMap(d => [d.high, d.low]).concat(c.guard);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const span = max - min || 1;
+      const yMin = min - span * .13;
+      const yMax = max + span * .14;
+      const x = i => pad.left + i * ((rect.width - pad.left - pad.right) / Math.max(1, c.data.length - 1));
+      const y = v => pad.top + (yMax - v) * ((rect.height - pad.top - pad.bottom) / (yMax - yMin));
+      return { ...rect, pad, yMin, yMax, x, y };
+    }
+
+    function draw() {
+      const c = CASES[current];
+      const size = setupCanvas();
+      const g = scales(c);
+      ctx.clearRect(0, 0, size.width, size.height);
+      drawGrid(g, c);
+      drawTestZone(g, c);
+      drawCandles(g, c);
+      drawGuard(g, c);
+      drawPath(g, c);
+      drawHeader(g, c);
+      if (showingAnswer) drawAnswer(g, c);
+    }
+
+    function drawGrid(g, c) {
+      ctx.save();
+      ctx.strokeStyle = "#e8eef7";
+      ctx.fillStyle = "#8a96aa";
+      ctx.font = "12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let i = 0; i <= 4; i++) {
+        const value = g.yMin + (g.yMax - g.yMin) * i / 4;
+        const yy = g.y(value);
+        ctx.beginPath();
+        ctx.moveTo(g.pad.left, yy);
+        ctx.lineTo(g.width - g.pad.right, yy);
+        ctx.stroke();
+        ctx.fillText(value.toFixed(1), g.pad.left - 10, yy);
+      }
+      ctx.strokeStyle = "#d7dfec";
+      ctx.strokeRect(g.pad.left, g.pad.top, g.width - g.pad.left - g.pad.right, g.height - g.pad.top - g.pad.bottom);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      c.data.forEach((d, i) => {
+        if (i === 0 || i === c.data.length - 1 || i % 2 === 1) {
+          ctx.fillText(d.date, g.x(i), g.height - g.pad.bottom + 18);
+        }
+      });
+      ctx.restore();
+    }
+
+    function drawTestZone(g, c) {
+      const start = g.x(c.testFrom) - 26;
+      const end = g.width - g.pad.right;
+      ctx.save();
+      ctx.fillStyle = "rgba(124, 58, 237, .055)";
+      ctx.fillRect(start, g.pad.top, end - start, g.height - g.pad.top - g.pad.bottom);
+      ctx.restore();
+    }
+
+    function drawCandles(g, c) {
+      const barW = Math.max(8, Math.min(22, (g.width - g.pad.left - g.pad.right) / c.data.length * .42));
+      c.data.forEach((d, i) => {
+        const x = g.x(i);
+        const up = d.close >= d.open;
+        const color = up ? "#dc2626" : "#16a34a";
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, g.y(d.high));
+        ctx.lineTo(x, g.y(d.low));
+        ctx.stroke();
+        const top = Math.min(g.y(d.open), g.y(d.close));
+        const bottom = Math.max(g.y(d.open), g.y(d.close));
+        ctx.globalAlpha = .86;
+        ctx.fillRect(x - barW / 2, top, barW, Math.max(3, bottom - top));
+        ctx.restore();
+      });
+    }
+
+    function drawPath(g, c) {
+      const points = [
+        { i: 0, v: c.data[0].low },
+        { i: 1, v: c.data[1].high },
+        { i: 2, v: c.data[2].low },
+        { i: 3, v: c.data[3].high },
+        { i: 4, v: c.data[4].low },
+        { i: 5, v: c.data[5].high }
+      ];
+      c.data.slice(c.testFrom).forEach((d, offset) => {
+        const i = c.testFrom + offset;
+        points.push({ i, v: offset % 2 === 0 ? d.low : d.high });
+      });
+      ctx.save();
+      ctx.strokeStyle = "#64748b";
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([7, 6]);
+      ctx.beginPath();
+      points.forEach((p, idx) => {
+        if (idx === 0) ctx.moveTo(g.x(p.i), g.y(p.v));
+        else ctx.lineTo(g.x(p.i), g.y(p.v));
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      points.forEach((p) => {
+        ctx.fillStyle = p.i >= c.testFrom ? "#f5f3ff" : "#fff";
+        ctx.strokeStyle = p.i >= c.testFrom ? "#7c3aed" : "#64748b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(g.x(p.i), g.y(p.v), 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    function drawGuard(g, c) {
+      ctx.save();
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(g.pad.left, g.y(c.guard));
+      ctx.lineTo(g.width - g.pad.right, g.y(c.guard));
+      ctx.stroke();
+      drawLabel(g.width - g.pad.right - 90, g.y(c.guard) + 25, `防守位 ${c.guard.toFixed(1)}`, "#b45309", "#fff7ed");
+      ctx.restore();
+    }
+
+    function drawHeader(g, c) {
+      ctx.save();
+      ctx.fillStyle = "#172033";
+      ctx.font = "700 15px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.fillText(c.focus, g.pad.left, 32);
+      ctx.restore();
+    }
+
+    function drawAnswer(g, c) {
+      const color = c.answerBreak === "effective_break" ? "#dc2626" : c.answerBreak === "false_break" ? "#f59e0b" : "#16a34a";
+      const label = breakLabel(c.answerBreak);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(g.x(c.testFrom) - 26, g.pad.top + 14, g.width - g.pad.right - (g.x(c.testFrom) - 26) - 12, g.height - g.pad.top - g.pad.bottom - 28);
+      ctx.setLineDash([]);
+      drawLabel(g.x(c.testFrom + 1.1), g.pad.top + 28, `答案：${label}`, color, "#ffffff");
+      ctx.restore();
+    }
+
+    function drawLabel(x, y, text, color, bg) {
+      ctx.save();
+      ctx.font = "800 12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      const padX = 8;
+      const w = ctx.measureText(text).width + padX * 2;
+      const h = 24;
+      const xx = Math.max(64, Math.min(x - w / 2, chart.getBoundingClientRect().width - w - 20));
+      const yy = Math.max(48, Math.min(y - h / 2, chart.getBoundingClientRect().height - h - 38));
+      roundRect(xx, yy, w, h, 8);
+      ctx.fillStyle = bg;
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, xx + w / 2, yy + h / 2 + .5);
+      ctx.restore();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function breakLabel(value) {
+      return {
+        not_break: "没有破位",
+        false_break: "假破位/刺破后收回",
+        effective_break: "有效破位"
+      }[value] || "未选择";
+    }
+
+    function evidenceLabel(value) {
+      return {
+        low_above: "低点仍在防守位上方",
+        wick_reclaim: "影线刺破但收盘收回",
+        close_reclaim: "短暂收盘跌破，但很快收回并向上确认",
+        close_below: "收盘跌破，并继续在防守位下方"
+      }[value] || "未选择";
+    }
+
+    function feedbackBreak(c, ok) {
+      if (ok) return "破位性质判断正确。";
+      if (breakAnswer.value === "effective_break" && c.answerBreak !== "effective_break") {
+        return "你把它看得太重了。有效破位至少要看到收盘跌破，或者跌破后继续在防守位下方运行；只是靠近或影线刺破，不够。";
+      }
+      if (breakAnswer.value === "not_break" && c.answerBreak !== "not_break") {
+        return "你把破位看得太轻了。如果收盘已经在防守位下方，并且后面没有快速收回，旧趋势就已经受损。";
+      }
+      return "这里的关键是区分“最低价刺破”和“收盘/后续确认”。影线刺破后收回，通常先按假破位；收盘跌破并持续在下方，才是有效破位。";
+    }
+
+    function feedbackEvidence(c, ok) {
+      if (ok) return "依据选择正确。";
+      return `本题最关键依据是“${evidenceLabel(c.answerEvidence)}”。做这一类题时，先看右侧最低价，再看收盘，最后看后续有没有回到防守位上方。`;
+    }
+
+    function reveal() {
+      const c = CASES[current];
+      showingAnswer = true;
+      const breakOk = breakAnswer.value === c.answerBreak;
+      const evidenceOk = evidenceAnswer.value === c.answerEvidence;
+      answerBox.innerHTML = `
+        <h3>${c.title}</h3>
+        <div class="result-row">
+          <span class="tag ${breakOk ? "ok" : "bad"}">${breakOk ? "✓" : "×"} 破位性质</span>
+          <span class="tag ${evidenceOk ? "ok" : "bad"}">${evidenceOk ? "✓" : "×"} 判断依据</span>
+        </div>
+        <div><b>标准答案：</b>破位性质 = ${breakLabel(c.answerBreak)}；核心依据 = ${evidenceLabel(c.answerEvidence)}。</div>
+        <div><b>你的答案：</b>破位性质 = ${breakLabel(breakAnswer.value)}；核心依据 = ${evidenceLabel(evidenceAnswer.value)}。</div>
+        <div><b>破位性质反馈：</b>${feedbackBreak(c, breakOk)}</div>
+        <div><b>依据反馈：</b>${feedbackEvidence(c, evidenceOk)}</div>
+        <div><b>判断理由：</b>${c.reason}</div>
+        <div><b>本关口诀：</b>先看有没有收盘跌破，再看跌破后能不能收回；不要把“刺一下”直接当成趋势坏了。</div>
+      `;
+      answerBox.classList.add("show");
+      draw();
+    }
+
+    function switchCase(index) {
+      current = (index + CASES.length) % CASES.length;
+      caseSelect.value = String(current);
+      showingAnswer = false;
+      breakAnswer.value = "";
+      evidenceAnswer.value = "";
+      answerBox.classList.remove("show");
+      guardText.textContent = `${CASES[current].guard.toFixed(1)}（橙色横线）`;
+      casePill.textContent = CASES[current].title;
+      draw();
+    }
+
+    revealBtn.addEventListener("click", reveal);
+    hideBtn.addEventListener("click", () => {
+      showingAnswer = false;
+      answerBox.classList.remove("show");
+      draw();
+    });
+    clearBtn.addEventListener("click", () => switchCase(current));
+    prevBtn.addEventListener("click", () => switchCase(current - 1));
+    nextBtn.addEventListener("click", () => switchCase(current + 1));
+    randomBtn.addEventListener("click", () => {
+      let next = current;
+      while (next === current && CASES.length > 1) {
+        next = Math.floor(Math.random() * CASES.length);
+      }
+      switchCase(next);
+    });
+    caseSelect.addEventListener("change", () => switchCase(Number(caseSelect.value)));
+    window.addEventListener("resize", draw);
+    switchCase(0);
+  </script>
+</body>
+</html>

@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>缠论第二关：防守位与结构切换练习器</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #697386;
+      --line: #dce3ee;
+      --blue: #2563eb;
+      --green: #16a34a;
+      --red: #dc2626;
+      --orange: #f59e0b;
+      --purple: #7c3aed;
+      --slate: #475569;
+      --soft-blue: #eff6ff;
+      --soft-orange: #fff7ed;
+      --soft-green: #f0fdf4;
+      --soft-red: #fef2f2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 8%, rgba(37, 99, 235, .12), transparent 30%),
+        radial-gradient(circle at 88% 12%, rgba(245, 158, 11, .14), transparent 28%),
+        var(--bg);
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 36px));
+      margin: 28px auto 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .92);
+      border: 1px solid rgba(220, 227, 238, .9);
+      border-radius: 22px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, .08);
+    }
+
+    .intro {
+      padding: 28px 30px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--blue);
+      background: var(--soft-blue);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -.05em;
+      line-height: 1.12;
+    }
+
+    .intro p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .concept {
+      padding: 24px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .concept-item {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 12px;
+      align-items: start;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+
+    .concept-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .concept strong {
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .concept span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .trainer {
+      padding: 22px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    select, button, input {
+      font: inherit;
+    }
+
+    select, input {
+      min-height: 44px;
+      border-radius: 13px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 13px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .14);
+    }
+
+    button {
+      min-height: 44px;
+      border: 1px solid #cbd5e1;
+      border-radius: 13px;
+      padding: 0 16px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    button.ghost {
+      background: #f8fafc;
+    }
+
+    .chart-wrap {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(#fff, #fbfdff);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 470px;
+      cursor: crosshair;
+    }
+
+    .floating-hint {
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, .86);
+      border: 1px solid rgba(203, 213, 225, .9);
+      color: var(--slate);
+      font-size: 13px;
+      font-weight: 850;
+      backdrop-filter: blur(8px);
+    }
+
+    .pill.blue { color: var(--blue); background: rgba(239, 246, 255, .9); }
+    .pill.orange { color: #b45309; background: rgba(255, 247, 237, .92); }
+    .pill.purple { color: var(--purple); background: rgba(245, 243, 255, .92); }
+
+    .practice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    label {
+      color: #334155;
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .picked {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      border: 1px solid #cbd5e1;
+      border-radius: 13px;
+      padding: 0 13px;
+      color: var(--muted);
+      font-weight: 800;
+      background: #fff;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 0;
+    }
+
+    .answer {
+      display: none;
+      margin-top: 14px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      border: 1px solid #dbeafe;
+      background: #f8fbff;
+      line-height: 1.75;
+    }
+
+    .answer.show { display: block; }
+
+    .answer h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .result-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 10px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-weight: 850;
+      font-size: 13px;
+    }
+
+    .tag.ok { color: #15803d; background: var(--soft-green); }
+    .tag.bad { color: #b91c1c; background: var(--soft-red); }
+    .tag.info { color: #1d4ed8; background: var(--soft-blue); }
+    .tag.warn { color: #b45309; background: var(--soft-orange); }
+
+    .lesson {
+      margin-top: 18px;
+      padding: 22px;
+    }
+
+    .lesson h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+      letter-spacing: -.03em;
+    }
+
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+      min-height: 142px;
+    }
+
+    .mini b {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .mini p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .hero, .practice-grid, .lesson-grid, .toolbar {
+        grid-template-columns: 1fr;
+      }
+      canvas { height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="card intro">
+        <div class="eyebrow">第二关 · 防守位与结构切换</div>
+        <h1>先守住旧趋势，再判断新结构</h1>
+        <p>这一关只练一件事：在一个已经形成的上升结构里，先找到“右侧变化发生前，旧趋势最后一个重要低点”作为本轮检验防守位；然后观察右侧走势是延续、破位观察、修复、横盘，还是切换为下降结构。</p>
+      </div>
+      <div class="card concept">
+        <div class="concept-item">
+          <strong>防守位</strong>
+          <span>本轮用来检验旧上升趋势是否受损的低点。它不是全图最低点，而是右侧变化发生前已经确认的最近重要低点。</span>
+        </div>
+        <div class="concept-item">
+          <strong>破位</strong>
+          <span>价格有效跌破防守位，说明旧趋势受损；但只靠这一点，还不能立刻确认新下降趋势。</span>
+        </div>
+        <div class="concept-item">
+          <strong>结构切换</strong>
+          <span>破位后如果出现“反弹不过前高 + 再创新低”，才更像从上升切到下降。</span>
+        </div>
+        <div class="concept-item">
+          <strong>上移防守</strong>
+          <span>如果右侧低点守住旧防守位，并且随后再创新高，这个右侧低点才可能成为下一轮新的防守位。</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card trainer">
+      <div class="toolbar">
+        <select id="caseSelect" aria-label="选择练习案例"></select>
+        <button id="prevBtn" class="ghost" type="button">上一题</button>
+        <button id="nextBtn" class="ghost" type="button">下一题</button>
+        <button id="randomBtn" type="button">随机题</button>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="chart" width="1120" height="470"></canvas>
+        <div class="floating-hint">
+          <span class="pill blue" id="casePill">案例</span>
+          <span class="pill orange">橙线：答案防守位</span>
+          <span class="pill purple">紫线：你的防守位</span>
+        </div>
+      </div>
+
+      <div class="practice-grid">
+        <div class="field">
+          <label>1. 你点选的防守位</label>
+          <div id="pickedGuard" class="picked">请在图中点击你认为的防守位；所有低点都可选</div>
+        </div>
+        <div class="field">
+          <label for="breakAnswer">2. 这里属于什么破位性质？</label>
+          <select id="breakAnswer">
+            <option value="">先不看答案</option>
+            <option value="not_break">没有跌破防守位</option>
+            <option value="effective_break">有效跌破防守位</option>
+            <option value="false_break">假破位/跌破后收回</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="outcomeAnswer">3. 破位后的结构结果是什么？</label>
+          <select id="outcomeAnswer">
+            <option value="">先不看答案</option>
+            <option value="continue">趋势延续</option>
+            <option value="watch">破位观察，尚未确认新趋势</option>
+            <option value="repair">上升结构修复</option>
+            <option value="range">转入横盘整理</option>
+            <option value="down_switch">确认切换为下降结构</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="revealBtn" class="primary" type="button">核对答案</button>
+        <button id="hideBtn" type="button">隐藏答案</button>
+        <button id="clearBtn" type="button">清空我的选择</button>
+      </div>
+
+      <div id="answerBox" class="answer" aria-live="polite"></div>
+    </section>
+
+    <section class="card lesson">
+      <h2>本关判断顺序</h2>
+      <div class="lesson-grid">
+        <div class="mini">
+          <b>第一步：先找旧趋势</b>
+          <p>旧结构如果是高点抬高、低点抬高，就先承认它是上升结构。不要因为一天大跌或大涨，马上改口。</p>
+        </div>
+        <div class="mini">
+          <b>第二步：找最近重要低点</b>
+          <p>上升趋势里的防守位，不是最高点，也不是当天最低价，而是最近一次回调结束后留下的有效波段低点。</p>
+        </div>
+        <div class="mini">
+          <b>第三步：破位后看右侧</b>
+          <p>跌破防守位只代表旧趋势受损。后面是修复、横盘，还是转下降，要看反弹高度和是否再创新低。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const CASES = [
+      {
+        title: "A｜守住防守位后继续上攻",
+        focus: "练习：旧防守位守住并创新高后，防守位要上移到新的确认低点。",
+        answerBreak: "not_break",
+        answerOutcome: "continue",
+        guardDate: "07-25",
+        guardValue: 111.2,
+        priorHigh: 118.8,
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 107.8, 100.7, 106.8),
+          k("07-09", 106.6, 108.6, 103.7, 104.4),
+          k("07-13", 104.7, 114.2, 104.2, 113.5),
+          k("07-17", 113.1, 114.4, 108.6, 109.4),
+          k("07-21", 109.8, 118.8, 109.5, 117.9),
+          k("07-25", 117.5, 118.2, 111.2, 112.2),
+          k("07-29", 112.6, 121.5, 112.2, 120.7),
+          k("08-02", 120.5, 123.2, 119.6, 122.6)
+        ],
+        swings: [
+          s(0, "L", 99.3), s(1, "H", 108.6), s(2, "L", 103.7),
+          s(3, "H", 114.2), s(4, "L", 108.6), s(5, "H", 118.8),
+          s(6, "L", 111.2), s(8, "H", 123.2)
+        ],
+        guardSwing: 6,
+        reason: "这一题的完整右侧已经显示出来：从前高 118.8 回落到 111.2，没有跌破上一轮防守位 108.6，随后又上涨到 123.2 创出新高。因此旧上升趋势没有坏，结构结果是趋势延续。由于 111.2 已经被后面的新高确认，它现在应上移为最新防守位；108.6 只是上一轮防守位。"
+      },
+      {
+        title: "B｜跌破防守位，但只进入观察",
+        focus: "练习：破位不是立刻等于下降趋势。",
+        answerBreak: "effective_break",
+        answerOutcome: "watch",
+        guardDate: "08-18",
+        guardValue: 108.6,
+        priorHigh: 118.8,
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 107.8, 100.7, 106.8),
+          k("07-09", 106.6, 108.6, 103.7, 104.4),
+          k("07-13", 104.7, 114.2, 104.2, 113.5),
+          k("07-17", 113.1, 114.4, 108.6, 109.4),
+          k("07-21", 109.8, 118.8, 109.5, 117.9),
+          k("07-25", 117.1, 117.4, 107.2, 107.6),
+          k("07-29", 107.2, 110.8, 106.1, 106.7),
+          k("08-02", 106.4, 109.0, 105.8, 108.2)
+        ],
+        swings: [
+          s(0, "L", 99.3), s(1, "H", 108.6), s(2, "L", 103.7),
+          s(3, "H", 114.2), s(4, "L", 108.6), s(5, "H", 118.8),
+          s(7, "L", 106.1)
+        ],
+        guardSwing: 4,
+        reason: "本轮防守位是破位前已经确认的 108.6。收盘和波段低点都跌到 108.6 下方，旧上升结构已经受损。但右侧还没形成清楚的“反弹不过前高 + 再创新低”，所以只能叫破位观察，不能抢先说已经是下降趋势。"
+      },
+      {
+        title: "C｜跌破后收回，并重新创新高",
+        focus: "练习：有些破位只是旧趋势的一次压力测试。",
+        answerBreak: "false_break",
+        answerOutcome: "repair",
+        guardDate: "08-18",
+        guardValue: 108.6,
+        priorHigh: 118.8,
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 107.8, 100.7, 106.8),
+          k("07-09", 106.6, 108.6, 103.7, 104.4),
+          k("07-13", 104.7, 114.2, 104.2, 113.5),
+          k("07-17", 113.1, 114.4, 108.6, 109.4),
+          k("07-21", 109.8, 118.8, 109.5, 117.9),
+          k("07-25", 117.0, 117.2, 107.3, 110.4),
+          k("07-29", 110.8, 116.5, 110.2, 115.8),
+          k("08-02", 116.1, 121.4, 115.6, 120.9)
+        ],
+        swings: [
+          s(0, "L", 99.3), s(1, "H", 108.6), s(2, "L", 103.7),
+          s(3, "H", 114.2), s(4, "L", 108.6), s(5, "H", 118.8),
+          s(6, "L", 107.3), s(8, "H", 121.4)
+        ],
+        guardSwing: 4,
+        reason: "本轮防守位是破位前已经确认的 108.6。盘中低点刺破了 108.6，但收盘重新回到防守位上方，随后又突破前高 118.8。这更像假破位后的上升结构修复，而不是下降结构确认。"
+      },
+      {
+        title: "D｜跌破后反复重叠，转入横盘",
+        focus: "练习：破位后不一定向下流畅展开，也可能变成箱体。",
+        answerBreak: "effective_break",
+        answerOutcome: "range",
+        guardDate: "08-18",
+        guardValue: 108.6,
+        priorHigh: 118.8,
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 107.8, 100.7, 106.8),
+          k("07-09", 106.6, 108.6, 103.7, 104.4),
+          k("07-13", 104.7, 114.2, 104.2, 113.5),
+          k("07-17", 113.1, 114.4, 108.6, 109.4),
+          k("07-21", 109.8, 118.8, 109.5, 117.9),
+          k("07-25", 117.2, 117.5, 107.0, 107.8),
+          k("07-29", 108.1, 114.5, 107.4, 113.6),
+          k("08-02", 113.2, 114.1, 107.2, 108.4),
+          k("08-06", 108.5, 113.8, 107.5, 112.9)
+        ],
+        swings: [
+          s(0, "L", 99.3), s(1, "H", 108.6), s(2, "L", 103.7),
+          s(3, "H", 114.2), s(4, "L", 108.6), s(5, "H", 118.8),
+          s(6, "L", 107.0), s(7, "H", 114.5), s(8, "L", 107.2), s(9, "H", 113.8)
+        ],
+        guardSwing: 4,
+        reason: "本轮防守位是破位前已经确认的 108.6。防守位被有效跌破，但后面没有连续走出更低的高点和更低的低点，而是在 107—114 附近反复重叠。这时更合理的判断是旧上升结束，进入横盘整理。"
+      },
+      {
+        title: "E｜跌破后反弹失败，再创新低",
+        focus: "练习：确认结构切换的关键，是破位后的右侧组合。",
+        answerBreak: "effective_break",
+        answerOutcome: "down_switch",
+        guardDate: "08-18",
+        guardValue: 108.6,
+        priorHigh: 118.8,
+        data: [
+          k("07-01", 100.2, 101.4, 99.3, 100.6),
+          k("07-05", 101.0, 107.8, 100.7, 106.8),
+          k("07-09", 106.6, 108.6, 103.7, 104.4),
+          k("07-13", 104.7, 114.2, 104.2, 113.5),
+          k("07-17", 113.1, 114.4, 108.6, 109.4),
+          k("07-21", 109.8, 118.8, 109.5, 117.9),
+          k("07-25", 117.0, 117.2, 106.4, 107.1),
+          k("07-29", 107.5, 112.7, 106.9, 111.9),
+          k("08-02", 111.4, 112.2, 101.8, 102.7),
+          k("08-06", 102.9, 106.5, 101.5, 104.3)
+        ],
+        swings: [
+          s(0, "L", 99.3), s(1, "H", 108.6), s(2, "L", 103.7),
+          s(3, "H", 114.2), s(4, "L", 108.6), s(5, "H", 118.8),
+          s(6, "L", 106.4), s(7, "H", 112.7), s(8, "L", 101.8)
+        ],
+        guardSwing: 4,
+        reason: "本轮防守位是破位前已经确认的 108.6。先有效跌破 108.6，随后反弹高点 112.7 明显低于前高 118.8，再向下跌出 101.8 的新低。这里才具备“低点降低 + 高点降低”的下降结构雏形。"
+      }
+    ];
+
+    function k(date, open, high, low, close) {
+      return { date, open, high, low, close };
+    }
+
+    function s(index, type, value) {
+      return { index, type, value };
+    }
+
+    const caseSelect = document.getElementById("caseSelect");
+    const chart = document.getElementById("chart");
+    const ctx = chart.getContext("2d");
+    const pickedGuard = document.getElementById("pickedGuard");
+    const breakAnswer = document.getElementById("breakAnswer");
+    const outcomeAnswer = document.getElementById("outcomeAnswer");
+    const revealBtn = document.getElementById("revealBtn");
+    const hideBtn = document.getElementById("hideBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const randomBtn = document.getElementById("randomBtn");
+    const answerBox = document.getElementById("answerBox");
+    const casePill = document.getElementById("casePill");
+
+    let current = 0;
+    let selectedGuardSwing = null;
+    let showingAnswer = false;
+
+    CASES.forEach((item, index) => {
+      const opt = document.createElement("option");
+      opt.value = String(index);
+      opt.textContent = item.title;
+      caseSelect.appendChild(opt);
+    });
+
+    function setupHiDpi() {
+      const rect = chart.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      chart.width = Math.round(rect.width * ratio);
+      chart.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return { width: rect.width, height: rect.height };
+    }
+
+    function getScales(c) {
+      const w = chart.getBoundingClientRect().width;
+      const h = chart.getBoundingClientRect().height;
+      const pad = { left: 58, right: 26, top: 58, bottom: 50 };
+      const values = c.data.flatMap(d => [d.high, d.low]).concat([c.guardValue, c.priorHigh]);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const span = max - min || 1;
+      const yMin = min - span * .13;
+      const yMax = max + span * .14;
+      const x = i => pad.left + i * ((w - pad.left - pad.right) / Math.max(1, c.data.length - 1));
+      const y = v => pad.top + (yMax - v) * ((h - pad.top - pad.bottom) / (yMax - yMin));
+      return { w, h, pad, x, y, yMin, yMax };
+    }
+
+    function draw() {
+      const c = CASES[current];
+      const size = setupHiDpi();
+      const g = getScales(c);
+      ctx.clearRect(0, 0, size.width, size.height);
+      drawGrid(g, c);
+      drawCandles(g, c);
+      drawSwingLine(g, c);
+      drawPickedGuard(g, c);
+      if (showingAnswer) drawAnswerMarks(g, c);
+      drawTopText(g, c);
+    }
+
+    function drawGrid(g, c) {
+      ctx.save();
+      ctx.strokeStyle = "#e8eef7";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#8a96aa";
+      ctx.font = "12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let i = 0; i <= 4; i++) {
+        const value = g.yMin + (g.yMax - g.yMin) * i / 4;
+        const yy = g.y(value);
+        ctx.beginPath();
+        ctx.moveTo(g.pad.left, yy);
+        ctx.lineTo(g.w - g.pad.right, yy);
+        ctx.stroke();
+        ctx.fillText(value.toFixed(1), g.pad.left - 10, yy);
+      }
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      c.data.forEach((d, i) => {
+        if (i === 0 || i === c.data.length - 1 || i % 2 === 1) {
+          ctx.fillText(d.date, g.x(i), g.h - g.pad.bottom + 18);
+        }
+      });
+      ctx.strokeStyle = "#d7dfec";
+      ctx.strokeRect(g.pad.left, g.pad.top, g.w - g.pad.left - g.pad.right, g.h - g.pad.top - g.pad.bottom);
+      ctx.restore();
+    }
+
+    function drawCandles(g, c) {
+      const barW = Math.max(8, Math.min(22, (g.w - g.pad.left - g.pad.right) / c.data.length * .42));
+      c.data.forEach((d, i) => {
+        const x = g.x(i);
+        const up = d.close >= d.open;
+        const color = up ? "#dc2626" : "#16a34a";
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, g.y(d.high));
+        ctx.lineTo(x, g.y(d.low));
+        ctx.stroke();
+        const top = Math.min(g.y(d.open), g.y(d.close));
+        const bottom = Math.max(g.y(d.open), g.y(d.close));
+        ctx.globalAlpha = .86;
+        ctx.fillRect(x - barW / 2, top, barW, Math.max(3, bottom - top));
+        ctx.restore();
+      });
+    }
+
+    function drawSwingLine(g, c) {
+      ctx.save();
+      ctx.strokeStyle = "#64748b";
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([7, 6]);
+      ctx.beginPath();
+      c.swings.forEach((p, idx) => {
+        const x = g.x(p.index);
+        const y = g.y(p.value);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      c.swings.forEach((p) => {
+        const x = g.x(p.index);
+        const y = g.y(p.value);
+        ctx.fillStyle = p.type === "H" ? "#fee2e2" : "#dcfce7";
+        ctx.strokeStyle = p.type === "H" ? "#dc2626" : "#16a34a";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    function drawPickedGuard(g, c) {
+      if (selectedGuardSwing === null) return;
+      const p = c.swings[selectedGuardSwing];
+      ctx.save();
+      ctx.strokeStyle = "#7c3aed";
+      ctx.fillStyle = "#7c3aed";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(g.pad.left, g.y(p.value));
+      ctx.lineTo(g.w - g.pad.right, g.y(p.value));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(g.x(p.index), g.y(p.value), 8, 0, Math.PI * 2);
+      ctx.fill();
+      drawLabel(g.x(p.index), g.y(p.value) - 28, "你选的防守位", "#7c3aed", "#f5f3ff");
+      ctx.restore();
+    }
+
+    function drawAnswerMarks(g, c) {
+      const guard = c.swings[c.guardSwing];
+      ctx.save();
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(g.pad.left, g.y(c.guardValue));
+      ctx.lineTo(g.w - g.pad.right, g.y(c.guardValue));
+      ctx.stroke();
+      ctx.fillStyle = "#f59e0b";
+      ctx.beginPath();
+      ctx.arc(g.x(guard.index), g.y(guard.value), 9, 0, Math.PI * 2);
+      ctx.fill();
+      drawLabel(g.x(guard.index), g.y(guard.value) + 28, `答案防守位 ${c.guardValue.toFixed(1)}`, "#b45309", "#fff7ed");
+
+      ctx.strokeStyle = "#2563eb";
+      ctx.setLineDash([4, 5]);
+      ctx.beginPath();
+      ctx.moveTo(g.pad.left, g.y(c.priorHigh));
+      ctx.lineTo(g.w - g.pad.right, g.y(c.priorHigh));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      drawLabel(g.w - g.pad.right - 86, g.y(c.priorHigh) - 22, `前高 ${c.priorHigh.toFixed(1)}`, "#1d4ed8", "#eff6ff");
+
+      const late = c.swings.slice(c.guardSwing + 2);
+      late.forEach((p) => {
+        const text = p.type === "H" ? `右侧高点 ${p.value.toFixed(1)}` : `右侧低点 ${p.value.toFixed(1)}`;
+        drawLabel(g.x(p.index), g.y(p.value) + (p.type === "H" ? -24 : 24), text, p.type === "H" ? "#b91c1c" : "#15803d", "#ffffff");
+      });
+      ctx.restore();
+    }
+
+    function drawTopText(g, c) {
+      ctx.save();
+      ctx.fillStyle = "#172033";
+      ctx.font = "700 15px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(c.focus, g.pad.left, 32);
+      ctx.restore();
+    }
+
+    function drawLabel(x, y, text, color, bg) {
+      ctx.save();
+      ctx.font = "800 12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      const padX = 8;
+      const metrics = ctx.measureText(text);
+      const w = metrics.width + padX * 2;
+      const h = 24;
+      const xx = Math.max(64, Math.min(x - w / 2, chart.getBoundingClientRect().width - w - 20));
+      const yy = Math.max(48, Math.min(y - h / 2, chart.getBoundingClientRect().height - h - 38));
+      roundRect(xx, yy, w, h, 8);
+      ctx.fillStyle = bg;
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = .92;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, xx + w / 2, yy + h / 2 + .5);
+      ctx.restore();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function chooseNearestLow(event) {
+      const c = CASES[current];
+      const rect = chart.getBoundingClientRect();
+      const px = event.clientX - rect.left;
+      const py = event.clientY - rect.top;
+      const g = getScales(c);
+      const candidates = c.swings
+        .map((p, idx) => ({ ...p, idx }))
+        .filter(p => p.type === "L");
+      let best = null;
+      let bestDist = Infinity;
+      candidates.forEach((p) => {
+        const dx = g.x(p.index) - px;
+        const dy = g.y(p.value) - py;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = p;
+        }
+      });
+      if (!best) return;
+      selectedGuardSwing = best.idx;
+      pickedGuard.textContent = `${c.data[best.index].date} 低点 ${best.value.toFixed(1)}`;
+      pickedGuard.style.color = "#7c3aed";
+      showingAnswer = false;
+      answerBox.classList.remove("show");
+      draw();
+    }
+
+    function outcomeLabel(value) {
+      return {
+        continue: "趋势延续",
+        watch: "破位观察，尚未确认新趋势",
+        repair: "上升结构修复",
+        range: "转入横盘整理",
+        down_switch: "确认切换为下降结构"
+      }[value] || "未选择";
+    }
+
+    function breakLabel(value) {
+      return {
+        not_break: "没有跌破防守位",
+        effective_break: "有效跌破防守位",
+        false_break: "假破位/跌破后收回"
+      }[value] || "未选择";
+    }
+
+    function guardFeedback(c, guardOk) {
+      const guard = c.swings[c.guardSwing];
+      if (selectedGuardSwing === null) {
+        return "你还没有点选防守位。先在图上找“旧上升趋势里，离右侧变化最近的那个重要回调低点”。";
+      }
+      if (guardOk) {
+        return "防守位选对了。这个点是旧上升趋势在右侧变化发生前，最近一次已经确认的波段低点。";
+      }
+      const picked = c.swings[selectedGuardSwing];
+      if (picked.index > guard.index) {
+        return `你点的是 ${c.data[picked.index].date} 的右侧低点 ${picked.value.toFixed(1)}。它很重要，但它属于“本轮回调/破位检验发生以后”才出现的结果区低点，不能倒过来作为本轮检验旧趋势的防守位。标准防守位要用右侧变化前已经存在的最近重要低点，也就是 ${c.data[guard.index].date} 的 ${guard.value.toFixed(1)}。如果它后面守住并重新创新高，这个右侧低点可以成为下一轮新的防守位候选。`;
+      }
+      return `你点的是更早的低点 ${c.data[picked.index].date} ${picked.value.toFixed(1)}。它可以说明更大一段上升曾经成立，但不是当前这段走势最近的防守位。练这一关时，优先找离右侧变化最近、且已经确认的那个回调低点：${c.data[guard.index].date} ${guard.value.toFixed(1)}。`;
+    }
+
+    function breakFeedback(c, breakOk) {
+      if (breakOk) return "破位性质判断正确。";
+      return `破位性质这里应判断为“${breakLabel(c.answerBreak)}”。判断时不要只看影线的瞬间穿越，还要看收盘是否收回，以及后面是否继续在防守位下方运行。`;
+    }
+
+    function outcomeFeedback(c, outcomeOk) {
+      if (outcomeOk) return "结构结果判断正确。";
+      return `结构结果这里应判断为“${outcomeLabel(c.answerOutcome)}”。破防守位只是旧趋势受损；是否切换为下降，要继续看右侧有没有“反弹不过前高 + 再创新低”。`;
+    }
+
+    function reveal() {
+      const c = CASES[current];
+      showingAnswer = true;
+      const guardOk = selectedGuardSwing === c.guardSwing;
+      const breakOk = breakAnswer.value === c.answerBreak;
+      const outcomeOk = outcomeAnswer.value === c.answerOutcome;
+      const guard = c.swings[c.guardSwing];
+      answerBox.innerHTML = `
+        <h3>${c.title}</h3>
+        <div class="result-row">
+          <span class="tag ${guardOk ? "ok" : "bad"}">${guardOk ? "✓" : "×"} 防守位</span>
+          <span class="tag ${breakOk ? "ok" : "bad"}">${breakOk ? "✓" : "×"} 破位性质</span>
+          <span class="tag ${outcomeOk ? "ok" : "bad"}">${outcomeOk ? "✓" : "×"} 结构结果</span>
+        </div>
+        <div><b>标准答案：</b>防守位 = ${c.data[guard.index].date} 低点 ${guard.value.toFixed(1)}；破位性质 = ${breakLabel(c.answerBreak)}；结构结果 = ${outcomeLabel(c.answerOutcome)}。</div>
+        <div><b>你的答案：</b>防守位 = ${selectedGuardSwing === null ? "未点选" : pickedGuard.textContent}；破位性质 = ${breakLabel(breakAnswer.value)}；结构结果 = ${outcomeLabel(outcomeAnswer.value)}。</div>
+        <div><b>防守位错因：</b>${guardFeedback(c, guardOk)}</div>
+        <div><b>破位性质反馈：</b>${breakFeedback(c, breakOk)}</div>
+        <div><b>结构结果反馈：</b>${outcomeFeedback(c, outcomeOk)}</div>
+        <div><b>判断理由：</b>${c.reason}</div>
+        <div><b>本关口诀：</b>防守位是旧趋势的生死线，但不是新趋势的确认线；破位以后，要继续看右侧怎么走。</div>
+      `;
+      answerBox.classList.add("show");
+      draw();
+    }
+
+    function switchCase(index) {
+      current = (index + CASES.length) % CASES.length;
+      caseSelect.value = String(current);
+      selectedGuardSwing = null;
+      showingAnswer = false;
+      pickedGuard.textContent = "请在图中点击你认为的防守位；所有低点都可选";
+      pickedGuard.style.color = "#697386";
+      breakAnswer.value = "";
+      outcomeAnswer.value = "";
+      answerBox.classList.remove("show");
+      casePill.textContent = CASES[current].title;
+      draw();
+    }
+
+    chart.addEventListener("click", chooseNearestLow);
+    revealBtn.addEventListener("click", reveal);
+    hideBtn.addEventListener("click", () => {
+      showingAnswer = false;
+      answerBox.classList.remove("show");
+      draw();
+    });
+    clearBtn.addEventListener("click", () => switchCase(current));
+    prevBtn.addEventListener("click", () => switchCase(current - 1));
+    nextBtn.addEventListener("click", () => switchCase(current + 1));
+    randomBtn.addEventListener("click", () => {
+      let next = current;
+      while (next === current && CASES.length > 1) {
+        next = Math.floor(Math.random() * CASES.length);
+      }
+      switchCase(next);
+    });
+    caseSelect.addEventListener("change", () => switchCase(Number(caseSelect.value)));
+    window.addEventListener("resize", draw);
+    switchCase(0);
+  </script>
+</body>
+</html>

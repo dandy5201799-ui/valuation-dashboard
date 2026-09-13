@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0,10 4,0 8" fill="#4f5d75"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0,10 4,0 8" fill="#eb6c36"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0,10 4,0 8" fill="#2563eb"/>
+    </marker>
+    <style>
+      .bg{fill:#f5f5f5}
+      .title{font:400 34px "Times New Roman","Songti SC",serif;fill:#2d3142}
+      .sub{font:500 15px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .node{fill:#fff;stroke:#2d3142;stroke-width:1.4}
+      .decision{fill:#fff;stroke:#2d3142;stroke-width:1.5}
+      .focal{fill:rgba(235,108,54,.08);stroke:#eb6c36;stroke-width:1.8}
+      .good{fill:rgba(22,163,74,.08);stroke:#16a34a;stroke-width:1.5}
+      .warn{fill:rgba(245,158,11,.10);stroke:#f59e0b;stroke-width:1.5}
+      .bad{fill:rgba(220,38,38,.08);stroke:#dc2626;stroke-width:1.5}
+      .blue{fill:rgba(37,99,235,.08);stroke:#2563eb;stroke-width:1.5}
+      .txt{font:700 17px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#172033}
+      .small{font:500 13px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .tiny{font:600 12px "SF Mono","Menlo",monospace;fill:#7a8399}
+      .label{font:700 12px "SF Mono","Menlo",monospace;fill:#4f5d75}
+      .arrow{fill:none;stroke:#4f5d75;stroke-width:2.2;marker-end:url(#arrow)}
+      .arrowA{fill:none;stroke:#eb6c36;stroke-width:2.8;marker-end:url(#arrow-accent)}
+      .arrowB{fill:none;stroke:#2563eb;stroke-width:2.4;marker-end:url(#arrow-blue)}
+      .dash{stroke-dasharray:7 6}
+      .price{fill:none;stroke:#64748b;stroke-width:3;stroke-dasharray:8 7}
+      .kred{fill:#dc2626;stroke:#dc2626}
+      .kgreen{fill:#16a34a;stroke:#16a34a}
+      .guard{stroke:#f59e0b;stroke-width:2.4}
+      .confirm{stroke:#2563eb;stroke-width:2.4}
+    </style>
+  </defs>
+
+  <rect class="bg" width="1400" height="900"/>
+  <text class="title" x="64" y="70">买入后的持有、减仓、止损、接回：结构决策图</text>
+  <text class="sub" x="64" y="102">核心：买入之后不要天天重新猜。先守防守位；破防先退出/降风险；修复后也要重新确认，不能因为“又涨了”就立刻接回。</text>
+
+  <!-- arrows behind nodes -->
+  <path class="arrowA" d="M700 152 L700 212"/>
+  <path class="arrow" d="M700 324 L700 384"/>
+  <path class="arrowB" d="M568 476 C420 506 356 552 320 620"/>
+  <path class="arrow" d="M700 500 L700 620"/>
+  <path class="arrowA" d="M832 476 C984 508 1060 552 1096 620"/>
+
+  <path class="arrow" d="M320 724 C364 790 468 816 584 816"/>
+  <path class="arrowB" d="M700 724 L700 788"/>
+  <path class="arrow" d="M1096 724 C1044 792 916 816 816 816"/>
+
+  <path class="arrow dash" d="M584 844 C460 864 324 840 276 760"/>
+  <path class="arrowB dash" d="M816 844 C944 864 1088 836 1140 760"/>
+
+  <!-- main nodes -->
+  <rect class="focal" x="568" y="124" width="264" height="72" rx="28"/>
+  <text class="txt" x="700" y="154" text-anchor="middle">已经入手</text>
+  <text class="small" x="700" y="178" text-anchor="middle">前提：入手点来自确认，而不是追情绪</text>
+
+  <polygon class="decision" points="700,220 844,292 700,364 556,292"/>
+  <text class="txt" x="700" y="286" text-anchor="middle">是否守住</text>
+  <text class="txt" x="700" y="310" text-anchor="middle">当前防守位？</text>
+
+  <polygon class="decision" points="700,392 848,468 700,544 552,468"/>
+  <text class="txt" x="700" y="452" text-anchor="middle">是否出现</text>
+  <text class="txt" x="700" y="476" text-anchor="middle">趋势尾声迹象？</text>
+  <text class="small" x="700" y="500" text-anchor="middle">放量滞涨 / 小高点降低 / 回调加深</text>
+
+  <rect class="good" x="208" y="620" width="224" height="104" rx="10"/>
+  <text class="txt" x="320" y="654" text-anchor="middle">趋势延续</text>
+  <text class="small" x="320" y="682" text-anchor="middle">高点抬升 + 低点抬升</text>
+  <text class="small" x="320" y="706" text-anchor="middle">动作：继续持有 / 防守位上移</text>
+
+  <rect class="warn" x="588" y="620" width="224" height="104" rx="10"/>
+  <text class="txt" x="700" y="654" text-anchor="middle">尾声观察</text>
+  <text class="small" x="700" y="682" text-anchor="middle">未破防守，但上涨质量变弱</text>
+  <text class="small" x="700" y="706" text-anchor="middle">动作：减仓 / 不加仓 / 等确认</text>
+
+  <rect class="bad" x="984" y="620" width="224" height="104" rx="10"/>
+  <text class="txt" x="1096" y="654" text-anchor="middle">有效破防</text>
+  <text class="small" x="1096" y="682" text-anchor="middle">收盘跌破防守位，且无快速收回</text>
+  <text class="small" x="1096" y="706" text-anchor="middle">动作：离场 / 明显降仓</text>
+
+  <polygon class="decision" points="700,780 828,840 700,900 572,840"/>
+  <text class="txt" x="700" y="832" text-anchor="middle">破防后是否</text>
+  <text class="txt" x="700" y="856" text-anchor="middle">完成修复确认？</text>
+
+  <rect class="blue" x="84" y="756" width="280" height="92" rx="10"/>
+  <text class="txt" x="224" y="790" text-anchor="middle">可以考虑接回</text>
+  <text class="small" x="224" y="818" text-anchor="middle">重新站回关键位 + 突破修复小高点</text>
+  <text class="tiny" x="224" y="840" text-anchor="middle">最好：回踩不破后再上</text>
+
+  <rect class="bad" x="1036" y="756" width="280" height="92" rx="10"/>
+  <text class="txt" x="1176" y="790" text-anchor="middle">不接回</text>
+  <text class="small" x="1176" y="818" text-anchor="middle">反弹不过压力 / 再创新低</text>
+  <text class="tiny" x="1176" y="840" text-anchor="middle">这只是弱反弹，不是修复</text>
+
+  <!-- arrow labels -->
+  <rect x="724" y="372" width="54" height="18" rx="3" fill="#f5f5f5"/>
+  <text class="label" x="751" y="385" text-anchor="middle">守住</text>
+  <rect x="872" y="496" width="70" height="18" rx="3" fill="#f5f5f5"/>
+  <text class="label" x="907" y="509" text-anchor="middle">跌破</text>
+  <rect x="472" y="496" width="70" height="18" rx="3" fill="#f5f5f5"/>
+  <text class="label" x="507" y="509" text-anchor="middle">没有</text>
+  <rect x="704" y="572" width="78" height="18" rx="3" fill="#f5f5f5"/>
+  <text class="label" x="743" y="585" text-anchor="middle">有，但未破</text>
+
+  <!-- mini k-line panels -->
+  <g transform="translate(80 170)">
+    <rect x="0" y="0" width="364" height="292" rx="10" fill="#fff" stroke="rgba(45,49,66,.16)"/>
+    <text class="txt" x="24" y="34">A. 守住防守位：继续持有</text>
+    <line class="guard" x1="36" y1="210" x2="328" y2="210"/>
+    <text class="tiny" x="250" y="202">防守位</text>
+    <path class="price" d="M44 226 L82 164 L122 196 L166 120 L206 188 L248 106 L292 170 L328 82"/>
+    <circle cx="206" cy="188" r="7" fill="#fff7ed" stroke="#f59e0b" stroke-width="3"/>
+    <circle cx="292" cy="170" r="7" fill="#f0fdf4" stroke="#16a34a" stroke-width="3"/>
+    <text class="small" x="182" y="252">回调没有破防，后面再创新高</text>
+  </g>
+
+  <g transform="translate(958 170)">
+    <rect x="0" y="0" width="364" height="292" rx="10" fill="#fff" stroke="rgba(45,49,66,.16)"/>
+    <text class="txt" x="24" y="34">B. 有效破防：先退出风险</text>
+    <line class="guard" x1="36" y1="150" x2="328" y2="150"/>
+    <text class="tiny" x="250" y="142">防守位</text>
+    <path class="price" d="M44 206 L82 132 L124 168 L164 92 L206 142 L248 182 L292 226 L328 214"/>
+    <circle cx="248" cy="182" r="7" fill="#fef2f2" stroke="#dc2626" stroke-width="3"/>
+    <text class="small" x="78" y="252">收盘跌破后没有马上收回</text>
+  </g>
+
+  <g transform="translate(516 170)">
+    <rect x="0" y="0" width="364" height="152" rx="10" fill="#fff" stroke="rgba(45,49,66,.16)"/>
+    <text class="txt" x="24" y="34">中间状态：尾声，不等于反转</text>
+    <line class="guard" x1="36" y1="108" x2="328" y2="108"/>
+    <path class="price" d="M44 114 L88 58 L132 90 L176 54 L220 92 L264 72 L320 96"/>
+    <circle cx="320" cy="96" r="7" fill="#fff7ed" stroke="#f59e0b" stroke-width="3"/>
+    <text class="small" x="182" y="134" text-anchor="middle">没破防，但高点推进变弱：减仓观察</text>
+  </g>
+
+  <!-- footnote -->
+  <text class="tiny" x="64" y="878">学习用途，不构成投资建议。图中“接回”也必须以重新确认后的结构为前提，不是跌破后凭感觉抄回。</text>
+</svg>

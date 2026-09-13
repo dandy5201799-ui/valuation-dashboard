@@ -1,0 +1,25 @@
+{
+  "title": "观察区、确认点与错误承担",
+  "description": "把趋势结构转化为观察、确认、失败线和动作分层的实战练习书。",
+  "author": "Codex × wps",
+  "language": "zh-Hans",
+  "root": ".",
+  "styles": {
+    "website": "styles/website.css",
+    "pdf": "styles/pdf.css"
+  },
+  "plugins": [],
+  "pluginsConfig": {},
+  "readme_path": "index.md",
+  "release_date": "2026-09-13",
+  "cover_image": "assets/cover.svg",
+  "cover_alt": "封面：观察区、确认点与错误承担",
+  "outputs": {
+    "print_html": "exported/book2-chan-practice-print.html",
+    "pdf": "exported/book2-chan-practice.pdf"
+  },
+  "title_page_lines": [
+    "观察不是买点，确认必须有失败线",
+    "学习草稿，非交易建议"
+  ]
+}
