@@ -225,6 +225,11 @@
   box-shadow: var(--hb-shadow-soft);
 }
 
+.book.with-site-switcher .hb-inline-pager__slot {
+  display: block;
+  min-width: 0;
+}
+
 .book.with-site-switcher .hb-inline-pager__link:hover,
 .book.with-site-switcher .hb-inline-pager__link:focus-visible {
   border-color: rgba(135, 89, 50, 0.28);
@@ -258,14 +263,15 @@
 .book.with-site-switcher .hb-related-reading {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 18px;
+  gap: 22px;
   align-items: end;
   margin: 26px 0 8px;
-  padding: 22px 24px;
+  padding: 26px 26px 28px;
   border: 1px solid rgba(53, 41, 27, 0.10);
   border-radius: 20px;
-  background: rgba(255, 252, 245, 0.70);
-  box-shadow: var(--hb-shadow-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 245, 0.78), rgba(250, 245, 235, 0.70));
+  box-shadow: 0 18px 44px rgba(53, 41, 27, 0.08);
 }
 
 .book.with-site-switcher .hb-related-reading__eyebrow {
@@ -284,11 +290,19 @@
 }
 
 .book.with-site-switcher .hb-related-reading p {
-  max-width: 42em !important;
+  max-width: 54em !important;
   margin: 0;
   color: #5e5245;
   font-size: 0.98rem;
   line-height: 1.72;
+}
+
+.book.with-site-switcher .hb-related-reading__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .book.with-site-switcher .hb-related-reading__button {
@@ -298,8 +312,6 @@
   min-height: 42px;
   padding: 0 18px;
   border-radius: 999px;
-  background: #312015;
-  color: #f8f4ea !important;
   font-family: "Avenir Next", "PingFang SC", sans-serif;
   font-size: 13px;
   font-weight: 700;
@@ -307,9 +319,28 @@
   white-space: nowrap;
 }
 
-.book.with-site-switcher .hb-related-reading__button:hover,
-.book.with-site-switcher .hb-related-reading__button:focus-visible {
+.book.with-site-switcher .hb-related-reading__button--primary {
+  border: 1px solid #312015;
+  background: #312015;
+  color: #f8f4ea !important;
+}
+
+.book.with-site-switcher .hb-related-reading__button--primary:hover,
+.book.with-site-switcher .hb-related-reading__button--primary:focus-visible {
   background: #4a3323;
+  text-decoration: none;
+}
+
+.book.with-site-switcher .hb-related-reading__button--secondary {
+  border: 1px solid rgba(53, 41, 27, 0.10);
+  background: rgba(255, 252, 245, 0.82);
+  color: #312015 !important;
+}
+
+.book.with-site-switcher .hb-related-reading__button--secondary:hover,
+.book.with-site-switcher .hb-related-reading__button--secondary:focus-visible {
+  border-color: rgba(135, 89, 50, 0.24);
+  background: rgba(255, 252, 245, 0.96);
   text-decoration: none;
 }
 
@@ -459,6 +490,9 @@
     gap: 10px;
     margin: 24px 0 16px;
   }
+  .book.with-site-switcher .hb-inline-pager__slot {
+    display: none;
+  }
   .book.with-site-switcher .hb-inline-pager__link--next {
     text-align: left;
   }
@@ -467,7 +501,10 @@
     align-items: start;
     padding: 18px 16px;
   }
+  .book.with-site-switcher .hb-related-reading__actions {
+    justify-content: flex-start;
+  }
   .book.with-site-switcher .hb-related-reading__button {
-    width: fit-content;
+    width: 100%;
   }
 }

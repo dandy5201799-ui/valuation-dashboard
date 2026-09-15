@@ -16,6 +16,8 @@ BOOK_DIRS = [
 ]
 DIST_DIR = REPO_ROOT / "dist"
 SITE_LABEL = "缠论学习书库"
+MARKER_TOOL_DIR = REPO_ROOT.parent / "02_引擎与工作台"
+MARKER_TOOL_DIST = "chan-marker-tool"
 
 
 def relative_href(from_dir: str, to_path: str) -> str:
@@ -71,8 +73,10 @@ def extract_navigation_target(html: str, direction: str) -> tuple[str, str] | No
 
 def build_inline_pager(html: str) -> str:
     links: list[str] = []
+    has_link = False
     prev_target = extract_navigation_target(html, "prev")
     if prev_target:
+        has_link = True
         href, label = prev_target
         links.append(
             '<a class="hb-inline-pager__link hb-inline-pager__link--prev" '
@@ -81,8 +85,12 @@ def build_inline_pager(html: str) -> str:
             f'<span class="hb-inline-pager__title">{escape(label)}</span>'
             "</a>"
         )
+    else:
+        links.append('<span class="hb-inline-pager__slot" aria-hidden="true"></span>')
+
     next_target = extract_navigation_target(html, "next")
     if next_target:
+        has_link = True
         href, label = next_target
         links.append(
             '<a class="hb-inline-pager__link hb-inline-pager__link--next" '
@@ -91,7 +99,10 @@ def build_inline_pager(html: str) -> str:
             f'<span class="hb-inline-pager__title">{escape(label)}</span>'
             "</a>"
         )
-    if not links:
+    else:
+        links.append('<span class="hb-inline-pager__slot" aria-hidden="true"></span>')
+
+    if not has_link:
         return ""
     return '<nav class="hb-inline-pager" aria-label="Chapter navigation">' + "".join(links) + "</nav>"
 
@@ -103,12 +114,46 @@ def build_related_reading(current_slug: str) -> str:
 <aside class="hb-related-reading" aria-label="延伸阅读">
   <div>
     <p class="hb-related-reading__eyebrow">延伸阅读</p>
-    <h2>继续看《缠论标记工具》</h2>
-    <p>读懂走势之后，下一步不是让工具替你判断，而是看它怎样把分型、笔、线段、中枢和确认位置标出来，方便回放、解释和复盘。</p>
+    <h2>打开缠论标记工具</h2>
+    <p>读懂走势之后，可以用工具把分型、笔、线段、中枢和确认位置标出来。工具负责呈现结构，判断仍然要回到你自己的复盘。</p>
   </div>
-  <a class="hb-related-reading__button" href="../book3-auto-marker/index.html">打开标记工具</a>
+  <div class="hb-related-reading__actions">
+    <a class="hb-related-reading__button hb-related-reading__button--primary" href="../chan-marker-tool/index.html">打开标记工具</a>
+    <a class="hb-related-reading__button hb-related-reading__button--secondary" href="../book3-auto-marker/index.html">阅读工具说明</a>
+  </div>
 </aside>
 """
+
+
+def copy_marker_tool() -> None:
+    if not MARKER_TOOL_DIR.exists():
+        print(f"警告: 找不到标记工具目录 {MARKER_TOOL_DIR}")
+        return
+
+    target_dir = DIST_DIR / MARKER_TOOL_DIST
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    files = [
+        ("缠论标记工具.dc.html", "index.html"),
+        ("support.js", "support.js"),
+        ("chan-algo.js", "chan-algo.js"),
+        ("chan-data.js", "chan-data.js"),
+    ]
+    for source_name, target_name in files:
+        source = MARKER_TOOL_DIR / source_name
+        if not source.exists():
+            print(f"警告: 标记工具缺少文件 {source}")
+            continue
+        shutil.copy2(source, target_dir / target_name)
+
+    data_source = MARKER_TOOL_DIR / "data"
+    if data_source.exists():
+        data_target = target_dir / "data"
+        if data_target.exists():
+            shutil.rmtree(data_target)
+        shutil.copytree(data_source, data_target, ignore=shutil.ignore_patterns(".gitkeep"))
+
+    print(f"复制缠论标记工具到 dist/{MARKER_TOOL_DIST}")
 
 
 def inject_switcher(book_publish_dir: Path, current_slug: str, books: list[dict]) -> None:
@@ -384,6 +429,8 @@ def main():
         target_dir = DIST_DIR / book_info["slug"]
         shutil.copytree(build_dir, target_dir)
         print(f"复制 {book_info['title']} 到 dist/{book_info['slug']}")
+
+    copy_marker_tool()
 
     # 后处理：注入导航栏和自定义样式
     for book_info in books:
