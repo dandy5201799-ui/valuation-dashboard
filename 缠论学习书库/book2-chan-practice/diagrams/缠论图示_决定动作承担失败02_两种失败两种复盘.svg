@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">两种失败，两种复盘</title>
+  <desc id="desc">提前进场属于纪律问题；确认后仍失败属于正常市场不确定性。</desc>
+  <defs><style>
+    .axis{stroke:#d8d4ca;stroke-width:1.2}.sep{stroke:#e9e6dd;stroke-width:1.2}.fail{stroke:#d97757;stroke-width:2;stroke-dasharray:9 8}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.trend{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}.early{fill:#fff;stroke:#a8a39a;stroke-width:2.5}.dot{fill:#181817;stroke:#fff;stroke-width:4}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:23px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:500;fill:#747069}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:700;fill:#181817}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+  </style></defs>
+  <rect width="1200" height="620" fill="#fff"/><line class="sep" x1="600" y1="90" x2="600" y2="500"/>
+  <g transform="translate(72 76)">
+    <text class="label" x="46" y="30">第一种失败</text><text class="note" x="46" y="58">纪律问题，没等确认</text>
+    <line class="axis" x1="40" y1="390" x2="500" y2="390"/><line class="fail" x1="88" y1="330" x2="452" y2="330"/>
+    <g>
+      <line class="down-wick" x1="96" y1="110" x2="96" y2="194"/><rect class="down" x="85" y="138" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="146" y1="184" x2="146" y2="274"/><rect class="down" x="135" y="214" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="196" y1="228" x2="196" y2="320"/><rect class="up" x="185" y="264" width="22" height="32" rx="3"/>
+      <line class="down-wick" x1="246" y1="276" x2="246" y2="362"/><rect class="down" x="235" y="304" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="296" y1="318" x2="296" y2="400"/><rect class="down" x="285" y="344" width="22" height="30" rx="3"/>
+      <line class="down-wick" x1="346" y1="348" x2="346" y2="424"/><rect class="down" x="335" y="372" width="22" height="28" rx="3"/>
+    </g>
+    <polyline class="trend" points="96,110 146,274 196,228 246,362 346,424"/>
+    <circle class="early" cx="196" cy="228" r="9"/><text class="tag" x="212" y="224">提前进场</text>
+  </g>
+  <g transform="translate(650 76)">
+    <text class="label" x="46" y="30">第二种失败</text><text class="note" x="46" y="58">正常现象，市场有不确定性</text>
+    <line class="axis" x1="40" y1="390" x2="500" y2="390"/><line class="fail" x1="88" y1="330" x2="452" y2="330"/>
+    <g>
+      <line class="down-wick" x1="96" y1="110" x2="96" y2="194"/><rect class="down" x="85" y="138" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="146" y1="184" x2="146" y2="274"/><rect class="down" x="135" y="214" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="196" y1="220" x2="196" y2="310"/><rect class="up" x="185" y="254" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="246" y1="154" x2="246" y2="254"/><rect class="up" x="235" y="194" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="296" y1="220" x2="296" y2="328"/><rect class="down" x="285" y="256" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="346" y1="300" x2="346" y2="390"/><rect class="down" x="335" y="328" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="396" y1="350" x2="396" y2="430"/><rect class="down" x="385" y="374" width="22" height="30" rx="3"/>
+    </g>
+    <polyline class="trend" points="96,110 146,274 196,220 246,154 296,328 396,430"/>
+    <circle class="dot" cx="246" cy="154" r="9"/><text class="tag" x="264" y="158">确认后进场</text>
+  </g>
+  <rect x="750" y="500" width="360" height="76" rx="20" fill="#181817"/><text class="white" x="778" y="546">第一种怪自己，第二种很正常</text>
+</svg>

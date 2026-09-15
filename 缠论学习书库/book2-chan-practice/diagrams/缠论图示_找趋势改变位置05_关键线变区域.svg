@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">关键线变成区域：用附近争夺的 K 线夹出范围</title>
+  <desc id="desc">防守区由有效低点最低价和附近争夺 K 线的上边界夹出；压力区由有效高点最高价和附近受阻 K 线的下边界夹出。</desc>
+  <defs>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.sep{stroke:#e9e6dd;stroke-width:1.2}.zone{fill:#f6ddce;stroke:#d97757;stroke-width:1.6;stroke-dasharray:8 7}.key{stroke:#d97757;stroke-width:2.2}.edge{stroke:#d97757;stroke-width:1.5;stroke-dasharray:6 7}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.trend{fill:none;stroke:#181817;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}.point{fill:#181817;stroke:#fff;stroke-width:4}.high{fill:#d97757;stroke:#fff;stroke-width:4}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:700;fill:#181817}.micro{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:22px;font-weight:700;fill:#fff}.white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <line class="sep" x1="600" y1="80" x2="600" y2="540"/>
+  <g transform="translate(74 78)">
+    <line class="axis" x1="40" y1="386" x2="496" y2="386"/>
+    <line class="axis" x1="40" y1="70" x2="40" y2="386"/>
+    <rect class="zone" x="254" y="300" width="178" height="58" rx="14"/>
+    <line class="edge" x1="254" y1="300" x2="432" y2="300"/>
+    <line class="key" x1="254" y1="358" x2="432" y2="358"/>
+    <g>
+      <line class="up-wick" x1="76" y1="284" x2="76" y2="344"/><rect class="up" x="65" y="306" width="22" height="24" rx="3"/>
+      <line class="up-wick" x1="118" y1="232" x2="118" y2="312"/><rect class="up" x="107" y="262" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="160" y1="158" x2="160" y2="260"/><rect class="up" x="149" y="196" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="202" y1="214" x2="202" y2="306"/><rect class="down" x="191" y="242" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="244" y1="276" x2="244" y2="356"/><rect class="down" x="233" y="302" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="286" y1="292" x2="286" y2="358"/><rect class="up" x="275" y="318" width="22" height="24" rx="3"/>
+      <line class="down-wick" x1="328" y1="288" x2="328" y2="352"/><rect class="down" x="317" y="310" width="22" height="26" rx="3"/>
+      <line class="up-wick" x1="370" y1="248" x2="370" y2="326"/><rect class="up" x="359" y="280" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="412" y1="190" x2="412" y2="288"/><rect class="up" x="401" y="228" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="454" y1="124" x2="454" y2="224"/><rect class="up" x="443" y="164" width="22" height="38" rx="3"/>
+    </g>
+    <polyline class="trend" points="76,344 160,158 244,356 328,352 454,124"/>
+    <circle class="point" cx="244" cy="356" r="9"/>
+    <text class="label" x="66" y="34">防守线变防守区</text>
+    <text class="tag" x="292" y="380">下沿：有效低点最低价</text>
+    <text class="tag" x="338" y="288">上沿：争夺区上边界</text>
+    <rect x="300" y="404" width="204" height="64" rx="17" fill="#181817"/>
+    <text class="white" x="322" y="432">只用已有 K 线</text>
+    <text class="white-note" x="322" y="458">不能事后加宽</text>
+  </g>
+  <g transform="translate(650 78)">
+    <line class="axis" x1="40" y1="386" x2="496" y2="386"/>
+    <line class="axis" x1="40" y1="70" x2="40" y2="386"/>
+    <rect class="zone" x="214" y="106" width="178" height="58" rx="14"/>
+    <line class="key" x1="214" y1="106" x2="392" y2="106"/>
+    <line class="edge" x1="214" y1="164" x2="392" y2="164"/>
+    <g>
+      <line class="down-wick" x1="76" y1="118" x2="76" y2="206"/><rect class="down" x="65" y="148" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="118" y1="184" x2="118" y2="284"/><rect class="down" x="107" y="214" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="160" y1="252" x2="160" y2="340"/><rect class="down" x="149" y="280" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="202" y1="230" x2="202" y2="316"/><rect class="up" x="191" y="264" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="244" y1="158" x2="244" y2="260"/><rect class="up" x="233" y="198" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="286" y1="106" x2="286" y2="172"/><rect class="down" x="275" y="126" width="22" height="26" rx="3"/>
+      <line class="up-wick" x1="328" y1="116" x2="328" y2="172"/><rect class="up" x="317" y="138" width="22" height="22" rx="3"/>
+      <line class="down-wick" x1="370" y1="128" x2="370" y2="198"/><rect class="down" x="359" y="152" width="22" height="28" rx="3"/>
+      <line class="down-wick" x1="412" y1="196" x2="412" y2="292"/><rect class="down" x="401" y="226" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="454" y1="284" x2="454" y2="376"/><rect class="down" x="443" y="312" width="22" height="34" rx="3"/>
+    </g>
+    <polyline class="trend" points="76,118 160,340 244,158 328,116 454,376"/>
+    <circle class="high" cx="328" cy="116" r="9"/>
+    <text class="label" x="66" y="34">压力线变压力区</text>
+    <text class="tag" x="282" y="92">上沿：有效高点最高价</text>
+    <text class="tag" x="282" y="202">下沿：受阻区下边界</text>
+    <text class="micro" x="300" y="402">有争夺，才看成区域</text>
+  </g>
+</svg>

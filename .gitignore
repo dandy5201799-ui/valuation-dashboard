@@ -2,3 +2,14 @@
 .claude/settings.local.json
 dashboard.html
 work/
+
+# Generated book outputs
+**/_book/
+**/site/
+缠论学习书库/dist/
+
+# Local dependencies
+**/node_modules/
+
+# OS/editor noise
+**/.DS_Store

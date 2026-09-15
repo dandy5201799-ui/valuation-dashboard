@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">从观察到确认：章节导览</title>
+  <desc id="desc">到了关键位置后，先进入观察，等待证据，直到确认点出现，再判断确认级别。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}.terminal{fill:#181817}.path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}.mini{fill:none;stroke:#181817;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}.dash{stroke:#d97757;stroke-width:2;stroke-dasharray:7 7}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:22px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:450;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}.white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}.dot{fill:#181817;stroke:#fff;stroke-width:3}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(56 158)">
+    <g transform="translate(0 0)">
+      <rect class="node" x="0" y="0" width="150" height="118" rx="18"/>
+      <path class="dash" d="M30 70 H120"/>
+      <polyline class="mini" points="32,82 62,46 94,78 120,52"/>
+      <text class="label" x="12" y="164">到了关键位置</text>
+      <text class="note" x="28" y="192">原结构要检查</text>
+    </g>
+    <path class="path" d="M168 60 H206"/>
+    <g transform="translate(226 0)">
+      <rect class="node" x="0" y="0" width="150" height="118" rx="18"/>
+      <rect x="40" y="48" width="70" height="34" rx="10" fill="#f6ddce" stroke="#d97757" stroke-dasharray="6 6"/>
+      <polyline class="mini" points="28,84 58,54 88,78 122,42"/>
+      <text class="label" x="28" y="164">进入观察</text>
+      <text class="note" x="24" y="192">开始盯结构</text>
+    </g>
+    <path class="path" d="M394 60 H432"/>
+    <g transform="translate(452 0)">
+      <rect class="node" x="0" y="0" width="150" height="118" rx="18"/>
+      <polyline class="mini" points="28,82 60,54 92,74 124,44"/>
+      <circle class="dot" cx="124" cy="44" r="7"/>
+      <text class="label" x="40" y="164">等证据</text>
+      <text class="note" x="26" y="192">不是只看位置</text>
+    </g>
+    <path class="path" d="M620 60 H658"/>
+    <g transform="translate(678 0)">
+      <rect class="node" x="0" y="0" width="150" height="118" rx="18"/>
+      <polyline class="mini" points="24,82 56,68 86,76 126,40"/>
+      <circle class="dot" cx="126" cy="40" r="8"/>
+      <text class="label" x="18" y="164">确认点出现</text>
+      <text class="note" x="24" y="192">结构给出信号</text>
+    </g>
+    <path class="path" d="M846 60 H884"/>
+    <g transform="translate(904 0)">
+      <rect class="node" x="0" y="0" width="150" height="118" rx="18"/>
+      <polyline class="mini" points="30,82 58,66 88,46 122,38"/>
+      <text class="label" x="20" y="164">确认级别</text>
+      <text class="note" x="18" y="192">决定动作大小</text>
+    </g>
+  </g>
+  <rect class="terminal" x="728" y="500" width="410" height="76" rx="20"/>
+  <text class="white" x="756" y="546">到了位置只是开始盯，有了证据才能动手</text>
+</svg>

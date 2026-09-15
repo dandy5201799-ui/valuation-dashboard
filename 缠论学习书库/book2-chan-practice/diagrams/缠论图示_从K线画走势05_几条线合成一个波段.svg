@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">几条线合成一个波段</title>
+  <desc id="desc">A 到 B 向上、B 到 C 向下、C 到 D 向上，几条线合在一起，形成一段可以观察的走势。</desc>
+  <defs>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.zone{fill:#f6ddce;stroke:#d97757;stroke-width:1.6;stroke-dasharray:8 8}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.pen{fill:none;stroke:#181817;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round}.segment{fill:none;stroke:#d97757;stroke-width:2.2;stroke-linecap:round;stroke-dasharray:9 8}.point{fill:#181817;stroke:#fff;stroke-width:4}.top{fill:#181817;stroke:#fff;stroke-width:4}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:19px;font-weight:700;fill:#181817}.micro{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}.white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(96 58)">
+    <line class="axis" x1="42" y1="430" x2="1038" y2="430"/>
+    <line class="axis" x1="42" y1="70" x2="42" y2="430"/>
+    <rect class="zone" x="96" y="102" width="560" height="330" rx="28"/>
+    <g>
+      <line class="up-wick" x1="96" y1="328" x2="96" y2="392"/><rect class="up" x="85" y="352" width="22" height="24" rx="3"/>
+      <line class="up-wick" x1="142" y1="286" x2="142" y2="360"/><rect class="up" x="131" y="316" width="22" height="26" rx="3"/>
+      <line class="up-wick" x1="188" y1="232" x2="188" y2="322"/><rect class="up" x="177" y="268" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="234" y1="150" x2="234" y2="254"/><rect class="up" x="223" y="190" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="280" y1="206" x2="280" y2="306"/><rect class="down" x="269" y="236" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="326" y1="272" x2="326" y2="370"/><rect class="down" x="315" y="304" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="372" y1="332" x2="372" y2="410"/><rect class="down" x="361" y="356" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="418" y1="304" x2="418" y2="388"/><rect class="up" x="407" y="338" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="464" y1="238" x2="464" y2="332"/><rect class="up" x="453" y="274" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="510" y1="174" x2="510" y2="276"/><rect class="up" x="499" y="214" width="22" height="38" rx="3"/>
+      <line class="up-wick" x1="556" y1="112" x2="556" y2="218"/><rect class="up" x="545" y="154" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="602" y1="144" x2="602" y2="250"/><rect class="down" x="591" y="176" width="22" height="42" rx="3"/>
+      <line class="up-wick" x1="648" y1="120" x2="648" y2="216"/><rect class="up" x="637" y="158" width="22" height="34" rx="3"/>
+    </g>
+    <polyline class="pen" points="96,392 234,150 372,410 556,112"/>
+    <line class="segment" x1="96" y1="392" x2="556" y2="112"/>
+    <circle class="point" cx="96" cy="392" r="9"/><circle class="top" cx="234" cy="150" r="9"/><circle class="point" cx="372" cy="410" r="9"/><circle class="top" cx="556" cy="112" r="9"/>
+    <text class="tag" x="76" y="386">A</text>
+    <text class="tag" x="246" y="148">B</text>
+    <text class="tag" x="386" y="414">C</text>
+    <text class="tag" x="570" y="110">D</text>
+    <text class="tag" x="130" y="240">A→B 向上</text>
+    <text class="tag" x="270" y="290">B→C 向下</text>
+    <text class="tag" x="430" y="250">C→D 向上</text>
+    <text class="label" x="266" y="94">波段</text>
+    <g>
+      <rect x="720" y="108" width="278" height="72" rx="18" fill="#fff" stroke="#d8d4ca"/>
+      <text class="label" x="746" y="140">至少连续几条线</text>
+      <text class="note" x="746" y="166">单独一条线信息太少</text>
+      <rect x="720" y="210" width="278" height="72" rx="18" fill="#fff" stroke="#d8d4ca"/>
+      <text class="label" x="746" y="242">端点顺序清楚</text>
+      <text class="note" x="746" y="268">A、B、C、D 依次出现</text>
+      <rect x="720" y="312" width="278" height="72" rx="18" fill="#fff" stroke="#d8d4ca"/>
+      <text class="label" x="746" y="344">看出推进和回撤</text>
+      <text class="note" x="746" y="370">再判断上行、回落或横盘</text>
+    </g>
+    <rect x="690" y="430" width="410" height="76" rx="20" fill="#181817"/>
+    <text class="white" x="716" y="462">几条线合起来</text>
+    <text class="white-note" x="716" y="490">才是一段可以观察的走势</text>
+  </g>
+</svg>

@@ -1,6 +1,6 @@
 {
-  "title": "缠论自动标记工具",
-  "description": "真实 K 线自动标记工具的规则、算法、产品界面和验证计划。",
+  "title": "缠论标记工具",
+  "description": "真实 K 线辅助标记的规则、算法、产品界面和验证计划。",
   "author": "Codex × wps",
   "language": "zh-Hans",
   "root": ".",
@@ -13,13 +13,13 @@
   "readme_path": "index.md",
   "release_date": "2026-09-13",
   "cover_image": "assets/cover.svg",
-  "cover_alt": "封面：缠论自动标记工具",
+  "cover_alt": "封面：缠论标记工具",
   "outputs": {
     "print_html": "exported/book3-auto-marker-print.html",
     "pdf": "exported/book3-auto-marker.pdf"
   },
   "title_page_lines": [
-    "让每一个自动标记都能解释、回放、追溯",
+    "让每一个辅助标记都能解释、回放、追溯",
     "学习与研究工具，非自动交易承诺"
   ]
 }

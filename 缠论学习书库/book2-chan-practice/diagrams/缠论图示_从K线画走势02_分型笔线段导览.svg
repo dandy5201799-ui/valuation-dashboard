@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">从 K 线到走势：选点、连线、找出波段</title>
+  <desc id="desc">K 线中先选出高点和低点，再把相邻高低点连成线，几条线组成一个波段，形成可以判断趋势的走势。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.pen{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}.segment{fill:none;stroke:#d97757;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:9 8;marker-end:url(#arrow)}.point{fill:#181817;stroke:#fff;stroke-width:4}.top{fill:#d97757;stroke:#fff;stroke-width:4}.guide{stroke:#d8d4ca;stroke-width:1.1;stroke-dasharray:6 8}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:23px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.terminal-label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:23px;font-weight:700;fill:#fff}.terminal-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#e9e6dd}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:20px;font-weight:700;fill:#181817}.tiny{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(86 54)">
+    <line class="axis" x1="38" y1="430" x2="1048" y2="430"/>
+    <line class="axis" x1="38" y1="62" x2="38" y2="430"/>
+
+    <g>
+      <line class="up-wick" x1="76" y1="336" x2="76" y2="402"/><rect class="up" x="65" y="360" width="22" height="24" rx="3"/>
+      <line class="up-wick" x1="124" y1="292" x2="124" y2="374"/><rect class="up" x="113" y="324" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="172" y1="242" x2="172" y2="330"/><rect class="up" x="161" y="276" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="220" y1="164" x2="220" y2="268"/><rect class="up" x="209" y="204" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="268" y1="204" x2="268" y2="306"/><rect class="down" x="257" y="234" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="316" y1="258" x2="316" y2="366"/><rect class="down" x="305" y="288" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="364" y1="312" x2="364" y2="402"/><rect class="down" x="353" y="338" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="412" y1="282" x2="412" y2="366"/><rect class="up" x="401" y="316" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="460" y1="220" x2="460" y2="310"/><rect class="up" x="449" y="254" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="508" y1="144" x2="508" y2="250"/><rect class="up" x="497" y="184" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="556" y1="174" x2="556" y2="280"/><rect class="down" x="545" y="204" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="604" y1="228" x2="604" y2="338"/><rect class="down" x="593" y="260" width="22" height="44" rx="3"/>
+      <line class="down-wick" x1="652" y1="286" x2="652" y2="382"/><rect class="down" x="641" y="314" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="700" y1="250" x2="700" y2="340"/><rect class="up" x="689" y="286" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="748" y1="190" x2="748" y2="288"/><rect class="up" x="737" y="228" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="796" y1="122" x2="796" y2="224"/><rect class="up" x="785" y="162" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="844" y1="154" x2="844" y2="254"/><rect class="down" x="833" y="182" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="892" y1="130" x2="892" y2="222"/><rect class="up" x="881" y="166" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="940" y1="94" x2="940" y2="190"/><rect class="up" x="929" y="132" width="22" height="34" rx="3"/>
+    </g>
+
+    <polyline class="pen" points="76,402 220,164 364,402 508,144 652,382 796,122 940,94"/>
+    <line class="segment" x1="76" y1="402" x2="940" y2="94"/>
+    <text class="tag" x="720" y="422" fill="#d97757">波段方向</text>
+
+    <line class="guide" x1="220" y1="164" x2="220" y2="430"/>
+    <line class="guide" x1="364" y1="402" x2="364" y2="430"/>
+    <line class="guide" x1="508" y1="144" x2="508" y2="430"/>
+    <line class="guide" x1="652" y1="382" x2="652" y2="430"/>
+    <line class="guide" x1="796" y1="122" x2="796" y2="430"/>
+    <line class="guide" x1="940" y1="94" x2="940" y2="430"/>
+
+    <circle class="point" cx="76" cy="402" r="8"/>
+    <circle class="top" cx="220" cy="164" r="8"/>
+    <circle class="point" cx="364" cy="402" r="8"/>
+    <circle class="top" cx="508" cy="144" r="8"/>
+    <circle class="point" cx="652" cy="382" r="8"/>
+    <circle class="top" cx="796" cy="122" r="8"/>
+    <circle class="top" cx="940" cy="94" r="8"/>
+
+    <text class="tag" x="188" y="148">高点</text>
+    <text class="tag" x="332" y="392">低点</text>
+    <text class="tag" x="476" y="128">高点</text>
+    <text class="tag" x="620" y="372">低点</text>
+
+    <text class="tiny" x="126" y="250">一笔</text>
+    <text class="tiny" x="286" y="292">一笔</text>
+    <text class="tiny" x="430" y="250">一笔</text>
+    <text class="tiny" x="574" y="292">一笔</text>
+    <text class="tiny" x="720" y="238">一笔</text>
+
+    <g>
+      <rect x="120" y="34" width="270" height="76" rx="18" fill="#fff" stroke="#d8d4ca"/>
+      <text class="label" x="146" y="67">先选点</text>
+      <text class="note" x="146" y="96">高点和低点来自前后比较</text>
+
+      <rect x="430" y="34" width="270" height="76" rx="18" fill="#fff" stroke="#d8d4ca"/>
+      <text class="label" x="456" y="67">再连线</text>
+      <text class="note" x="456" y="96">相邻高低点形成一段移动</text>
+
+      <rect x="736" y="446" width="300" height="76" rx="18" fill="#181817"/>
+      <text class="terminal-label" x="762" y="479">找出波段</text>
+      <text class="terminal-note" x="762" y="508">整理成可以观察的走势</text>
+    </g>
+  </g>
+</svg>

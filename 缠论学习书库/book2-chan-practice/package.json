@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "build": "node scripts/build-site.mjs",
+    "dev": "node scripts/build-site.mjs --serve"
+  },
+  "devDependencies": {
+    "honkit": "^6.2.2"
+  },
+  "name": "book2-chan-practice",
+  "version": "1.0.0",
+  "description": "![封面：看懂K线走势](assets/cover.svg)",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">确认信号的三个级别</title>
+  <desc id="desc">三个小图分别展示一小段反弹确认、回调结束确认、原趋势结束确认，级别从左到右递增。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.1}.panel{fill:#fff;stroke:#d8d4ca;stroke-width:1.1}.path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}.break{stroke:#d97757;stroke-width:2;stroke-dasharray:8 8}.up{fill:#fff;stroke:#d97757;stroke-width:1.8}.up-wick{stroke:#d97757;stroke-width:1.8;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:1.8}.down-wick{stroke:#747069;stroke-width:1.8;stroke-linecap:round}.trend{fill:none;stroke:#181817;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}.dot{fill:#181817;stroke:#fff;stroke-width:4}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:20px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:15px;font-weight:500;fill:#747069}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:15px;font-weight:700;fill:#181817}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(48 78)">
+    <g transform="translate(0 0)">
+      <rect class="panel" x="0" y="0" width="300" height="290" rx="24"/>
+      <line class="axis" x1="34" y1="236" x2="264" y2="236"/>
+      <g>
+        <line class="down-wick" x1="52" y1="42" x2="52" y2="112"/><rect class="down" x="42" y="64" width="20" height="30" rx="3"/>
+        <line class="down-wick" x1="86" y1="90" x2="86" y2="166"/><rect class="down" x="76" y="116" width="20" height="30" rx="3"/>
+        <line class="down-wick" x1="120" y1="148" x2="120" y2="220"/><rect class="down" x="110" y="172" width="20" height="28" rx="3"/>
+        <line class="up-wick" x1="154" y1="146" x2="154" y2="214"/><rect class="up" x="144" y="172" width="20" height="24" rx="3"/>
+        <line class="up-wick" x1="188" y1="112" x2="188" y2="184"/><rect class="up" x="178" y="140" width="20" height="26" rx="3"/>
+        <line class="down-wick" x1="222" y1="138" x2="222" y2="210"/><rect class="down" x="212" y="162" width="20" height="28" rx="3"/>
+        <line class="up-wick" x1="256" y1="118" x2="256" y2="188"/><rect class="up" x="246" y="146" width="20" height="24" rx="3"/>
+      </g>
+      <polyline class="trend" points="52,42 120,220 188,112 222,210 256,118"/>
+      <circle class="dot" cx="256" cy="118" r="8"/>
+      <text class="tag" x="164" y="94">小反弹确认点</text>
+      <text class="label" x="18" y="336">级别1：一小段</text>
+      <text class="note" x="18" y="362">只确认一小段走完了，可能只是反弹</text>
+    </g>
+    <path class="path" d="M326 145 H374"/>
+    <g transform="translate(402 0)">
+      <rect class="panel" x="0" y="0" width="300" height="290" rx="24"/>
+      <line class="axis" x1="34" y1="236" x2="264" y2="236"/>
+      <line class="break" x1="124" y1="206" x2="260" y2="206"/>
+      <g>
+        <line class="up-wick" x1="48" y1="184" x2="48" y2="248"/><rect class="up" x="38" y="208" width="20" height="24" rx="3"/>
+        <line class="up-wick" x1="82" y1="128" x2="82" y2="206"/><rect class="up" x="72" y="158" width="20" height="30" rx="3"/>
+        <line class="up-wick" x1="116" y1="58" x2="116" y2="150"/><rect class="up" x="106" y="94" width="20" height="34" rx="3"/>
+        <line class="down-wick" x1="150" y1="110" x2="150" y2="202"/><rect class="down" x="140" y="138" width="20" height="34" rx="3"/>
+        <line class="down-wick" x1="184" y1="164" x2="184" y2="230"/><rect class="down" x="174" y="186" width="20" height="26" rx="3"/>
+        <line class="up-wick" x1="218" y1="142" x2="218" y2="218"/><rect class="up" x="208" y="172" width="20" height="28" rx="3"/>
+        <line class="up-wick" x1="252" y1="82" x2="252" y2="172"/><rect class="up" x="242" y="118" width="20" height="34" rx="3"/>
+      </g>
+      <polyline class="trend" points="48,248 116,58 184,230 218,142 252,82"/>
+      <circle class="dot" cx="252" cy="82" r="8"/>
+      <text class="tag" x="126" y="222">防守位</text>
+      <text class="label" x="18" y="336">级别2：一段回调</text>
+      <text class="note" x="18" y="362">确认一段回调走完了，原趋势恢复</text>
+    </g>
+    <path class="path" d="M728 145 H776"/>
+    <g transform="translate(804 0)">
+      <rect class="panel" x="0" y="0" width="300" height="290" rx="24"/>
+      <line class="axis" x1="34" y1="236" x2="264" y2="236"/>
+      <line class="break" x1="104" y1="176" x2="264" y2="176"/>
+      <g>
+        <line class="up-wick" x1="46" y1="186" x2="46" y2="248"/><rect class="up" x="36" y="210" width="20" height="24" rx="3"/>
+        <line class="up-wick" x1="80" y1="118" x2="80" y2="202"/><rect class="up" x="70" y="152" width="20" height="30" rx="3"/>
+        <line class="up-wick" x1="114" y1="54" x2="114" y2="148"/><rect class="up" x="104" y="92" width="20" height="34" rx="3"/>
+        <line class="down-wick" x1="148" y1="112" x2="148" y2="206"/><rect class="down" x="138" y="142" width="20" height="36" rx="3"/>
+        <line class="down-wick" x1="182" y1="186" x2="182" y2="258"/><rect class="down" x="172" y="210" width="20" height="28" rx="3"/>
+        <line class="up-wick" x1="216" y1="156" x2="216" y2="230"/><rect class="up" x="206" y="184" width="20" height="26" rx="3"/>
+        <line class="down-wick" x1="250" y1="200" x2="250" y2="270"/><rect class="down" x="240" y="222" width="20" height="28" rx="3"/>
+      </g>
+      <polyline class="trend" points="46,248 114,54 182,258 216,156 250,270"/>
+      <circle class="dot" cx="216" cy="156" r="8"/>
+      <text class="tag" x="118" y="168">防守位被跌破</text>
+      <text class="tag" x="178" y="140">反抽不回</text>
+      <text class="label" x="18" y="336">级别3：原趋势</text>
+      <text class="note" x="18" y="362">确认原趋势走完了，可能反转</text>
+    </g>
+  </g>
+  <rect x="750" y="500" width="360" height="76" rx="20" fill="#181817"/>
+  <text class="white" x="778" y="546">确认什么级别，就做什么操作</text>
+</svg>

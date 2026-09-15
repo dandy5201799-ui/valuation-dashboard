@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">决定动作，承担失败：章节导览</title>
+  <desc id="desc">确认信号出现后，先写动作计划，再按计划进场；做对了更新计划，做错了按计划离开。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}.path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}.mini{fill:none;stroke:#181817;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}.dash{stroke:#d97757;stroke-width:2;stroke-dasharray:7 7}.dot{fill:#181817;stroke:#fff;stroke-width:3}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:22px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:450;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(54 156)">
+    <g><rect class="node" x="0" y="0" width="160" height="118" rx="18"/><polyline class="mini" points="32,82 62,66 92,74 128,38"/><circle class="dot" cx="128" cy="38" r="8"/><text class="label" x="12" y="164">确认信号出现</text><text class="note" x="36" y="192">机会成立</text></g>
+    <path class="path" d="M178 60 H218"/>
+    <g transform="translate(238 0)"><rect class="node" x="0" y="0" width="160" height="118" rx="18"/><path class="mini" d="M44 36 H116 M44 60 H106 M44 84 H94"/><text class="label" x="28" y="164">写动作计划</text><text class="note" x="24" y="192">先定规则</text></g>
+    <path class="path" d="M416 60 H456"/>
+    <g transform="translate(476 0)"><rect class="node" x="0" y="0" width="160" height="118" rx="18"/><polyline class="mini" points="38,82 68,58 98,68 126,40"/><circle class="dot" cx="98" cy="68" r="7"/><text class="label" x="28" y="164">按计划进场</text><text class="note" x="30" y="192">不是临场猜</text></g>
+    <path class="path" d="M654 60 H694"/>
+    <g transform="translate(714 0)"><rect class="node" x="0" y="0" width="160" height="118" rx="18"/><polyline class="mini" points="34,86 66,64 98,48 126,30"/><path class="dash" d="M38 86 H128"/><text class="label" x="16" y="164">做对了更新计划</text><text class="note" x="34" y="192">保护结果</text></g>
+    <path class="path" d="M892 60 H932"/>
+    <g transform="translate(952 0)"><rect class="node" x="0" y="0" width="160" height="118" rx="18"/><polyline class="mini" points="34,38 66,72 98,86 126,96"/><path class="dash" d="M32 82 H128"/><text class="label" x="16" y="164">做错了按计划走人</text><text class="note" x="38" y="192">到线执行</text></g>
+  </g>
+  <rect x="708" y="500" width="430" height="76" rx="20" fill="#181817"/>
+  <text class="white" x="736" y="546">确认只是可以动手，动手之前先写计划</text>
+</svg>

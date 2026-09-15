@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">第三章导览：从走势延续到关键位置</title>
+  <desc id="desc">已经画好的走势，先检查方向是否延续，再看是否变弱，然后找到防守位、压力位或横盘边界，最后进入观察。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .box{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}.terminal{fill:#181817}.line{fill:none;stroke:#5f5b55;stroke-width:2;marker-end:url(#arrow)}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#fff}.white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#e9e6dd}.mini{fill:none;stroke:#181817;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent{fill:none;stroke:#d97757;stroke-width:2.2;stroke-dasharray:7 7}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(92 100)">
+    <rect class="box" x="0" y="82" width="220" height="130" rx="20"/>
+    <polyline class="mini" points="42,160 82,116 122,174 168,108"/>
+    <text class="label" x="42" y="254">已有走势</text>
+    <text class="note" x="42" y="282">第二章画出来</text>
+
+    <path class="line" d="M236 146 H286"/>
+
+    <rect class="box" x="306" y="82" width="220" height="130" rx="20"/>
+    <polyline class="mini" points="352,170 394,126 434,156 480,112"/>
+    <text class="label" x="352" y="254">是否延续</text>
+    <text class="note" x="352" y="282">原方向还顺不顺</text>
+
+    <path class="line" d="M546 146 H596"/>
+
+    <rect class="box" x="616" y="82" width="220" height="130" rx="20"/>
+    <polyline class="mini" points="658,120 704,96 748,116 794,112"/>
+    <path class="accent" d="M658 154 H794"/>
+    <text class="label" x="658" y="254">哪里警惕</text>
+    <text class="note" x="658" y="282">找关键位置</text>
+
+    <path class="line" d="M856 146 H858"/>
+
+    <rect class="terminal" x="878" y="82" width="220" height="130" rx="20"/>
+    <text class="white" x="920" y="140">进入观察</text>
+    <text class="white-note" x="920" y="170">还不是确认</text>
+  </g>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="420" viewBox="0 0 920 420">
+  <rect width="920" height="420" fill="#fff"/>
+  <g transform="translate(54 32)">
+    <rect x="0" y="0" width="812" height="330" rx="14" fill="#fbfdff" stroke="#dbe3ef"/>
+    <g stroke="#eef2f7"><line x1="42" y1="275" x2="770" y2="275"/><line x1="42" y1="220" x2="770" y2="220"/><line x1="42" y1="165" x2="770" y2="165"/><line x1="42" y1="110" x2="770" y2="110"/><line x1="42" y1="55" x2="770" y2="55"/></g>
+
+    <rect x="520" y="218" width="180" height="42" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="2" opacity=".8"/>
+    <line x1="500" y1="240" x2="720" y2="240" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="7 6"/>
+    <text x="516" y="232" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="15" font-weight="700" fill="#2563eb">关键线：防守线</text>
+    <text x="582" y="252" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="16" font-weight="700" fill="#2563eb">观察区</text>
+
+    <g stroke-width="3">
+      <line x1="78" y1="270" x2="78" y2="220" stroke="#16a34a"/><rect x="68" y="238" width="20" height="24" fill="#16a34a"/>
+      <line x1="120" y1="226" x2="120" y2="176" stroke="#16a34a"/><rect x="110" y="194" width="20" height="24" fill="#16a34a"/>
+      <line x1="162" y1="178" x2="162" y2="128" stroke="#16a34a"/><rect x="152" y="144" width="20" height="25" fill="#16a34a"/>
+      <line x1="204" y1="136" x2="204" y2="84" stroke="#16a34a"/><rect x="194" y="100" width="20" height="26" fill="#16a34a"/>
+      <line x1="246" y1="122" x2="246" y2="72" stroke="#dc2626"/><rect x="236" y="86" width="20" height="28" fill="#dc2626"/>
+      <line x1="288" y1="166" x2="288" y2="118" stroke="#dc2626"/><rect x="278" y="132" width="20" height="26" fill="#dc2626"/>
+      <line x1="330" y1="204" x2="330" y2="156" stroke="#16a34a"/><rect x="320" y="172" width="20" height="22" fill="#16a34a"/>
+      <line x1="372" y1="162" x2="372" y2="114" stroke="#16a34a"/><rect x="362" y="130" width="20" height="23" fill="#16a34a"/>
+      <line x1="414" y1="118" x2="414" y2="68" stroke="#16a34a"/><rect x="404" y="84" width="20" height="24" fill="#16a34a"/>
+      <line x1="456" y1="106" x2="456" y2="58" stroke="#dc2626"/><rect x="446" y="72" width="20" height="26" fill="#dc2626"/>
+      <line x1="498" y1="150" x2="498" y2="102" stroke="#dc2626"/><rect x="488" y="116" width="20" height="25" fill="#dc2626"/>
+      <line x1="540" y1="188" x2="540" y2="142" stroke="#dc2626"/><rect x="530" y="156" width="20" height="24" fill="#dc2626"/>
+      <line x1="582" y1="224" x2="582" y2="180" stroke="#dc2626"/><rect x="572" y="194" width="20" height="23" fill="#dc2626"/>
+      <line x1="624" y1="248" x2="624" y2="204" stroke="#16a34a"/><rect x="614" y="218" width="20" height="22" fill="#16a34a"/>
+      <line x1="666" y1="230" x2="666" y2="186" stroke="#dc2626"/><rect x="656" y="200" width="20" height="24" fill="#dc2626"/>
+      <line x1="708" y1="282" x2="708" y2="232" stroke="#dc2626"/><rect x="698" y="246" width="20" height="28" fill="#dc2626"/>
+    </g>
+
+    <polyline points="78,270 246,72 330,204 456,58 624,248 666,186 708,282" fill="none" stroke="#7c3aed" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+    <line x1="500" y1="260" x2="735" y2="260" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="7 6"/>
+    <text x="512" y="278" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="15" font-weight="700" fill="#b91c1c">确认线：防守区下沿</text>
+    <circle cx="708" cy="282" r="9" fill="#dc2626" stroke="#fff" stroke-width="3"/>
+    <text x="620" y="309" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="17" font-weight="700" fill="#b91c1c">确认点</text>
+  </g>
+</svg>

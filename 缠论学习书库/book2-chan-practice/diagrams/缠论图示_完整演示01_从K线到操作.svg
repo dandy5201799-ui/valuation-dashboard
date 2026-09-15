@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">从 K 线到操作</title>
+  <desc id="desc">上排 6 步结构处理，下排 7 步买卖判断，最后进入复盘检查。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}.path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:22px;font-weight:700;fill:#181817}.step{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:15px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <text class="label" x="70" y="70">结构处理</text>
+  <g transform="translate(70 96)">
+    <g><rect class="node" x="0" y="0" width="124" height="70" rx="16"/><text class="step" x="18" y="43">1.K线包含</text></g>
+    <path class="path" d="M136 35 H166"/>
+    <g transform="translate(178 0)"><rect class="node" x="0" y="0" width="124" height="70" rx="16"/><text class="step" x="26" y="43">2.找分型</text></g>
+    <path class="path" d="M314 35 H344"/>
+    <g transform="translate(356 0)"><rect class="node" x="0" y="0" width="124" height="70" rx="16"/><text class="step" x="34" y="43">3.连笔</text></g>
+    <path class="path" d="M492 35 H522"/>
+    <g transform="translate(534 0)"><rect class="node" x="0" y="0" width="124" height="70" rx="16"/><text class="step" x="26" y="43">4.连线段</text></g>
+    <path class="path" d="M670 35 H700"/>
+    <g transform="translate(712 0)"><rect class="node" x="0" y="0" width="124" height="70" rx="16"/><text class="step" x="26" y="43">5.找中枢</text></g>
+    <path class="path" d="M848 35 H878"/>
+    <g transform="translate(890 0)"><rect class="node" x="0" y="0" width="124" height="70" rx="16"/><text class="step" x="18" y="43">6.走势类型</text></g>
+  </g>
+  <path class="path" d="M636 186 V244"/>
+  <text class="note" x="592" y="224">结构是基础</text>
+  <text class="label" x="70" y="300">买卖判断</text>
+  <g transform="translate(38 326)">
+    <g><rect class="node" x="0" y="0" width="112" height="70" rx="16"/><text class="step" x="18" y="43">7.看背驰</text></g>
+    <path class="path" d="M122 35 H142"/>
+    <g transform="translate(152 0)"><rect class="node" x="0" y="0" width="112" height="70" rx="16"/><text class="step" x="10" y="43">8.找买卖点</text></g>
+    <path class="path" d="M274 35 H294"/>
+    <g transform="translate(304 0)"><rect class="node" x="0" y="0" width="112" height="70" rx="16"/><text class="step" x="10" y="43">9.判断趋势</text></g>
+    <path class="path" d="M426 35 H446"/>
+    <g transform="translate(456 0)"><rect class="node" x="0" y="0" width="128" height="70" rx="16"/><text class="step" x="10" y="43">10.找关键位置</text></g>
+    <path class="path" d="M594 35 H614"/>
+    <g transform="translate(624 0)"><rect class="node" x="0" y="0" width="112" height="70" rx="16"/><text class="step" x="18" y="43">11.等确认</text></g>
+    <path class="path" d="M746 35 H766"/>
+    <g transform="translate(776 0)"><rect class="node" x="0" y="0" width="128" height="70" rx="16"/><text class="step" x="10" y="43">12.写动作计划</text></g>
+    <path class="path" d="M914 35 H934"/>
+    <g transform="translate(944 0)"><rect class="node" x="0" y="0" width="128" height="70" rx="16"/><text class="step" x="10" y="43">13.多周期配合</text></g>
+  </g>
+  <path class="path" d="M636 410 V452"/>
+  <rect class="node" x="426" y="458" width="420" height="72" rx="18"/>
+  <text class="step" x="488" y="502">复盘检查：规则一致吗？执行到位吗？</text>
+  <rect x="690" y="532" width="448" height="64" rx="20" fill="#181817"/>
+  <text class="white" x="720" y="572">先处理结构，再做买卖判断，最后复盘</text>
+</svg>

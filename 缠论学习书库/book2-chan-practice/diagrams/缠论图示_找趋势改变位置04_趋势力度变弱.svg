@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">趋势变弱：推动变小，回调变深</title>
+  <desc id="desc">上升趋势中，后一段上推幅度变小，回调更深，说明趋势力度开始变弱。</desc>
+  <defs>
+    <marker id="arrow-coral" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#d97757" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#747069" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.trend{fill:none;stroke:#181817;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}.push{fill:none;stroke:#d97757;stroke-width:2.3;marker-end:url(#arrow-coral)}.pull{fill:none;stroke:#747069;stroke-width:2.1;marker-end:url(#arrow-gray);stroke-dasharray:7 7}.guide{stroke:#d8d4ca;stroke-width:1.2;stroke-dasharray:6 8}.point{fill:#181817;stroke:#fff;stroke-width:4}.high{fill:#d97757;stroke:#fff;stroke-width:4}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#fff}.white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#e9e6dd}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:19px;font-weight:700;fill:#181817}.accent{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:19px;font-weight:700;fill:#d97757}.small{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:450;fill:#747069}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(96 54)">
+    <line class="axis" x1="42" y1="452" x2="1036" y2="452"/>
+    <line class="axis" x1="42" y1="74" x2="42" y2="452"/>
+    <line class="guide" x1="160" y1="372" x2="160" y2="148"/>
+    <line class="guide" x1="356" y1="148" x2="356" y2="356"/>
+    <line class="guide" x1="548" y1="356" x2="548" y2="120"/>
+    <line class="guide" x1="730" y1="120" x2="730" y2="342"/>
+    <line class="guide" x1="892" y1="342" x2="892" y2="96"/>
+    <g>
+      <line class="up-wick" x1="92" y1="328" x2="92" y2="406"/><rect class="up" x="81" y="360" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="132" y1="286" x2="132" y2="370"/><rect class="up" x="121" y="318" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="172" y1="230" x2="172" y2="322"/><rect class="up" x="161" y="266" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="212" y1="160" x2="212" y2="266"/><rect class="up" x="201" y="202" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="252" y1="208" x2="252" y2="308"/><rect class="down" x="241" y="236" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="292" y1="266" x2="292" y2="360"/><rect class="down" x="281" y="294" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="332" y1="318" x2="332" y2="394"/><rect class="down" x="321" y="342" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="372" y1="290" x2="372" y2="374"/><rect class="up" x="361" y="324" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="412" y1="230" x2="412" y2="322"/><rect class="up" x="401" y="266" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="452" y1="170" x2="452" y2="272"/><rect class="up" x="441" y="210" width="22" height="38" rx="3"/>
+      <line class="up-wick" x1="492" y1="128" x2="492" y2="224"/><rect class="up" x="481" y="164" width="22" height="36" rx="3"/>
+      <line class="down-wick" x1="532" y1="170" x2="532" y2="278"/><rect class="down" x="521" y="202" width="22" height="46" rx="3"/>
+      <line class="down-wick" x1="572" y1="240" x2="572" y2="346"/><rect class="down" x="561" y="270" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="612" y1="300" x2="612" y2="382"/><rect class="down" x="601" y="326" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="652" y1="276" x2="652" y2="360"/><rect class="up" x="641" y="308" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="692" y1="220" x2="692" y2="314"/><rect class="up" x="681" y="256" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="732" y1="160" x2="732" y2="256"/><rect class="up" x="721" y="196" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="772" y1="116" x2="772" y2="210"/><rect class="up" x="761" y="152" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="812" y1="190" x2="812" y2="302"/><rect class="down" x="801" y="224" width="22" height="50" rx="3"/>
+      <line class="down-wick" x1="852" y1="272" x2="852" y2="374"/><rect class="down" x="841" y="304" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="892" y1="326" x2="892" y2="404"/><rect class="down" x="881" y="350" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="932" y1="300" x2="932" y2="386"/><rect class="up" x="921" y="334" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="972" y1="250" x2="972" y2="344"/><rect class="up" x="961" y="286" width="22" height="34" rx="3"/>
+    </g>
+    <polyline class="trend" points="92,406 212,160 332,394 492,128 612,382 772,116 892,404 972,250"/>
+    <circle class="point" cx="92" cy="406" r="8"/><circle class="high" cx="212" cy="160" r="8"/><circle class="point" cx="332" cy="394" r="8"/><circle class="high" cx="492" cy="128" r="8"/><circle class="point" cx="612" cy="382" r="8"/><circle class="high" cx="772" cy="116" r="8"/><circle class="point" cx="892" cy="404" r="8"/>
+    <path class="push" d="M132 382 C160 300 176 230 208 166"/>
+    <text class="accent" x="118" y="112">上推一</text>
+    <text class="small" x="118" y="138">幅度大，走得顺</text>
+    <path class="push" d="M374 356 C414 266 446 190 486 136"/>
+    <text class="accent" x="390" y="92">上推二</text>
+    <text class="small" x="390" y="118">还能创新高</text>
+    <path class="push" d="M654 346 C690 260 724 184 766 124"/>
+    <text class="accent" x="700" y="70">上推三</text>
+    <text class="small" x="700" y="96">新高幅度变小</text>
+    <path class="pull" d="M512 154 C546 228 578 310 610 374"/>
+    <text class="tag" x="560" y="432">回调更深</text>
+    <rect x="740" y="420" width="268" height="74" rx="18" fill="#181817"/>
+    <text class="white" x="766" y="452">力度变弱</text>
+    <text class="white-note" x="766" y="480">推动变小，回调变深</text>
+  </g>
+</svg>
