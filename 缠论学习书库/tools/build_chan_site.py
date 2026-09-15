@@ -17,6 +17,7 @@ BOOK_DIRS = [
 DIST_DIR = REPO_ROOT / "dist"
 SITE_LABEL = "缠论学习书库"
 MARKER_TOOL_URL = "https://dandistudio.site/chan/"
+GITHUB_URL = "https://github.com/dandy5201799-ui/valuation-dashboard"
 
 
 def relative_href(from_dir: str, to_path: str) -> str:
@@ -40,6 +41,11 @@ def build_switcher_markup(current_slug: str, current_page: str, books: list[dict
             f'<a class="{classes}" href="{escape(relative_href(current_dir, target))}">'
             f'{escape(book["title"])}</a>'
         )
+
+    link_parts.append(
+        f'<a class="hb-site-switcher__link hb-site-switcher__link--github" '
+        f'href="{escape(GITHUB_URL)}" target="_blank" rel="noopener">GitHub</a>'
+    )
 
     links_html = "".join(link_parts)
     current_book = next(b for b in books if b["slug"] == current_slug)

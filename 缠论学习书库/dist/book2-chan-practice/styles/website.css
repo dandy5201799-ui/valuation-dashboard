@@ -205,6 +205,10 @@
   color: var(--hb-nav-pill-active-text);
 }
 
+.hb-site-switcher__link--github {
+  font-weight: 700;
+}
+
 /* 自定义章节导航 */
 .book.with-site-switcher .hb-inline-pager {
   display: grid;
