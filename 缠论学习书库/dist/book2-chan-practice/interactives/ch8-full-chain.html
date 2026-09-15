@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第8章 · 完整流程演示器</title>
+<link rel="stylesheet" href="demo-base.css">
+<style>
+  .chart{min-height:300px;}
+</style>
+</head>
+<body>
+<div class="demo">
+  <div class="demo-head">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="demo-title">完整流程演示器</div>
+    <div class="demo-sub">第8章 · 从一根根K线到一笔交易：把整个判断链条走一遍</div>
+  </div>
+
+  <div class="chart">
+    <svg id="svg" class="chart-svg" viewBox="0 0 720 320" role="img" aria-label="完整流程演示"></svg>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-group">
+      <button class="btn" id="prevBtn">← 上一步</button>
+      <button class="btn primary" id="nextBtn">下一步 →</button>
+      <button class="btn" id="resetBtn">回到第1步</button>
+    </div>
+    <div class="ctl-group" style="margin-left:auto">
+      <span class="chip watch" id="stepChip">第1步</span>
+      <span id="stepNum" class="mono" style="font-size:11px;color:var(--muted)">1 / 12</span>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <span class="vtext" id="stepText">从最原始的K线开始，一层一层加上判断。每一步都先回答“这一步做什么”。</span>
+  </div>
+
+  <div class="hint"><b>怎么玩：</b>点“下一步”逐层叠加：<b>原始K线 → 包含处理 → 分型 → 笔 → 线段 → 中枢 → 走势类型与力度 → 关键位置 → 观察 → 确认 → 动作计划 → 多周期复核</b>。每一步的图和说明都在变化，全部走完就是一次完整的独立判断。</div>
+</div>
+
+<script>
+(function(){
+  var W = 720, H = 320, padT = 42, padB = 40, padL = 50, padR = 20;
+  var svg = document.getElementById("svg");
+  var BARS = [
+    {d:"01", o:100.0, h:101.5, l:99.8,  c:100.8},
+    {d:"02", o:101.0, h:104.2, l:100.7, c:103.9},
+    {d:"03", o:103.6, h:107.0, l:103.2, c:106.4},
+    {d:"04", o:106.2, h:109.6, l:105.9, c:109.1},
+    {d:"05", o:108.9, h:109.2, l:107.4, c:108.0},
+    {d:"06", o:108.1, h:108.7, l:105.6, c:106.2},
+    {d:"07", o:106.4, h:108.9, l:106.0, c:108.4},
+    {d:"08", o:108.2, h:112.8, l:107.9, c:112.3},
+    {d:"09", o:112.0, h:112.4, l:110.1, c:110.6},
+    {d:"10", o:110.8, h:111.5, l:108.7, c:109.4},
+    {d:"11", o:109.6, h:111.2, l:109.1, c:110.8},
+    {d:"12", o:110.5, h:113.6, l:110.2, c:113.1},
+    {d:"13", o:113.0, h:113.4, l:111.3, c:111.9},
+    {d:"14", o:112.0, h:112.7, l:109.2, c:109.8},
+    {d:"15", o:110.0, h:112.4, l:109.6, c:111.8},
+    {d:"16", o:111.6, h:115.6, l:111.2, c:115.1}
+  ];
+  var N = BARS.length;
+  // 分型（前后各两根规则）
+  var PIV = [
+    {i:3,  t:"H", v:109.6}, {i:5,  t:"L", v:105.6},
+    {i:7,  t:"H", v:112.8}, {i:9,  t:"L", v:108.7},
+    {i:11, t:"H", v:113.6}, {i:13, t:"L", v:109.2}
+  ];
+  var STEPS = [
+    {chip:["watch","看K线"],  title:"① 原始K线",  text:"先只看最原始的K线，不着急下结论。真正的判断从这里开始。"},
+    {chip:["watch","合并K线"], title:"② 包含处理", text:"把方向一致的包含K线先合并成一根（图中括起来的组），把噪声清掉，后面选点才清楚。"},
+    {chip:["watch","找分型"], title:"③ 找分型",   text:"用“前后各两根”规则找顶分型（红三角）和底分型（蓝三角）——它们是走势里的关键转折点。"},
+    {chip:["watch","画笔"],   title:"④ 画笔",     text:"相邻分型交替连接成笔：向上笔、向下笔。走势被压缩成一条清晰的折线。"},
+    {chip:["watch","画波段"], title:"⑤ 画线段",   text:"笔再组合成线段：上升段、整理段、再上升段。现在能看出大结构了。"},
+    {chip:["watch","找中枢"], title:"⑥ 找中枢",   text:"中间几段反复重叠，形成争夺区（中枢）：上沿 112.8、下沿 108.7。这里是多空反复交换的位置。"},
+    {chip:["up","趋势延续"],  title:"⑦ 走势类型与力度", text:"中枢位置抬高，且突破后的上涨段比中枢前更长 → 力度增强、没有背驰 → 上升趋势延续。"},
+    {chip:["flat","防守位"],  title:"⑧ 找关键位置", text:"上升趋势里盯防守位＝保护上涨结构的有效低点 109.2。价格回到这里进入观察，跌破说明结构受损。"},
+    {chip:["watch","观察中"], title:"⑨ 进入观察", text:"价格回到防守位附近来回晃（观察区），忍住不动手——到位置只是观察，不是确认。"},
+    {chip:["ok","确认"],      title:"⑩ 等待确认", text:"收盘站上最近小高点 113.6 → 确认信号出现（这里是做多的确认点）。"},
+    {chip:["ok","写计划"],    title:"⑪ 制定动作计划", text:"定入场价、判断失败线、实际止损执行价、可承受损失与仓位：计划不成立就不进场。"},
+    {chip:["ok","复核"],      title:"⑫ 多周期复核", text:"回到30分钟复核同一段走势：大图方向＋小图确认一致，才执行。执行后按计划复盘。"}
+  ];
+  var step = 0;
+
+  function yScale(){
+    var mn = Math.min.apply(null, BARS.map(function(d){return d.l;}));
+    var mx = Math.max.apply(null, BARS.map(function(d){return d.h;}));
+    var gap = (mx-mn)||1;
+    return { min: mn-gap*0.14, max: mx+gap*0.18 };
+  }
+  function yOf(v){
+    var r = yScale();
+    return padT + (r.max-v)/(r.max-r.min)*(H-padT-padB);
+  }
+  function xOf(i){
+    return padL + i*(W-padL-padR)/(N-1);
+  }
+  function ns(name, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function text(x,y,s,attrs){
+    var t = ns("text", Object.assign({x:x,y:y,"text-anchor":"middle","font-size":"10.5",fill:"#5f5b55"}, attrs||{}));
+    t.textContent = s;
+    return t;
+  }
+  function line(x1,y1,x2,y2,attrs){
+    return ns("line", Object.assign({x1:x1,y1:y1,x2:x2,y2:y2}, attrs||{}));
+  }
+
+  function draw(){
+    svg.innerHTML = "";
+    var r = yScale();
+    for (var k=0;k<=5;k++){
+      var v = r.min + (r.max-r.min)*k/5, yy = yOf(v);
+      svg.appendChild(ns("line",{x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:"#e9e6dd","stroke-width":"1"}));
+      svg.appendChild(text(padL-7,yy+3,v.toFixed(1),{"text-anchor":"end","font-size":"9.5",fill:"#a19c8c"}));
+    }
+    var bw = Math.max(4,(W-padL-padR)/N*0.36);
+
+    // ① 原始K线（始终显示，越往后越淡作底）
+    var op = step===0 ? "0.95" : "0.4";
+    BARS.forEach(function(d,i){
+      var x = xOf(i), up = d.c >= d.o;
+      var col = up ? "#d97757" : "#2f8f6b";
+      svg.appendChild(ns("line",{x1:x,y1:yOf(d.h),x2:x,y2:yOf(d.l),stroke:col,"stroke-width":"1.4","stroke-opacity":op}));
+      var top = yOf(Math.max(d.o,d.c)), bot = yOf(Math.min(d.o,d.c));
+      svg.appendChild(ns("rect",{x:x-bw/2,y:top,width:bw,height:Math.max(1.5,bot-top),fill:col,"fill-opacity":op,rx:1}));
+      if (i%5===0) svg.appendChild(text(x, H-16, d.d, {fill:"#a19c8c","font-size":"8.5"}));
+    });
+
+    // ② 包含处理：两组连续同向K线括起来
+    if (step >= 1){
+      [[1,2,"向上合并"],[12,13,"向下合并"]].forEach(function(g){
+        var x1 = xOf(g[0])-bw-3, x2 = xOf(g[1])+bw+3;
+        svg.appendChild(ns("path",{d:"M"+x1+" "+(padT-6)+" H"+x2,stroke:"#5f5b55","stroke-width":"1.4","stroke-dasharray":"3 3"}));
+        svg.appendChild(text((x1+x2)/2, padT-12, g[2], {fill:"#5f5b55","font-size":"9.5"}));
+      });
+    }
+
+    // ③ 分型
+    if (step >= 2){
+      PIV.forEach(function(p){
+        var x = xOf(p.i), yy = yOf(p.v);
+        var col = p.t==="H" ? "#d97757" : "#2f8f6b";
+        if (p.t==="H"){
+          svg.appendChild(ns("path",{d:"M"+x+" "+(yy-11)+" L"+(x+7)+" "+(yy-1)+" L"+(x-7)+" "+(yy-1)+" Z",fill:col,stroke:"#fff","stroke-width":"1"}));
+          svg.appendChild(text(x, yy-17, "顶", {fill:"#b3542f","font-weight":"700","font-size":"9"}));
+        } else {
+          svg.appendChild(ns("path",{d:"M"+x+" "+(yy+11)+" L"+(x+7)+" "+(yy+1)+" L"+(x-7)+" "+(yy+1)+" Z",fill:col,stroke:"#fff","stroke-width":"1"}));
+          svg.appendChild(text(x, yy+20, "底", {fill:"#23664c","font-weight":"700","font-size":"9"}));
+        }
+      });
+    }
+
+    // ④ 笔
+    if (step >= 3){
+      var poly = PIV.map(function(p){return (xOf(p.i))+","+(yOf(p.v).toFixed(1));}).join(" ");
+      svg.appendChild(ns("polyline",{points:poly,fill:"none",stroke:"#393735","stroke-width":"2.6","stroke-linejoin":"round","stroke-linecap":"round"}));
+      PIV.forEach(function(p,j){
+        if (j>0){
+          var mx = (xOf(PIV[j-1].i)+xOf(p.i))/2, my = (yOf(PIV[j-1].v)+yOf(p.v))/2;
+          svg.appendChild(text(mx, my + (p.t==="H"?-8:16), "笔"+j, {fill:"#5f5b55","font-weight":"700","font-size":"11"}));
+        }
+      });
+    }
+
+    // ⑤ 线段
+    if (step >= 4){
+      var segs = [[0,7,"上升段"],[7,11,"整理段"],[11,15,"再上升段"]];
+      segs.forEach(function(s){
+        var yTop = Math.min(yOf(BARS[s[0]].l), yOf(BARS[s[1]].l));
+        var yBot = Math.max(yOf(BARS[s[0]].h), yOf(BARS[s[1]].h));
+        svg.appendChild(ns("rect",{x:xOf(s[0])-6,y:yTop-6,width:xOf(s[1])-xOf(s[0])+12,height:yBot-yTop+12,fill:"#b8790a","fill-opacity":"0.07",rx:4}));
+        svg.appendChild(text((xOf(s[0])+xOf(s[1]))/2, yTop-10, s[2], {fill:"#8a5a06","font-weight":"700","font-size":"10.5"}));
+      });
+    }
+
+    // ⑥ 中枢
+    if (step >= 5){
+      var zx1 = xOf(5), zx2 = xOf(11), zTop = yOf(112.8), zBot = yOf(108.7);
+      svg.appendChild(ns("rect",{x:zx1,y:zTop,width:zx2-zx1,height:zBot-zTop,fill:"#b8790a","fill-opacity":"0.16",stroke:"#b8790a","stroke-opacity":"0.6",rx:5}));
+      svg.appendChild(line(xOf(5),zTop,xOf(11),zTop,{stroke:"#b8790a","stroke-width":"1.4","stroke-dasharray":"5 4"}));
+      svg.appendChild(line(xOf(5),zBot,xOf(11),zBot,{stroke:"#b8790a","stroke-width":"1.4","stroke-dasharray":"5 4"}));
+      svg.appendChild(text(xOf(6), zTop-8, "上沿 112.8", {"text-anchor":"start","font-size":"10",fill:"#8a5a06","font-weight":"700"}));
+      svg.appendChild(text(xOf(6), zBot+16, "下沿 108.7", {"text-anchor":"start","font-size":"10",fill:"#8a5a06","font-weight":"700"}));
+      svg.appendChild(text((zx1+zx2)/2, (zTop+zBot)/2, "中枢", {fill:"#8a5a06","font-weight":"700","font-size":"12"}));
+    }
+
+    // ⑦ 力度对比
+    if (step >= 6){
+      var a1 = yOf(108.7), a2 = yOf(113.6);   // 中枢前上攻 108.7→113.6
+      var b1 = yOf(109.2), b2 = yOf(115.6);   // 突破后上攻 109.2→115.6
+      var ax = xOf(9), bx = xOf(13);
+      svg.appendChild(ns("line",{x1:ax,y1:a2,x2:ax+34,y2:a1,stroke:"#1f9d63","stroke-width":"2","stroke-opacity":"0.75"}));
+      svg.appendChild(ns("line",{x1:bx,y1:b2,x2:bx+34,y2:b1,stroke:"#1f9d63","stroke-width":"2"}));
+      svg.appendChild(text(ax+34, a1+12, "前段 4.9", {"text-anchor":"middle","font-size":"9.5",fill:"#15734a"}));
+      svg.appendChild(text(bx+34, b1+12, "后段 6.4（更长）", {"text-anchor":"middle","font-size":"9.5",fill:"#15734a","font-weight":"700"}));
+    }
+
+    // ⑧ 防守位
+    if (step >= 7){
+      svg.appendChild(line(padL,yOf(109.2),W-padR,yOf(109.2),{stroke:"#b8790a","stroke-width":"2","stroke-dasharray":"7 4"}));
+      svg.appendChild(text(W-padR-8, yOf(109.2)-8, "防守位 109.2", {"text-anchor":"end","font-size":"11",fill:"#8a5a06","font-weight":"700"}));
+    }
+
+    // ⑨ 观察区
+    if (step >= 8){
+      var ox1 = xOf(13)-6, ox2 = xOf(15)+6;
+      svg.appendChild(ns("rect",{x:ox1,y:padT-4,width:ox2-ox1,height:H-padT-padB+8,fill:"#d97757","fill-opacity":"0.08",stroke:"#d97757","stroke-opacity":"0.4",rx:6}));
+      svg.appendChild(text((ox1+ox2)/2, padT+14, "观察区：回到防守位，不动手", {fill:"#b3542f","font-weight":"700","font-size":"10.5"}));
+    }
+
+    // ⑩ 确认
+    if (step >= 9){
+      svg.appendChild(line(padL,yOf(113.6),W-padR,yOf(113.6),{stroke:"#1f9d63","stroke-width":"2","stroke-dasharray":"7 4"}));
+      svg.appendChild(text(W-padR-8, yOf(113.6)+16, "小高点 113.6", {"text-anchor":"end","font-size":"10.5",fill:"#15734a","font-weight":"700"}));
+      var cx = xOf(15);
+      svg.appendChild(ns("rect",{x:cx-bw-3,y:padT-6,width:bw*2+6,height:H-padT-padB+12,fill:"none",stroke:"#1f9d63","stroke-width":"2",rx:6}));
+      svg.appendChild(text(cx, yOf(115.6)-12, "收盘 115.1 站上 → 确认", {fill:"#15734a","font-weight":"700","font-size":"10.5"}));
+    }
+
+    // ⑪ 动作计划
+    if (step >= 10){
+      [["entry",114.5,"#1f9d63","入场价 114.5"],["fail",109.2,"#b8790a","失败线 109.2（防守位）"],["stop",108.9,"#d1453a","止损执行价 108.9"]].forEach(function(m){
+        svg.appendChild(line(padL,yOf(m[1]),W-padR,yOf(m[1]),{stroke:m[2],"stroke-width":"1.8",stroke: m[0]==="fail" ? "#b8790a" : m[2], "stroke-dasharray": m[0]==="fail" ? "7 4" : "1 0"}));
+        svg.appendChild(text(padL+6, yOf(m[1])+(m[0]==="entry"?16:-8), m[3], {"text-anchor":"start","font-size":"10.5",fill:m[2],"font-weight":"700"}));
+      });
+      svg.appendChild(text((padL+W-padR)/2, H-30, "计划：入场 114.5，止损 108.9，每股风险 5.6，可承受 5000 元 → 800 股，最大亏损 4480 元", {fill:"#393735","font-weight":"700","font-size":"11"}));
+    }
+
+    // ⑫ 多周期
+    if (step >= 11){
+      svg.appendChild(ns("rect",{x:padL,y:padT-8,width:W-padL-padR,height:H-padT-padB+16,fill:"none",stroke:"#5f5b55","stroke-width":"1.6","stroke-dasharray":"6 5",rx:8}));
+      svg.appendChild(text((padL+W-padR)/2, padT+14, "复核：到30分钟看同一段——大图上升+回调防守位，小图站上小高点确认，两层一致 → 执行", {fill:"#393735","font-weight":"700","font-size":"11.5"}));
+    }
+
+    var s = STEPS[step];
+    var vc = document.getElementById("stepChip");
+    vc.className = "chip " + s.chip[0];
+    vc.textContent = s.title;
+    document.getElementById("stepText").textContent = s.text;
+    document.getElementById("stepNum").textContent = (step+1) + " / " + STEPS.length;
+    document.getElementById("prevBtn").disabled = step===0;
+    document.getElementById("nextBtn").disabled = step===STEPS.length-1;
+    document.getElementById("nextBtn").textContent = step===STEPS.length-1 ? "完成" : "下一步 →";
+  }
+
+  document.getElementById("prevBtn").addEventListener("click", function(){ step = Math.max(0, step-1); draw(); });
+  document.getElementById("nextBtn").addEventListener("click", function(){ if (step < STEPS.length-1) step++; draw(); });
+  document.getElementById("resetBtn").addEventListener("click", function(){ step = 0; draw(); });
+
+  draw();
+})();
+</script>
+</body>
+</html>

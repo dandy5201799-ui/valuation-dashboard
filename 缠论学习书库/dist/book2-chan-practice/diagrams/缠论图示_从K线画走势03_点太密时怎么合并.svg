@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">点太密时怎么合并</title>
+  <desc id="desc">左边密集的小高点小低点很乱，右边合并后只保留清楚交替的高低点，连线变清晰。</desc>
+  <defs>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.sep{stroke:#e9e6dd;stroke-width:1.2}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.messy{fill:#fff;stroke:#a8a39a;stroke-width:2}.point{fill:#181817;stroke:#fff;stroke-width:4}.top{fill:#181817;stroke:#fff;stroke-width:4}.trend{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}.muted-trend{fill:none;stroke:#a8a39a;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5 7}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:700;fill:#181817}.micro{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}.white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <line class="sep" x1="600" y1="82" x2="600" y2="488"/>
+  <g transform="translate(76 72)">
+    <text class="label" x="60" y="32">点太密：走势看不清</text>
+    <text class="note" x="60" y="62">很多小高低点都标出来，反而失去结构</text>
+    <line class="axis" x1="38" y1="394" x2="500" y2="394"/>
+    <line class="axis" x1="38" y1="92" x2="38" y2="394"/>
+    <g>
+      <line class="up-wick" x1="78" y1="300" x2="78" y2="364"/><rect class="up" x="67" y="326" width="22" height="24" rx="3"/>
+      <line class="up-wick" x1="112" y1="264" x2="112" y2="334"/><rect class="up" x="101" y="292" width="22" height="26" rx="3"/>
+      <line class="down-wick" x1="146" y1="240" x2="146" y2="316"/><rect class="down" x="135" y="266" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="180" y1="194" x2="180" y2="282"/><rect class="up" x="169" y="228" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="214" y1="226" x2="214" y2="314"/><rect class="down" x="203" y="254" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="248" y1="170" x2="248" y2="260"/><rect class="up" x="237" y="206" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="282" y1="218" x2="282" y2="318"/><rect class="down" x="271" y="250" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="316" y1="276" x2="316" y2="358"/><rect class="down" x="305" y="302" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="350" y1="248" x2="350" y2="330"/><rect class="up" x="339" y="282" width="22" height="28" rx="3"/>
+      <line class="down-wick" x1="384" y1="286" x2="384" y2="370"/><rect class="down" x="373" y="312" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="418" y1="232" x2="418" y2="326"/><rect class="up" x="407" y="270" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="452" y1="174" x2="452" y2="274"/><rect class="up" x="441" y="214" width="22" height="38" rx="3"/>
+    </g>
+    <polyline class="muted-trend" points="78,364 112,264 146,316 180,194 214,314 248,170 282,318 316,358 350,248 384,370 418,232 452,174"/>
+    <circle class="messy" cx="78" cy="364" r="7"/><circle class="messy" cx="112" cy="264" r="7"/><circle class="messy" cx="146" cy="316" r="7"/><circle class="messy" cx="180" cy="194" r="7"/><circle class="messy" cx="214" cy="314" r="7"/><circle class="messy" cx="248" cy="170" r="7"/><circle class="messy" cx="282" cy="318" r="7"/><circle class="messy" cx="316" cy="358" r="7"/><circle class="messy" cx="350" cy="248" r="7"/><circle class="messy" cx="384" cy="370" r="7"/><circle class="messy" cx="418" cy="232" r="7"/><circle class="messy" cx="452" cy="174" r="7"/>
+    <text class="micro" x="84" y="424">灰色空心圆：候选点太多</text>
+  </g>
+  <g transform="translate(646 72)">
+    <text class="label" x="60" y="32">合并后：高低点交替</text>
+    <text class="note" x="60" y="62">只保留能形成结构的点</text>
+    <line class="axis" x1="38" y1="394" x2="500" y2="394"/>
+    <line class="axis" x1="38" y1="92" x2="38" y2="394"/>
+    <g>
+      <line class="up-wick" x1="78" y1="300" x2="78" y2="364"/><rect class="up" x="67" y="326" width="22" height="24" rx="3"/>
+      <line class="up-wick" x1="112" y1="264" x2="112" y2="334"/><rect class="up" x="101" y="292" width="22" height="26" rx="3"/>
+      <line class="down-wick" x1="146" y1="240" x2="146" y2="316"/><rect class="down" x="135" y="266" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="180" y1="194" x2="180" y2="282"/><rect class="up" x="169" y="228" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="214" y1="226" x2="214" y2="314"/><rect class="down" x="203" y="254" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="248" y1="170" x2="248" y2="260"/><rect class="up" x="237" y="206" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="282" y1="218" x2="282" y2="318"/><rect class="down" x="271" y="250" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="316" y1="276" x2="316" y2="358"/><rect class="down" x="305" y="302" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="350" y1="248" x2="350" y2="330"/><rect class="up" x="339" y="282" width="22" height="28" rx="3"/>
+      <line class="down-wick" x1="384" y1="286" x2="384" y2="370"/><rect class="down" x="373" y="312" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="418" y1="232" x2="418" y2="326"/><rect class="up" x="407" y="270" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="452" y1="174" x2="452" y2="274"/><rect class="up" x="441" y="214" width="22" height="38" rx="3"/>
+    </g>
+    <polyline class="trend" points="78,364 248,170 384,370 452,174"/>
+    <circle class="point" cx="78" cy="364" r="8"/><circle class="top" cx="248" cy="170" r="8"/><circle class="point" cx="384" cy="370" r="8"/><circle class="top" cx="452" cy="174" r="8"/>
+    <text class="tag" x="108" y="144">连续高点，留更高</text>
+    <text class="tag" x="206" y="424">连续低点，留更低</text>
+    <text class="micro" x="318" y="138">两点之间 K 线太少不画</text>
+  </g>
+  <rect x="748" y="500" width="390" height="76" rx="20" fill="#181817"/>
+  <text class="white" x="774" y="532">合并目标不是少画</text>
+  <text class="white-note" x="774" y="560">是让高低点清楚交替</text>
+</svg>

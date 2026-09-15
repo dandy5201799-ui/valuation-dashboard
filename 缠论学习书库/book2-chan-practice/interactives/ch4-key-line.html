@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第4章 · 关键线演示器</title>
+<link rel="stylesheet" href="demo-base.css">
+<style>
+  .chart{min-height:280px;}
+  .drag-h{cursor:ew-resize;}
+  .drag-h.dragging{cursor:grabbing;}
+</style>
+</head>
+<body>
+<div class="demo">
+  <div class="demo-head">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="demo-title">关键线演示器</div>
+    <div class="demo-sub">第4章 · 上升看防守位，下降看压力位，横盘看上下沿；关键线还能画成区域</div>
+  </div>
+
+  <div class="chart">
+    <svg id="svg" class="chart-svg" viewBox="0 0 720 300" role="img" aria-label="关键线演示"></svg>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-group">
+      <div class="seg" id="scenTabs">
+        <button data-s="up" class="active">上升·防守位</button>
+        <button data-s="down">下降·压力位</button>
+        <button data-s="range">横盘·上下沿</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <button class="btn on" id="zoneBtn">关键线</button>
+    </div>
+    <div class="ctl-group" style="margin-left:auto">
+      <span class="lbl">拖动把手：</span>
+      <span id="dragHint" class="mono" style="font-size:11px;color:var(--muted)">上下拖动关键线</span>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <span class="chip watch" id="verdictChip">上升·防守位</span>
+    <span class="vtext" id="verdictText">上升趋势里，最值得盯的是保护上涨结构的有效低点。拖动它看看怎么画防守线。</span>
+  </div>
+
+  <div class="hint"><b>怎么玩：</b>用场景按钮切换<b>上升（防守位）/ 下降（压力位）/ 横盘（上下沿）</b>。拖动琥珀色把手上下移动关键线；点“关键线/关键区”切换：区域模式会把关键线扩成一小块价格范围（底部/顶部来回晃到的位置）。到位置只是进入观察，不是确认。</div>
+</div>
+
+<script>
+(function(){
+  var W = 720, H = 300, padT = 36, padB = 40, padL = 46, padR = 18;
+  var svg = document.getElementById("svg");
+  var scen = "up";      // up / down / range
+  var zoneMode = false; // 线 / 区
+  var keyUp = 110.2, keyDn = 117.6, keyTop = 114.6, keyBot = 106.4;
+
+  var DATA = {
+    up: [
+      {d:"01", o:100.0, h:101.4, l:99.3,  c:100.6},
+      {d:"02", o:101.0, h:107.8, l:100.7, c:106.8},
+      {d:"03", o:106.6, h:108.6, l:103.7, c:104.4},
+      {d:"04", o:104.7, h:114.2, l:104.2, c:113.5},
+      {d:"05", o:113.1, h:114.4, l:108.6, c:109.4},
+      {d:"06", o:109.8, h:118.8, l:109.5, c:117.9},
+      {d:"07", o:117.0, h:117.2, l:110.2, c:111.0},
+      {d:"08", o:111.2, h:112.0, l:110.0, c:111.6},
+      {d:"09", o:111.4, h:111.8, l:110.1, c:110.8},
+      {d:"10", o:110.9, h:112.4, l:110.0, c:112.1},
+      {d:"11", o:112.0, h:114.6, l:111.6, c:114.1},
+      {d:"12", o:114.0, h:117.2, l:113.5, c:116.8},
+      {d:"13", o:116.6, h:119.8, l:116.2, c:119.2}
+    ],
+    down: [
+      {d:"01", o:122.0, h:123.4, l:120.6, c:121.1},
+      {d:"02", o:121.0, h:121.8, l:117.6, c:118.1},
+      {d:"03", o:118.4, h:120.2, l:116.5, c:119.4},
+      {d:"04", o:119.0, h:119.7, l:114.8, c:115.2},
+      {d:"05", o:115.3, h:117.4, l:113.7, c:116.8},
+      {d:"06", o:116.4, h:116.9, l:112.2, c:113.1},
+      {d:"07", o:113.3, h:117.6, l:112.9, c:115.0},
+      {d:"08", o:114.8, h:116.0, l:114.1, c:115.2},
+      {d:"09", o:115.0, h:115.4, l:113.8, c:114.2},
+      {d:"10", o:114.3, h:115.6, l:113.5, c:113.9},
+      {d:"11", o:113.8, h:114.2, l:111.6, c:112.1}
+    ],
+    range: [
+      {d:"01", o:109.0, h:111.5, l:108.6, c:110.9},
+      {d:"02", o:110.7, h:114.6, l:110.4, c:113.8},
+      {d:"03", o:113.5, h:114.3, l:109.8, c:110.4},
+      {d:"04", o:110.6, h:113.9, l:110.1, c:112.8},
+      {d:"05", o:112.5, h:114.6, l:110.8, c:113.9},
+      {d:"06", o:113.5, h:114.2, l:107.4, c:108.2},
+      {d:"07", o:108.4, h:112.7, l:107.2, c:111.6},
+      {d:"08", o:111.7, h:114.4, l:110.9, c:113.2},
+      {d:"09", o:112.8, h:113.1, l:106.2, c:106.8},
+      {d:"10", o:106.7, h:109.4, l:105.9, c:108.7},
+      {d:"11", o:108.9, h:112.5, l:108.1, c:111.9},
+      {d:"12", o:111.6, h:114.1, l:110.7, c:113.6}
+    ]
+  };
+
+  function bars(){ return DATA[scen]; }
+  function yScale(){
+    var ds = bars();
+    var mn = Math.min.apply(null, ds.map(function(d){return d.l;}));
+    var mx = Math.max.apply(null, ds.map(function(d){return d.h;}));
+    var gap = (mx-mn)||1;
+    return { min: mn-gap*0.10, max: mx+gap*0.15 };
+  }
+  function yOf(v){
+    var r = yScale();
+    return padT + (r.max-v)/(r.max-r.min)*(H-padT-padB);
+  }
+  function vOf(yy){
+    var r = yScale();
+    return r.max - (yy-padT)/(H-padT-padB)*(r.max-r.min);
+  }
+  function xOf(i){
+    var n = bars().length;
+    return padL + i*(W-padL-padR)/(n-1);
+  }
+  function ns(name, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function text(x,y,s,attrs){
+    var t = ns("text", Object.assign({x:x,y:y,"text-anchor":"middle","font-size":"10.5",fill:"#5f5b55"}, attrs||{}));
+    t.textContent = s;
+    return t;
+  }
+
+  function line(x1,y1,x2,y2,attrs){
+    return ns("line", Object.assign({x1:x1,y1:y1,x2:x2,y2:y2}, attrs||{}));
+  }
+
+  function draw(){
+    svg.innerHTML = "";
+    var ds = bars(), r = yScale();
+    for (var k=0;k<=5;k++){
+      var v = r.min + (r.max-r.min)*k/5, yy = yOf(v);
+      svg.appendChild(ns("line",{x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:"#e9e6dd","stroke-width":"1"}));
+      svg.appendChild(text(padL-7,yy+3,v.toFixed(1),{"text-anchor":"end","font-size":"9.5",fill:"#a19c8c"}));
+    }
+    var bw = Math.max(4,(W-padL-padR)/ds.length*0.32);
+    ds.forEach(function(d,i){
+      var x = xOf(i), up = d.c >= d.o;
+      var col = up ? "#d97757" : "#2f8f6b";
+      svg.appendChild(ns("line",{x1:x,y1:yOf(d.h),x2:x,y2:yOf(d.l),stroke:col,"stroke-width":"1.4"}));
+      var top = yOf(Math.max(d.o,d.c)), bot = yOf(Math.min(d.o,d.c));
+      svg.appendChild(ns("rect",{x:x-bw/2,y:top,width:bw,height:Math.max(1.5,bot-top),fill:col,"fill-opacity":"0.88",rx:1}));
+      if (i%4===0 || i===ds.length-1) svg.appendChild(text(x, H-18, d.d, {fill:"#a19c8c"}));
+    });
+
+    var chip, txt, handles = [];
+    if (scen === "up"){
+      // 防守区：下沿=关键低点，上沿=低点后三根晃到的最高价（与低点的间距固定）
+      var lowBar = 6, spread = 112.4 - 110.2; // 08-10 三根晃到的最高价 112.4
+      var zBot = keyUp, zTop = keyUp + spread;
+      if (zoneMode){
+        svg.appendChild(ns("rect",{x:padL,y:yOf(zTop),width:W-padL-padR,height:Math.max(3,yOf(zBot)-yOf(zTop)),fill:"#b8790a","fill-opacity":"0.13",stroke:"#b8790a","stroke-opacity":"0.45",rx:5}));
+        svg.appendChild(line(padL,yOf(zTop),W-padR,yOf(zTop),{stroke:"#b8790a","stroke-width":"1.3","stroke-dasharray":"5 4"}));
+        svg.appendChild(text(W-padR-8, yOf(zTop)-7, "上沿 "+zTop.toFixed(1), {"text-anchor":"end","font-size":"10",fill:"#8a5a06","font-weight":"700"}));
+        svg.appendChild(text(W-padR-8, yOf(zBot)+15, "下沿 "+zBot.toFixed(1), {"text-anchor":"end","font-size":"10",fill:"#8a5a06","font-weight":"700"}));
+      }
+      svg.appendChild(line(padL,yOf(keyUp),W-padR,yOf(keyUp),{stroke:"#b8790a","stroke-width":"2"}));
+      svg.appendChild(text(padL+70, yOf(keyUp)-8, "防守位 "+(keyUp).toFixed(1), {"text-anchor":"start","font-size":"11",fill:"#8a5a06","font-weight":"700"}));
+      handles.push({v:"keyUp", y:yOf(keyUp), label:"防守位"});
+      chip = ["flat","上升·防守位"];
+      txt = "防守位是保护上涨结构的有效低点。价格回到" + keyUp.toFixed(1) + "附近，进入观察：守住→上升继续；有效跌破→结构受损。" + (zoneMode ? " 区域模式：下沿"+zBot.toFixed(1)+"，上沿"+zTop.toFixed(1)+"，底部来回晃到的范围。" : " 线模式：先画一条线，需要时再扩成区域。");
+    } else if (scen === "down"){
+      var hiBar = 6, spread2 = 117.6 - 113.5; // 07-10 三根晃到的最低价 113.5
+      var zTop2 = keyDn, zBot2 = keyDn - spread2;
+      if (zoneMode){
+        svg.appendChild(ns("rect",{x:padL,y:yOf(zTop2),width:W-padL-padR,height:Math.max(3,yOf(zBot2)-yOf(zTop2)),fill:"#b8790a","fill-opacity":"0.13",stroke:"#b8790a","stroke-opacity":"0.45",rx:5}));
+        svg.appendChild(line(padL,yOf(zTop2),W-padR,yOf(zTop2),{stroke:"#b8790a","stroke-width":"1.3","stroke-dasharray":"5 4"}));
+        svg.appendChild(text(padL+60, yOf(zTop2)-8, "上沿 "+zTop2.toFixed(1), {"text-anchor":"start","font-size":"10",fill:"#8a5a06","font-weight":"700"}));
+        svg.appendChild(text(padL+60, yOf(zBot2)+15, "下沿 "+zBot2.toFixed(1), {"text-anchor":"start","font-size":"10",fill:"#8a5a06","font-weight":"700"}));
+      }
+      svg.appendChild(line(padL,yOf(keyDn),W-padR,yOf(keyDn),{stroke:"#b8790a","stroke-width":"2"}));
+      svg.appendChild(text(W-padR-70, yOf(keyDn)-8, "压力位 "+(keyDn).toFixed(1), {"text-anchor":"end","font-size":"11",fill:"#8a5a06","font-weight":"700"}));
+      handles.push({v:"keyDn", y:yOf(keyDn), label:"压力位"});
+      chip = ["flat","下降·压力位"];
+      txt = "压力位是压住反弹的有效高点。价格反弹到" + keyDn.toFixed(1) + "附近进入观察：压住→下降继续；收盘站上→下降结构受损。" + (zoneMode ? " 区域模式：上沿"+zTop2.toFixed(1)+"，下沿"+zBot2.toFixed(1)+"，顶部反复晃到的范围。" : " 线模式：先画一条线，需要时再扩成区域。");
+    } else {
+      if (zoneMode){
+        svg.appendChild(ns("rect",{x:padL,y:yOf(keyTop),width:W-padL-padR,height:Math.max(3,yOf(keyBot)-yOf(keyTop)),fill:"#b8790a","fill-opacity":"0.10",stroke:"#b8790a","stroke-opacity":"0.35",rx:5}));
+      }
+      svg.appendChild(line(padL,yOf(keyTop),W-padR,yOf(keyTop),{stroke:"#b8790a","stroke-width":"2","stroke-dasharray":"2 2"}));
+      svg.appendChild(line(padL,yOf(keyBot),W-padR,yOf(keyBot),{stroke:"#b8790a","stroke-width":"2","stroke-dasharray":"2 2"}));
+      svg.appendChild(text(padL+64, yOf(keyTop)-8, "上沿 "+(keyTop).toFixed(1), {"text-anchor":"start","font-size":"11",fill:"#8a5a06","font-weight":"700"}));
+      svg.appendChild(text(padL+64, yOf(keyBot)+16, "下沿 "+(keyBot).toFixed(1), {"text-anchor":"start","font-size":"11",fill:"#8a5a06","font-weight":"700"}));
+      handles.push({v:"keyTop", y:yOf(keyTop), label:"上沿"});
+      handles.push({v:"keyBot", y:yOf(keyBot), label:"下沿"});
+      chip = ["flat","横盘·上下沿"];
+      txt = "横盘里看反复争夺的范围：上方反复过不去的位置是上沿" + keyTop.toFixed(1) + "，下方反复跌不穿的位置是下沿" + keyBot.toFixed(1) + "。到边界只是进入观察，不代表突破。" + (zoneMode ? " 区域模式：上下沿之间就是争夺区。" : "");
+    }
+
+    // 拖动把手
+    handles.forEach(function(h){
+      var g = ns("g", {"class":"drag-h", "data-v":h.v});
+      var c = ns("circle", {cx:W-padR-10, cy:h.y, r:7, fill:"#fff", stroke:"#b8790a", "stroke-width":"2.4"});
+      g.appendChild(c);
+      g.appendChild(ns("path",{d:"M"+(W-padR-16)+" "+(h.y-5)+" L"+(W-padR-16)+" "+(h.y+5)+" M"+(W-padR-10)+" "+(h.y-5)+" L"+(W-padR-10)+" "+(h.y+5)+" M"+(W-padR-4)+" "+(h.y-5)+" L"+(W-padR-4)+" "+(h.y+5),stroke:"#8a5a06","stroke-width":"1.8"}));
+      svg.appendChild(g);
+    });
+
+    var vc = document.getElementById("verdictChip");
+    vc.className = "chip " + chip[0];
+    vc.textContent = chip[1];
+    document.getElementById("verdictText").textContent = txt;
+    document.getElementById("zoneBtn").textContent = zoneMode ? "关键区" : "关键线";
+    document.getElementById("zoneBtn").classList.toggle("on", zoneMode);
+    document.getElementById("dragHint").textContent = scen==="range" ? "拖动上沿或下沿的把手" : "上下拖动关键线把手";
+  }
+
+  // 场景切换
+  document.querySelectorAll("#scenTabs button").forEach(function(b){
+    b.addEventListener("click", function(){
+      scen = b.getAttribute("data-s");
+      document.querySelectorAll("#scenTabs button").forEach(function(x){x.classList.toggle("active", x===b);});
+      keyUp = 110.2; keyDn = 117.6; keyTop = 114.6; keyBot = 106.4;
+      draw();
+    });
+  });
+  document.getElementById("zoneBtn").addEventListener("click", function(){
+    zoneMode = !zoneMode;
+    draw();
+  });
+
+  // 拖动
+  var drag = null;
+  svg.addEventListener("pointerdown", function(e){
+    var g = e.target.closest(".drag-h");
+    if (!g) return;
+    drag = { v:g.getAttribute("data-v"), lastY:e.clientY };
+    g.classList.add("dragging");
+    svg.setPointerCapture(e.pointerId);
+  });
+  svg.addEventListener("pointermove", function(e){
+    if (!drag) return;
+    var rect = svg.getBoundingClientRect();
+    var scale = H / rect.height;
+    var yy = (e.clientY - rect.top) * scale;
+    yy = Math.max(padT+4, Math.min(H-padB-4, yy));
+    var v = vOf(yy);
+    if (drag.v==="keyUp") keyUp = Math.max(105, Math.min(113, v));
+    if (drag.v==="keyDn") keyDn = Math.max(110, Math.min(120, v));
+    if (drag.v==="keyTop"){ keyTop = Math.max(keyBot+1, Math.min(117, v)); }
+    if (drag.v==="keyBot"){ keyBot = Math.min(keyTop-1, Math.max(103, v)); }
+    draw();
+  });
+  function endDrag(){ if (drag){ drag = null; draw(); } }
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+
+  draw();
+})();
+</script>
+</body>
+</html>

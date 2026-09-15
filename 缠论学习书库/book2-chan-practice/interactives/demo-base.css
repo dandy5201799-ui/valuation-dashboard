@@ -1,0 +1,87 @@
+/* ============================================================
+   概念演示器 · 共享基础样式
+   设计语言取自「缠论工作台_Mac版.html」，但大幅简化：
+   暖白纸面 + 红/绿/琥珀三色 + 深墨色操作钮 + macOS 交通灯点缀。
+   每个演示器只保留：标题栏 / 一张图 / 一行控件 / 一行结论。
+   ============================================================ */
+:root{
+  --bg:#f6f5f0; --panel:#fffdf8; --panel2:#fbf9f2; --line:#e2ddd0; --chip:#f0eee6;
+  --ink:#1c1f26; --muted:#8b8677; --faint:#a19c8c;
+  --up:#1f9d63; --down:#d1453a; --amber:#b8790a; --fail:#b23b30; --accent:#2f2b24;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:transparent;}
+body{
+  font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  font-size:13px; color:var(--ink); line-height:1.5;
+}
+.mono{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;}
+svg text{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace;}
+button{font-family:inherit;cursor:pointer;}
+input[type=range]{accent-color:var(--accent);cursor:pointer;}
+
+/* ---------- 演示器外壳 ---------- */
+.demo{
+  display:flex; flex-direction:column; min-height:100vh;
+  background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden;
+  box-shadow:0 12px 28px rgba(53,41,27,.08);
+}
+.demo-head{
+  display:flex; align-items:center; gap:10px; flex:none;
+  padding:9px 14px; border-bottom:1px solid var(--line); background:var(--panel2);
+}
+.dots{display:flex; gap:5px; flex:none;}
+.dots span{width:9px;height:9px;border-radius:50%;display:block;}
+.dots span:nth-child(1){background:#e3564a;}
+.dots span:nth-child(2){background:#e3ac3d;}
+.dots span:nth-child(3){background:#2ea44a;}
+.demo-title{font-size:12.5px;font-weight:700;letter-spacing:.02em;}
+.demo-sub{font-size:11px;color:var(--muted);margin-left:2px;}
+
+.chart{flex:1; display:flex; align-items:center; justify-content:center; padding:8px 12px 2px; min-height:0;}
+svg.chart-svg{display:block; width:100%; height:auto;}
+
+.controls{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap; flex:none;
+  padding:9px 14px; border-top:1px solid var(--line); background:var(--panel2);
+}
+.controls .lbl{font-size:11px;color:var(--muted);white-space:nowrap;}
+.ctl-group{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.ctl-group + .ctl-group{border-left:1px solid var(--line); padding-left:12px;}
+
+.btn{
+  border:1px solid var(--line); background:var(--panel); color:var(--ink);
+  border-radius:7px; padding:5px 11px; font-size:12px; font-weight:600;
+}
+.btn:hover{background:var(--chip);}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+.btn.primary:hover{opacity:.88;}
+.btn.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+.btn:disabled{opacity:.42; cursor:default;}
+
+.seg{display:flex; border:1px solid var(--line); border-radius:7px; overflow:hidden;}
+.seg button{border:none; background:var(--panel); padding:5px 12px; font-size:12px; font-weight:600; color:var(--muted);}
+.seg button.active{background:var(--accent); color:#fff;}
+.seg button + button{border-left:1px solid var(--line);}
+
+.verdict{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex:none;
+  padding:9px 14px; border-top:1px solid var(--line); background:var(--panel2); font-size:12.5px;
+}
+.chip{
+  display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px;
+  font-size:12px; font-weight:700; background:var(--chip); color:var(--muted); white-space:nowrap;
+}
+.chip.up{background:#e3f2e9; color:#15734a;}
+.chip.down{background:#fbe7e5; color:#b03a30;}
+.chip.flat{background:#f5ead4; color:#94630a;}
+.chip.watch{background:#eef0f3; color:#5b6472;}
+.chip.warn{background:#fbe7e5; color:#b03a30;}
+.chip.ok{background:#e3f2e9; color:#15734a;}
+.vtext{font-size:12.5px; color:var(--ink);}
+
+.hint{
+  flex:none; font-size:11px; color:var(--faint); line-height:1.6;
+  padding:7px 14px; border-top:1px solid var(--line); background:#fdfbf6;
+}
+.hint b{color:var(--muted); font-weight:700;}

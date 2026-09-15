@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">下降趋势看压力位</title>
+  <desc id="desc">一段下降走势中，最近压住反弹的有效高点被标为压力位。</desc>
+  <defs>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.trend{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}.key{stroke:#d97757;stroke-width:2.4;stroke-dasharray:9 8}.point{fill:#181817;stroke:#fff;stroke-width:4}.high{fill:#747069;stroke:#fff;stroke-width:4}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.terminal-label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:23px;font-weight:700;fill:#fff}.terminal-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#e9e6dd}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:20px;font-weight:700;fill:#181817}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(92 56)">
+    <line class="axis" x1="38" y1="444" x2="1048" y2="444"/><line class="axis" x1="38" y1="62" x2="38" y2="444"/>
+    <g>
+      <line class="up-wick" x1="76" y1="70" x2="76" y2="150"/><rect class="up" x="65" y="100" width="22" height="28" rx="3"/>
+      <line class="down-wick" x1="124" y1="100" x2="124" y2="188"/><rect class="down" x="113" y="128" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="172" y1="156" x2="172" y2="250"/><rect class="down" x="161" y="184" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="220" y1="222" x2="220" y2="318"/><rect class="down" x="209" y="252" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="268" y1="184" x2="268" y2="274"/><rect class="up" x="257" y="220" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="316" y1="138" x2="316" y2="230"/><rect class="up" x="305" y="176" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="364" y1="118" x2="364" y2="206"/><rect class="up" x="353" y="154" width="22" height="30" rx="3"/>
+      <line class="down-wick" x1="412" y1="156" x2="412" y2="254"/><rect class="down" x="401" y="184" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="460" y1="220" x2="460" y2="322"/><rect class="down" x="449" y="250" width="22" height="44" rx="3"/>
+      <line class="down-wick" x1="508" y1="292" x2="508" y2="390"/><rect class="down" x="497" y="322" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="556" y1="250" x2="556" y2="338"/><rect class="up" x="545" y="286" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="604" y1="214" x2="604" y2="304"/><rect class="up" x="593" y="250" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="652" y1="194" x2="652" y2="284"/><rect class="up" x="641" y="230" width="22" height="32" rx="3"/>
+      <line class="down-wick" x1="700" y1="244" x2="700" y2="346"/><rect class="down" x="689" y="274" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="748" y1="310" x2="748" y2="412"/><rect class="down" x="737" y="340" width="22" height="42" rx="3"/>
+    </g>
+    <polyline class="trend" points="76,70 220,318 364,118 508,390 652,194 748,412"/>
+    <line class="key" x1="580" y1="194" x2="866" y2="194"/>
+    <circle class="high" cx="76" cy="70" r="8"/><circle class="point" cx="220" cy="318" r="8"/><circle class="high" cx="364" cy="118" r="8"/><circle class="point" cx="508" cy="390" r="8"/><circle class="high" cx="652" cy="194" r="10"/><circle class="point" cx="748" cy="412" r="8"/>
+    <text class="tag" x="624" y="180">压力位</text>
+    <rect x="720" y="142" width="302" height="82" rx="18" fill="#181817"/>
+    <text class="terminal-label" x="746" y="176">下降先看高点</text>
+    <text class="terminal-note" x="746" y="204">最近压住反弹的有效高点</text>
+    <rect x="132" y="418" width="284" height="76" rx="18" fill="#fff" stroke="#d8d4ca"/>
+    <text class="label" x="158" y="451">结构还在下移</text>
+    <text class="note" x="158" y="480">高点和低点仍在降低</text>
+  </g>
+</svg>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">观察不等于确认</title>
+  <desc id="desc">完整展示上升趋势形成 L3 防守位，价格从 H3 回调到防守位附近进入观察区，再突破小高点形成确认点。</desc>
+  <defs>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.zone{fill:#f6ddce;stroke:#d97757;stroke-width:1.5;stroke-dasharray:8 8}.def{stroke:#747069;stroke-width:2;stroke-dasharray:9 8}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.trend{fill:none;stroke:#181817;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}.dot{fill:#181817;stroke:#fff;stroke-width:4}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:700;fill:#181817}.small{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:15px;font-weight:600;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(74 54)">
+    <line class="axis" x1="42" y1="438" x2="1058" y2="438"/>
+    <line class="axis" x1="42" y1="68" x2="42" y2="438"/>
+    <rect class="zone" x="690" y="326" width="214" height="86" rx="18"/>
+    <line class="def" x1="472" y1="412" x2="940" y2="412"/>
+    <g>
+      <line class="up-wick" x1="82" y1="332" x2="82" y2="404"/><rect class="up" x="71" y="360" width="22" height="26" rx="3"/>
+      <line class="up-wick" x1="122" y1="286" x2="122" y2="366"/><rect class="up" x="111" y="318" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="162" y1="232" x2="162" y2="324"/><rect class="up" x="151" y="268" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="202" y1="170" x2="202" y2="268"/><rect class="up" x="191" y="208" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="242" y1="214" x2="242" y2="318"/><rect class="down" x="231" y="246" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="282" y1="272" x2="282" y2="358"/><rect class="down" x="271" y="298" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="322" y1="238" x2="322" y2="334"/><rect class="up" x="311" y="276" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="362" y1="172" x2="362" y2="276"/><rect class="up" x="351" y="212" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="402" y1="112" x2="402" y2="220"/><rect class="up" x="391" y="154" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="442" y1="160" x2="442" y2="270"/><rect class="down" x="431" y="194" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="482" y1="232" x2="482" y2="338"/><rect class="down" x="471" y="264" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="522" y1="206" x2="522" y2="310"/><rect class="up" x="511" y="246" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="562" y1="144" x2="562" y2="254"/><rect class="up" x="551" y="188" width="22" height="42" rx="3"/>
+      <line class="up-wick" x1="602" y1="76" x2="602" y2="188"/><rect class="up" x="591" y="120" width="22" height="44" rx="3"/>
+      <line class="down-wick" x1="642" y1="134" x2="642" y2="248"/><rect class="down" x="631" y="168" width="22" height="44" rx="3"/>
+      <line class="down-wick" x1="682" y1="218" x2="682" y2="326"/><rect class="down" x="671" y="250" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="722" y1="310" x2="722" y2="414"/><rect class="down" x="711" y="342" width="22" height="38" rx="3"/>
+      <line class="up-wick" x1="762" y1="288" x2="762" y2="382"/><rect class="up" x="751" y="324" width="22" height="34" rx="3"/>
+      <line class="down-wick" x1="802" y1="324" x2="802" y2="412"/><rect class="down" x="791" y="350" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="842" y1="300" x2="842" y2="396"/><rect class="up" x="831" y="338" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="882" y1="232" x2="882" y2="338"/><rect class="up" x="871" y="274" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="922" y1="166" x2="922" y2="278"/><rect class="up" x="911" y="210" width="22" height="42" rx="3"/>
+    </g>
+    <polyline class="trend" points="82,404 202,170 282,358 402,112 482,338 602,76 722,414 762,288 802,412 842,300 922,166"/>
+    <circle class="dot" cx="82" cy="404" r="8"/><circle class="dot" cx="202" cy="170" r="8"/><circle class="dot" cx="282" cy="358" r="8"/><circle class="dot" cx="402" cy="112" r="8"/><circle class="dot" cx="482" cy="338" r="8"/><circle class="dot" cx="602" cy="76" r="8"/><circle class="dot" cx="722" cy="414" r="9"/><circle class="dot" cx="842" cy="300" r="8"/><circle class="dot" cx="922" cy="166" r="9"/>
+    <text class="small" x="58" y="428">L1</text><text class="small" x="212" y="168">H1</text><text class="small" x="292" y="362">L2</text><text class="small" x="412" y="108">H2</text><text class="small" x="492" y="342">L3</text><text class="small" x="612" y="74">H3</text>
+    <text class="tag" x="116" y="88">上升趋势：高低点抬高</text>
+    <text class="tag" x="508" y="408">防守位 L3</text>
+    <text class="tag" x="740" y="326">观察区</text>
+    <text class="tag" x="850" y="292">小高点 H</text>
+    <text class="tag" x="942" y="174">确认点</text>
+    <rect x="710" y="454" width="386" height="76" rx="20" fill="#181817"/>
+    <text class="white" x="736" y="500">观察是开始盯，确认是可以动手</text>
+  </g>
+</svg>

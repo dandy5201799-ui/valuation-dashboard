@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第2章 · 选点连线演示器</title>
+<link rel="stylesheet" href="demo-base.css">
+<style>
+  .chart{min-height:270px;}
+  .step-tabs{display:flex;gap:5px;flex-wrap:wrap;}
+  .step-tabs .st{font-size:11.5px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:700;cursor:default;}
+  .step-tabs .st.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+</style>
+</head>
+<body>
+<div class="demo">
+  <div class="demo-head">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="demo-title">选点连线演示器</div>
+    <div class="demo-sub">第2章 · 从K线里选点、合并、连线，最后看出一个波段</div>
+  </div>
+
+  <div class="chart">
+    <svg id="svg" class="chart-svg" viewBox="0 0 720 300" role="img" aria-label="选点连线演示"></svg>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-group">
+      <span class="lbl">检查第几根：</span>
+      <input id="cursor" type="range" min="2" max="18" step="1" value="8" style="width:180px">
+      <span id="cursorLabel" class="mono" style="font-size:11px;color:var(--muted)"></span>
+    </div>
+    <div class="ctl-group" style="margin-left:auto">
+      <button class="btn primary" id="nextBtn">下一步</button>
+      <button class="btn" id="resetBtn">重置</button>
+    </div>
+  </div>
+
+  <div class="controls" style="border-top:none;padding-top:0">
+    <div class="step-tabs" id="stepTabs"></div>
+  </div>
+
+  <div class="verdict">
+    <span class="chip watch" id="stepChip">第①步</span>
+    <span class="vtext" id="stepText">先用“前后各两根”的规则，从K线里选出局部高点和局部低点。</span>
+  </div>
+
+  <div class="hint"><b>怎么玩：</b>拖动滑块逐根检查K线，看哪些K线符合“最高价高于前后各两根”或“最低价低于前后各两根”。点“下一步”依次看：<b>选点 → 合并 → 连线 → 波段</b>。带“合并”标记的点，是连续同类点里不够清楚、被保留更高/更低点的候选。</div>
+</div>
+
+<script>
+(function(){
+  // 21 根合成K线：左段有两个连续高点需合并，右段形成低→高→低→高的波段
+  var BARS = [
+    {d:"01", o:54.2, h:55.0, l:54.0, c:54.8},
+    {d:"02", o:54.6, h:55.4, l:53.9, c:54.2},
+    {d:"03", o:54.3, h:54.9, l:53.8, c:54.5},
+    {d:"04", o:54.4, h:56.2, l:54.1, c:55.8},
+    {d:"05", o:55.6, h:56.5, l:55.0, c:56.1},
+    {d:"06", o:56.0, h:57.1, l:55.7, c:56.8},
+    {d:"07", o:56.6, h:57.5, l:55.9, c:56.4},
+    {d:"08", o:56.5, h:57.2, l:56.2, c:56.9},
+    {d:"09", o:56.8, h:57.4, l:56.3, c:57.1},
+    {d:"10", o:57.0, h:58.8, l:56.9, c:58.4},
+    {d:"11", o:58.2, h:58.6, l:57.6, c:58.0},
+    {d:"12", o:58.1, h:59.2, l:57.9, c:58.9},
+    {d:"13", o:58.7, h:59.5, l:58.3, c:59.2},
+    {d:"14", o:59.1, h:59.4, l:58.6, c:59.0},
+    {d:"15", o:59.2, h:60.1, l:58.9, c:59.8},
+    {d:"16", o:59.6, h:59.9, l:57.9, c:58.4},
+    {d:"17", o:58.9, h:59.3, l:58.6, c:59.0},
+    {d:"18", o:58.9, h:60.0, l:58.7, c:59.7},
+    {d:"19", o:59.8, h:63.5, l:59.5, c:63.0},
+    {d:"20", o:62.8, h:63.2, l:61.2, c:61.8},
+    {d:"21", o:62.0, h:62.8, l:60.4, c:61.1}
+  ];
+  var N = BARS.length;
+  var W = 720, H = 300, padT = 34, padB = 34, padL = 42, padR = 14;
+  var svg = document.getElementById("svg");
+  var STEPS = [
+    {chip:"第①步", text:"先用“前后各两根”规则选点：局部高点的最高价要高于前后各两根；局部低点的最低价要低于前后各两根。拖动滑块检查每一根。"},
+    {chip:"第②步", text:"把符合条件的点标出来：红色三角是局部高点，蓝色三角是局部低点。注意它们必须和前后各两根比较，只看当天涨跌不成立。"},
+    {chip:"第③步", text:"点太密时合并：连续出现两个高点、中间没有低点，保留更高更清楚的那个；连续两个低点同理保留更低的。带“合并”标记的是被去掉的候选。"},
+    {chip:"第④步", text:"把相邻的确认点连成线：低点连到后面高点是一笔向上，高点连到后面低点是一笔向下。端点是交替的。"},
+    {chip:"第⑤步", text:"几条线连续组合成一段波段：低点→高点→低点→高点，连起来能看到价格在这一段是推进还是回撤。这就是可以观察的波段。"}
+  ];
+
+  // 与现有练习器一致的选点算法：前后各两根 + 同类型合并
+  function rawPivots(){
+    var out = [];
+    for (var i=2; i<=N-3; i++){
+      var win = BARS.slice(i-2, i+3);
+      if (BARS[i].h === Math.max.apply(null, win.map(function(d){return d.h;}))) out.push({i:i, type:"H", v:BARS[i].h});
+      if (BARS[i].l === Math.min.apply(null, win.map(function(d){return d.l;}))) out.push({i:i, type:"L", v:BARS[i].l});
+    }
+    out.sort(function(a,b){return a.i-b.i;});
+    return out;
+  }
+  function mergedPivots(){
+    var out = [];
+    var raw = rawPivots();
+    raw.forEach(function(p){
+      var q = out[out.length-1];
+      if (q && q.type === p.type){
+        if (p.type==="H" ? p.v>q.v : p.v<q.v) out[out.length-1] = p;
+      } else out.push(p);
+    });
+    return out;
+  }
+  function isLocal(i){
+    var win = BARS.slice(Math.max(0,i-2), Math.min(N,i+3));
+    var h = BARS[i].h, l = BARS[i].l;
+    var hOk = h === Math.max.apply(null, win.map(function(d){return d.h;}));
+    var lOk = l === Math.min.apply(null, win.map(function(d){return d.l;}));
+    return { h:hOk, l:lOk };
+  }
+
+  var step = 0;
+  var cursor = 8;
+
+  function yScale(){
+    var mn = Math.min.apply(null, BARS.map(function(d){return d.l;}));
+    var mx = Math.max.apply(null, BARS.map(function(d){return d.h;}));
+    var gap = (mx-mn) || 1;
+    return { min: mn-gap*0.10, max: mx+gap*0.14 };
+  }
+  function yOf(v){
+    var r = yScale();
+    return padT + (r.max-v)/(r.max-r.min)*(H-padT-padB);
+  }
+  function xOf(i){
+    return padL + i*(W-padL-padR)/(N-1);
+  }
+  function ns(name, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function text(x,y,s,attrs){
+    var t = ns("text", Object.assign({x:x,y:y,"text-anchor":"middle","font-size":"10.5",fill:"#a19c8c"}, attrs||{}));
+    t.textContent = s;
+    return t;
+  }
+
+  function draw(){
+    svg.innerHTML = "";
+    var r = yScale();
+
+    // 网格
+    for (var k=0;k<=5;k++){
+      var v = r.min + (r.max-r.min)*k/5, yy = yOf(v);
+      svg.appendChild(ns("line",{x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:"#e9e6dd","stroke-width":"1"}));
+      svg.appendChild(text(padL-7,yy+3,v.toFixed(1),{"text-anchor":"end"}));
+    }
+
+    // 检查窗口高亮
+    if (step === 0){
+      var from = Math.max(0,cursor-2), to = Math.min(N-1,cursor+2);
+      svg.appendChild(ns("rect",{x:xOf(from)-8,y:padT-8,width:xOf(to)-xOf(from)+16,height:H-padT-padB+16,fill:"#d97757","fill-opacity":"0.07",stroke:"#d97757","stroke-opacity":"0.35","stroke-dasharray":"4 4",rx:8}));
+    }
+
+    // K线
+    var bw = Math.max(4, (W-padL-padR)/N*0.30);
+    BARS.forEach(function(d,i){
+      var x = xOf(i), up = d.c >= d.o;
+      var col = up ? "#d97757" : "#2f8f6b";
+      svg.appendChild(ns("line",{x1:x,y1:yOf(d.h),x2:x,y2:yOf(d.l),stroke:col,"stroke-width":"1.4"}));
+      var top = yOf(Math.max(d.o,d.c)), bot = yOf(Math.min(d.o,d.c));
+      svg.appendChild(ns("rect",{x:x-bw/2,y:top,width:bw,height:Math.max(1.5,bot-top),fill:col,"fill-opacity":"0.88",rx:1}));
+      if (i % 5 === 0 || i === N-1) svg.appendChild(text(x, H-16, d.d, {}));
+    });
+
+    // 检查位置游标
+    if (step === 0){
+      var cx = xOf(cursor);
+      svg.appendChild(ns("line",{x1:cx,y1:padT-8,x2:cx,y2:H-padB+8,stroke:"#181817","stroke-width":"1.6","stroke-dasharray":"3 3"}));
+      var loc = isLocal(cursor);
+      var txt = "第"+(cursor+1)+"根";
+      if (loc.h && loc.l) txt += "：同时是局部高点与局部低点候选";
+      else if (loc.h) txt += "：局部高点候选（最高价高于前后各两根）";
+      else if (loc.l) txt += "：局部低点候选（最低价低于前后各两根）";
+      else txt += "：不满足选点规则";
+      document.getElementById("cursorLabel").textContent = txt;
+    } else {
+      document.getElementById("cursorLabel").textContent = "";
+    }
+
+    // 选点 / 合并 / 连线 / 波段
+    var raw = rawPivots(), merged = mergedPivots();
+    if (step >= 1){
+      var mergedSet = new Set(merged.map(function(p){return p.i+"-"+p.type;}));
+      raw.forEach(function(p){
+        var kept = mergedSet.has(p.i+"-"+p.type);
+        var x = xOf(p.i), yy = yOf(p.v);
+        var col = p.type==="H" ? "#d97757" : "#2f8f6b";
+        if (step >= 2 && !kept){
+          svg.appendChild(ns("path",{d:"M"+(x-5)+" "+(yy-5)+" L"+(x+5)+" "+(yy+5)+" M"+(x+5)+" "+(yy-5)+" L"+(x-5)+" "+(yy+5),stroke:"#c9c3b8","stroke-width":"1.6"}));
+          svg.appendChild(text(x, yy + (p.type==="H"?-10:16), "合并", {fill:"#a19c8c","font-size":"9"}));
+        } else if (step >= 1){
+          var tri = p.type==="H"
+            ? "M"+x+" "+(yy-11)+" L"+(x+7)+" "+(yy-1)+" L"+(x-7)+" "+(yy-1)+" Z"
+            : "M"+x+" "+(yy+11)+" L"+(x+7)+" "+(yy+1)+" L"+(x-7)+" "+(yy+1)+" Z";
+          svg.appendChild(ns("path",{d:tri,fill:col,stroke:"#fff","stroke-width":"1.2"}));
+          svg.appendChild(text(x, yy + (p.type==="H"?-20:24), p.type==="H"?"高":"低", {fill:col,"font-weight":"700","font-size":"10"}));
+        }
+      });
+    }
+
+    if (step >= 3){
+      var pts = merged;
+      var poly = [];
+      pts.forEach(function(p){ poly.push((xOf(p.i))+","+(yOf(p.v).toFixed(1))); });
+      svg.appendChild(ns("polyline",{points:poly.join(" "),fill:"none",stroke:"#393735","stroke-width":"2.4","stroke-linejoin":"round","stroke-linecap":"round"}));
+      pts.forEach(function(p,j){
+        var x = xOf(p.i), yy = yOf(p.v);
+        svg.appendChild(ns("circle",{cx:x,cy:yy,r:4,fill:"#fff",stroke:"#393735","stroke-width":"2"}));
+        if (j>0){
+          var midX = (xOf(pts[j-1].i)+x)/2, midY = (yOf(pts[j-1].v)+yy)/2;
+          var upSeg = pts[j].type==="H";
+          svg.appendChild(text(midX, midY + (upSeg?-8:16), "笔"+j, {fill:"#5f5b55","font-weight":"700","font-size":"11"}));
+        }
+      });
+    }
+
+    if (step >= 4){
+      var a = merged[0], b = merged[merged.length-1];
+      var topBand = Math.max(yOf(a.v), yOf(b.v));
+      var botBand = Math.min(yOf(a.v), yOf(b.v));
+      svg.appendChild(ns("rect",{x:padL,y:topBand-6,width:W-padL-padR,height:Math.max(8,botBand-topBand+12),fill:"#b8790a","fill-opacity":"0.08",stroke:"#b8790a","stroke-opacity":"0.3",rx:6}));
+      svg.appendChild(text((xOf(a.i)+xOf(b.i))/2, topBand-16, "这一段形成一个可观察的波段", {fill:"#8a5a06","font-weight":"700","font-size":"11.5"}));
+    }
+
+    document.getElementById("stepChip").textContent = STEPS[step].chip;
+    document.getElementById("stepText").textContent = STEPS[step].text;
+    renderTabs();
+  }
+
+  function renderTabs(){
+    var box = document.getElementById("stepTabs");
+    box.innerHTML = "";
+    STEPS.forEach(function(s,i){
+      var b = document.createElement("span");
+      b.className = "st" + (i===step ? " on" : "");
+      b.textContent = s.chip;
+      box.appendChild(b);
+    });
+  }
+
+  document.getElementById("cursor").addEventListener("input", function(e){
+    cursor = +e.target.value;
+    draw();
+  });
+  document.getElementById("nextBtn").addEventListener("click", function(){
+    step = Math.min(STEPS.length-1, step+1);
+    draw();
+  });
+  document.getElementById("resetBtn").addEventListener("click", function(){
+    step = 0; cursor = 8;
+    document.getElementById("cursor").value = 8;
+    draw();
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>

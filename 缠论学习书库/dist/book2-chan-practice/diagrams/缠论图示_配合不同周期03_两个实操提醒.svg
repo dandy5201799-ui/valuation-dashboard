@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">两个实操提醒</title>
+  <desc id="desc">结论不同时各自保留；失败线和判断要在同一层，不要临时换层。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      .panel{fill:#fff;stroke:#d8d4ca;stroke-width:1.1}.axis{stroke:#e9e6dd;stroke-width:1}.fail{stroke:#d97757;stroke-width:1.8;stroke-dasharray:8 8}.trend{fill:none;stroke:#181817;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}.path{fill:none;stroke:#5f5b55;stroke-width:1.7;marker-end:url(#arrow)}.dot{fill:#181817;stroke:#fff;stroke-width:3}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:22px;font-weight:700;fill:#181817}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:15px;font-weight:500;fill:#747069}.no{fill:none;stroke:#d97757;stroke-width:3}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <text class="label" x="86" y="54">结论不同时各自保留</text>
+  <g transform="translate(80 82)">
+    <g><rect class="panel" x="0" y="0" width="300" height="138" rx="20"/><polyline class="trend" points="34,92 76,44 122,78 172,34 226,96"/><text class="tag" x="34" y="118">大图升 + 小图跌</text><text class="note" x="162" y="118">上升中的回调</text></g>
+    <g transform="translate(350 0)"><rect class="panel" x="0" y="0" width="300" height="138" rx="20"/><polyline class="trend" points="34,34 78,92 126,58 176,104 232,66"/><text class="tag" x="34" y="118">大图跌 + 小图升</text><text class="note" x="162" y="118">下降中的反弹</text></g>
+    <g transform="translate(700 0)"><rect class="panel" x="0" y="0" width="300" height="138" rx="20"/><polyline class="trend" points="34,92 78,48 126,94 178,50 232,92"/><text class="tag" x="34" y="118">大图横 + 小图有趋势</text><text class="note" x="200" y="118">区间内短线</text></g>
+  </g>
+  <text class="label" x="86" y="284">失败线和判断要同一层</text>
+  <g transform="translate(100 320)">
+    <g><rect class="panel" x="0" y="0" width="390" height="160" rx="22"/><text class="tag" x="28" y="34">按大图判断做</text><line class="axis" x1="28" y1="126" x2="348" y2="126"/><polyline class="trend" points="44,108 100,52 154,114 236,42 314,92"/><line class="fail" x1="44" y1="134" x2="314" y2="134"/><text class="note" x="236" y="148">大图失败线</text></g>
+    <g transform="translate(410 58)"><circle class="no" cx="42" cy="42" r="34"/><line class="no" x1="18" y1="66" x2="66" y2="18"/><text class="note" x="2" y="102">不要临时换</text></g>
+    <g transform="translate(560 0)"><rect class="panel" x="0" y="0" width="390" height="160" rx="22"/><text class="tag" x="28" y="34">按小图判断做</text><line class="axis" x1="28" y1="126" x2="348" y2="126"/><polyline class="trend" points="44,90 92,62 138,104 188,66 248,46"/><circle class="dot" cx="248" cy="46" r="7"/><line class="fail" x1="44" y1="102" x2="248" y2="102"/><text class="note" x="212" y="116">小图失败线</text></g>
+  </g>
+  <rect x="760" y="500" width="330" height="76" rx="20" fill="#181817"/><text class="white" x="800" y="546">判断和失败线要同一层</text>
+</svg>

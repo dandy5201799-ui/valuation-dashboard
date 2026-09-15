@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">把相邻点连成线</title>
+  <desc id="desc">四个确认的高低点 L1、H1、L2、H2 依次连接，形成向上笔、向下笔、向上笔。</desc>
+  <defs>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.pen{fill:none;stroke:#181817;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round}.point{fill:#181817;stroke:#fff;stroke-width:4}.top{fill:#181817;stroke:#fff;stroke-width:4}.guide{stroke:#d8d4ca;stroke-width:1.1;stroke-dasharray:6 8}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:19px;font-weight:700;fill:#181817}.micro{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}.white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(96 58)">
+    <line class="axis" x1="42" y1="430" x2="1038" y2="430"/>
+    <line class="axis" x1="42" y1="70" x2="42" y2="430"/>
+    <g>
+      <line class="up-wick" x1="96" y1="328" x2="96" y2="392"/><rect class="up" x="85" y="352" width="22" height="24" rx="3"/>
+      <line class="up-wick" x1="146" y1="284" x2="146" y2="360"/><rect class="up" x="135" y="314" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="196" y1="226" x2="196" y2="318"/><rect class="up" x="185" y="262" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="246" y1="146" x2="246" y2="250"/><rect class="up" x="235" y="186" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="296" y1="202" x2="296" y2="310"/><rect class="down" x="285" y="232" width="22" height="44" rx="3"/>
+      <line class="down-wick" x1="346" y1="272" x2="346" y2="372"/><rect class="down" x="335" y="304" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="396" y1="332" x2="396" y2="408"/><rect class="down" x="385" y="356" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="446" y1="302" x2="446" y2="384"/><rect class="up" x="435" y="334" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="496" y1="236" x2="496" y2="330"/><rect class="up" x="485" y="272" width="22" height="36" rx="3"/>
+      <line class="up-wick" x1="546" y1="176" x2="546" y2="278"/><rect class="up" x="535" y="216" width="22" height="38" rx="3"/>
+      <line class="up-wick" x1="596" y1="110" x2="596" y2="218"/><rect class="up" x="585" y="152" width="22" height="42" rx="3"/>
+    </g>
+    <polyline class="pen" points="96,392 246,146 396,408 596,110"/>
+    <line class="guide" x1="96" y1="392" x2="96" y2="430"/>
+    <line class="guide" x1="246" y1="146" x2="246" y2="430"/>
+    <line class="guide" x1="396" y1="408" x2="396" y2="430"/>
+    <line class="guide" x1="596" y1="110" x2="596" y2="430"/>
+    <circle class="point" cx="96" cy="392" r="9"/><circle class="top" cx="246" cy="146" r="9"/><circle class="point" cx="396" cy="408" r="9"/><circle class="top" cx="596" cy="110" r="9"/>
+    <text class="tag" x="70" y="382">L1</text>
+    <text class="tag" x="258" y="142">H1</text>
+    <text class="tag" x="410" y="410">L2</text>
+    <text class="tag" x="610" y="108">H2</text>
+    <text class="tag" x="138" y="238">向上笔</text>
+    <text class="tag" x="286" y="286">向下笔</text>
+    <text class="tag" x="468" y="248">向上笔</text>
+    <g>
+      <rect x="700" y="112" width="272" height="72" rx="18" fill="#fff" stroke="#d8d4ca"/>
+      <text class="label" x="726" y="144">两个端点都确认</text>
+      <text class="note" x="726" y="170">不能拿候选点直接连</text>
+      <rect x="700" y="214" width="272" height="72" rx="18" fill="#fff" stroke="#d8d4ca"/>
+      <text class="label" x="726" y="246">一高一低</text>
+      <text class="note" x="726" y="272">高点和低点相邻连接</text>
+      <rect x="700" y="316" width="272" height="72" rx="18" fill="#fff" stroke="#d8d4ca"/>
+      <text class="label" x="726" y="348">来自不同 K 线</text>
+      <text class="note" x="726" y="374">相邻点不能共用同一根</text>
+    </g>
+    <rect x="690" y="430" width="390" height="76" rx="20" fill="#181817"/>
+    <text class="white" x="716" y="462">低点连高点是向上</text>
+    <text class="white-note" x="716" y="490">高点连低点是向下</text>
+  </g>
+</svg>

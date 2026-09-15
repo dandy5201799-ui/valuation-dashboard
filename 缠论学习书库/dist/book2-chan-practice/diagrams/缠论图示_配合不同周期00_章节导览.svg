@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">配合不同周期：章节导览</title>
+  <desc id="desc">先看大图定方向和位置，再看小图找确认和入场；结论不同各自保留，失败线用做判断那一层的。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}.path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}.mini{fill:none;stroke:#181817;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}.dash{stroke:#d97757;stroke-width:2;stroke-dasharray:7 7}.dot{fill:#181817;stroke:#fff;stroke-width:3}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:450;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(72 158)">
+    <g><rect class="node" x="0" y="0" width="200" height="118" rx="18"/><polyline class="mini" points="42,82 76,52 108,72 150,36"/><path class="dash" d="M46 92 H154"/><text class="label" x="16" y="164">先看大图定方向和位置</text><text class="note" x="46" y="192">知道顺哪边、盯哪里</text></g>
+    <path class="path" d="M220 60 H272"/>
+    <g transform="translate(292 0)"><rect class="node" x="0" y="0" width="200" height="118" rx="18"/><polyline class="mini" points="42,82 72,68 106,76 152,38"/><circle class="dot" cx="152" cy="38" r="7"/><text class="label" x="16" y="164">再看小图找确认和入场</text><text class="note" x="44" y="192">把动作落到细节</text></g>
+    <path class="path" d="M512 60 H564"/>
+    <g transform="translate(584 0)"><rect class="node" x="0" y="0" width="200" height="118" rx="18"/><polyline class="mini" points="38,44 76,34 116,62 156,48"/><polyline class="mini" points="38,88 76,98 116,72 156,92"/><text class="label" x="18" y="164">两边结论不同各自保留</text><text class="note" x="48" y="192">范围不同，不互相抹掉</text></g>
+    <path class="path" d="M804 60 H856"/>
+    <g transform="translate(876 0)"><rect class="node" x="0" y="0" width="200" height="118" rx="18"/><polyline class="mini" points="44,46 78,36 114,50 154,32"/><path class="dash" d="M44 84 H154"/><text class="label" x="16" y="164">失败线用判断那一层的</text><text class="note" x="54" y="192">大图归大图，小图归小图</text></g>
+  </g>
+  <rect x="760" y="500" width="330" height="76" rx="20" fill="#181817"/><text class="white" x="800" y="546">大图定方向，小图找入场</text>
+</svg>

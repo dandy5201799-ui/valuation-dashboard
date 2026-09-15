@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">看懂K线走势封面</title>
+  <desc id="desc">暖白纸面风格的缠论学习书封面，包含K线、折线和确认点。</desc>
+  <defs>
+    <style>
+      .serif { font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Source Han Serif SC", serif; }
+      .sans { font-family: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; }
+    </style>
+    <filter id="paperShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#35291b" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="1200" fill="#f4efe4"/>
+  <rect x="66" y="74" width="768" height="1052" rx="30" fill="#fcf8ef" stroke="#d8c9b8" stroke-width="1.5" filter="url(#paperShadow)"/>
+  <rect x="94" y="104" width="712" height="992" rx="22" fill="#fffaf1" stroke="#eadfce" stroke-width="1"/>
+
+  <text x="128" y="178" class="sans" font-size="22" font-weight="700" fill="#875932">CHAN STUDY 01</text>
+  <text x="128" y="280" class="serif" font-size="76" font-weight="700" fill="#211912">看懂K线走势</text>
+  <text x="132" y="344" class="serif" font-size="30" fill="#5e5245">从价格涨跌里，看清结构和方向</text>
+
+  <g transform="translate(138 458)">
+    <rect x="0" y="0" width="624" height="360" rx="18" fill="#fffdf8" stroke="#d7c8b7" stroke-width="1"/>
+    <text x="42" y="58" class="serif" font-size="28" font-weight="700" fill="#211912">从 K 线到判断</text>
+    <text x="42" y="94" class="sans" font-size="18" fill="#756756">这本书把需要掌握的结构能力按顺序串起来</text>
+
+    <g class="sans" font-size="21" font-weight="700" fill="#33291d">
+      <rect x="42" y="126" width="246" height="58" rx="16" fill="#fffaf1" stroke="#d8c9b8"/>
+      <circle cx="72" cy="155" r="14" fill="#211912"/>
+      <text x="68" y="162" font-size="17" fill="#fffaf1">1</text>
+      <text x="102" y="163">看清趋势</text>
+
+      <rect x="336" y="126" width="246" height="58" rx="16" fill="#fffaf1" stroke="#d8c9b8"/>
+      <circle cx="366" cy="155" r="14" fill="#211912"/>
+      <text x="362" y="162" font-size="17" fill="#fffaf1">2</text>
+      <text x="396" y="163">选择高低点</text>
+
+      <rect x="42" y="202" width="246" height="58" rx="16" fill="#fffaf1" stroke="#d8c9b8"/>
+      <circle cx="72" cy="231" r="14" fill="#211912"/>
+      <text x="68" y="238" font-size="17" fill="#fffaf1">3</text>
+      <text x="102" y="239">连成笔和线段</text>
+
+      <rect x="336" y="202" width="246" height="58" rx="16" fill="#fffaf1" stroke="#d8c9b8"/>
+      <circle cx="366" cy="231" r="14" fill="#211912"/>
+      <text x="362" y="238" font-size="17" fill="#fffaf1">4</text>
+      <text x="396" y="239">找到关键位置</text>
+
+      <rect x="42" y="278" width="246" height="58" rx="16" fill="#fffaf1" stroke="#d8c9b8"/>
+      <circle cx="72" cy="307" r="14" fill="#211912"/>
+      <text x="68" y="314" font-size="17" fill="#fffaf1">5</text>
+      <text x="102" y="315">等待确认信号</text>
+
+      <rect x="336" y="278" width="246" height="58" rx="16" fill="#fffaf1" stroke="#d8c9b8"/>
+      <circle cx="366" cy="307" r="14" fill="#211912"/>
+      <text x="362" y="314" font-size="17" fill="#fffaf1">6</text>
+      <text x="396" y="315">写出失败线</text>
+    </g>
+  </g>
+
+  <g transform="translate(132 870)">
+    <line x1="0" y1="0" x2="636" y2="0" stroke="#d8c9b8" stroke-width="1"/>
+    <text x="0" y="64" class="serif" font-size="26" fill="#33291d">趋势 · 结构 · 位置 · 确认 · 复盘</text>
+    <text x="0" y="116" class="sans" font-size="20" fill="#756756">先读懂走势，再讨论机会和动作。</text>
+  </g>
+</svg>

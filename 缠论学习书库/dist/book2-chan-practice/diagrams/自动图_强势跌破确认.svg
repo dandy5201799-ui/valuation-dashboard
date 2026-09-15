@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="620" viewBox="0 0 1080 620">
+<rect width="1080" height="620" rx="24" fill="#ffffff"/>
+<style>
+    .axis{stroke:#d8e0ec;stroke-width:1}
+    .grid{stroke:#edf2f7;stroke-width:1}
+    .small{font-family:PingFang SC,Noto Sans CJK SC,Arial,sans-serif;font-size:18px;fill:#475569}
+    .tiny{font-family:PingFang SC,Noto Sans CJK SC,Arial,sans-serif;font-size:15px;fill:#64748b}
+    .label{font-family:PingFang SC,Noto Sans CJK SC,Arial,sans-serif;font-size:18px;font-weight:700}
+    .tag{font-family:PingFang SC,Noto Sans CJK SC,Arial,sans-serif;font-size:17px;font-weight:700}
+  </style>
+<rect x="66" y="36" width="980" height="506" rx="12" fill="#fbfdff" stroke="#d8e0ec"/>
+<line class="grid" x1="66" y1="36" x2="1046" y2="36"/>
+<text class="tiny" x="56" y="41" text-anchor="end">41.85</text>
+<line class="grid" x1="66" y1="162.5" x2="1046" y2="162.5"/>
+<text class="tiny" x="56" y="167.5" text-anchor="end">40.25</text>
+<line class="grid" x1="66" y1="289" x2="1046" y2="289"/>
+<text class="tiny" x="56" y="294" text-anchor="end">38.66</text>
+<line class="grid" x1="66" y1="415.5" x2="1046" y2="415.5"/>
+<text class="tiny" x="56" y="420.5" text-anchor="end">37.06</text>
+<line class="grid" x1="66" y1="542" x2="1046" y2="542"/>
+<text class="tiny" x="56" y="547" text-anchor="end">35.46</text>
+<rect x="147.66666666666666" y="225.74920787987287" width="285.83333333333337" height="38.02176608348293" fill="#fef3c7" opacity="0.55" stroke="#f59e0b" stroke-width="2" stroke-dasharray="7 7"/>
+<text class="tag" x="421.5" y="250.74920787987287" text-anchor="end" fill="#f59e0b">防守区</text>
+<rect x="-832.3333333333333" y="102.97058823529383" width="1510.8333333333333" height="141.7895026863205" fill="#ede9fe" opacity="0.3" stroke="#a855f7" stroke-width="2" stroke-dasharray="7 7"/>
+<text class="tag" x="666.5" y="127.97058823529383" text-anchor="end" fill="#a855f7">原中枢</text>
+<line x1="66" y1="244.76009092161434" x2="678.5" y2="244.76009092161434" stroke="#dc2626" stroke-width="3" stroke-dasharray="8 6"/>
+<g transform="translate(147.66666666666666,232.76009092161434)">
+        <rect x="-8" y="-24" width="162" height="34" rx="13" fill="#fff" stroke="#dc2626" stroke-width="2"/>
+        <text class="tag" x="8" y="-2" fill="#dc2626">关键线 39.21</text>
+      </g>
+<line x1="270.1666666666667" y1="262.97885383661617" x2="678.5" y2="262.97885383661617" stroke="#ea580c" stroke-width="3" stroke-dasharray="8 6"/>
+<g transform="translate(311,250.97885383661617)">
+        <rect x="-8" y="-24" width="162" height="34" rx="13" fill="#fff" stroke="#ea580c" stroke-width="2"/>
+        <text class="tag" x="8" y="-2" fill="#ea580c">小低点 / 确认线</text>
+      </g>
+<line x1="66" y1="120.39723102355661" x2="66" y2="162.37959774073542" stroke="#dc2626" stroke-width="2"/>
+<rect x="60" y="145.7450750792117" width="12" height="10.297561647609541" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="106.83333333333333" y1="121.18935115029566" x2="106.83333333333333" y2="176.63776002204136" stroke="#16a34a" stroke-width="2"/>
+<rect x="100.83333333333333" y="125.94207191073117" width="12" height="22.179363548698277" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="147.66666666666666" y1="102.97058823529383" x2="147.66666666666666" y2="172.67715938834493" stroke="#dc2626" stroke-width="2"/>
+<rect x="141.66666666666666" y="124.35783165725249" width="12" height="47.52720760435338" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="188.5" y1="163.96383799421355" x2="188.5" y2="239.21525003443978" stroke="#dc2626" stroke-width="2"/>
+<rect x="182.5" y="167.92443862790998" width="12" height="49.11144785783148" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="229.33333333333331" y1="202.77772420443551" x2="229.33333333333331" y2="253.47341231574572" stroke="#dc2626" stroke-width="2"/>
+<rect x="223.33333333333331" y="220.2043669926983" width="12" height="19.010883041741465" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="270.1666666666667" y1="228.9176883868297" x2="270.1666666666667" y2="262.97885383661617" stroke="#dc2626" stroke-width="2"/>
+<rect x="264.1666666666667" y="239.21525003443978" width="12" height="14.258162281305943" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="311" y1="232.87828902052613" x2="311" y2="260.6024934563984" stroke="#dc2626" stroke-width="2"/>
+<rect x="305" y="247.13645130183207" width="12" height="5.544840887174587" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="351.83333333333337" y1="249.5128116820493" x2="351.83333333333337" y2="337.43814575010333" stroke="#dc2626" stroke-width="2"/>
+<rect x="345.83333333333337" y="252.68129218900665" width="12" height="83.96473343435704" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="392.66666666666663" y1="308.9218211874909" x2="392.66666666666663" y2="342.1908665105383" stroke="#16a34a" stroke-width="2"/>
+<rect x="386.66666666666663" y="333.4775451164069" width="12" height="2" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="433.5" y1="301.55510400881633" x2="433.5" y2="368.88531478165027" stroke="#dc2626" stroke-width="2"/>
+<rect x="427.5" y="302.34722413555545" width="12" height="60.993249758920285" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="474.33333333333337" y1="347.4980713596911" x2="474.33333333333337" y2="380.76711668273845" stroke="#dc2626" stroke-width="2"/>
+<rect x="468.33333333333337" y="362.54835376773667" width="12" height="14.258162281305943" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="515.1666666666666" y1="330.86354869816734" x2="515.1666666666666" y2="379.97499655599944" stroke="#16a34a" stroke-width="2"/>
+<rect x="509.16666666666663" y="362.54835376773667" width="12" height="12.673922027827246" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="556" y1="345.91383110621297" x2="556" y2="406.1149607383936" stroke="#dc2626" stroke-width="2"/>
+<rect x="550" y="347.4980713596911" width="12" height="53.864168618267" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="596.8333333333333" y1="374.43015566882485" x2="596.8333333333333" y2="436.21552555448415" stroke="#dc2626" stroke-width="2"/>
+<rect x="590.8333333333333" y="398.98587959774034" width="12" height="33.26904532304741" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="637.6666666666667" y1="406.9070808651326" x2="637.6666666666667" y2="469.48457087753104" stroke="#dc2626" stroke-width="2"/>
+<rect x="631.6666666666667" y="432.25492492078774" width="12" height="27.72420443587282" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="678.5" y1="396.60951921752314" x2="678.5" y2="475.0294117647056" stroke="#16a34a" stroke-width="2"/>
+<rect x="672.5" y="418.7888827662208" width="12" height="41.190246590439756" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="719.3333333333333" y1="379.97499655599944" x2="719.3333333333333" y2="430.67068466730956" stroke="#16a34a" stroke-width="2"/>
+<rect x="713.3333333333333" y="412.4519217523072" width="12" height="3.1684805069568256" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="760.1666666666667" y1="385.519837443174" x2="760.1666666666667" y2="444.136726821876" stroke="#dc2626" stroke-width="2"/>
+<rect x="754.1666666666667" y="410.8676814988291" width="12" height="25.34784405565506" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="801" y1="368.88531478165027" x2="801" y2="456.01852872296473" stroke="#16a34a" stroke-width="2"/>
+<rect x="795" y="378.39075630252074" width="12" height="51.48780823804924" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="841.8333333333333" y1="327.6950681912105" x2="841.8333333333333" y2="378.39075630252074" stroke="#16a34a" stroke-width="2"/>
+<rect x="835.8333333333333" y="367.30107452817157" width="12" height="11.089681774349174" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="882.6666666666667" y1="317.397506543601" x2="882.6666666666667" y2="387.89619782339173" stroke="#dc2626" stroke-width="2"/>
+<rect x="876.6666666666667" y="350.66655186664786" width="12" height="34.06116544978647" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="923.5" y1="367.30107452817157" x2="923.5" y2="409.2834412453504" stroke="#dc2626" stroke-width="2"/>
+<rect x="917.5" y="367.30107452817157" width="12" height="29.308444689351575" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<line x1="964.3333333333333" y1="339.5768700922987" x2="964.3333333333333" y2="399.7779997244799" stroke="#16a34a" stroke-width="2"/>
+<rect x="958.3333333333333" y="340.3689902190384" width="12" height="56.24052899848476" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="1005.1666666666667" y1="268.2860586857689" x2="1005.1666666666667" y2="348.2901914864307" stroke="#16a34a" stroke-width="2"/>
+<rect x="999.1666666666667" y="284.9205813472927" width="12" height="60.993249758920285" rx="1.5" fill="#16a34a" opacity="0.9"/>
+<line x1="1046" y1="265.90969830555116" x2="1046" y2="316.6053864168614" stroke="#dc2626" stroke-width="2"/>
+<rect x="1040" y="285.71270147403175" width="12" height="7.921201267392291" rx="1.5" fill="#dc2626" opacity="0.9"/>
+<polyline points="147.66666666666666,102.97058823529383 678.5,475.0294117647056" fill="none" stroke="#4f46e5" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<circle cx="147.66666666666666" cy="102.97058823529383" r="5.5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<circle cx="678.5" cy="475.0294117647056" r="5.5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<circle cx="270.1666666666667" cy="262.97885383661617" r="8" fill="#fff" stroke="#ea580c" stroke-width="4"/>
+<g transform="translate(140.16666666666669,302.97885383661617)">
+      <rect x="0" y="-28" width="126" height="38" rx="14" fill="#fff" stroke="#ea580c" stroke-width="2.5"/>
+      <text class="label" x="14" y="-4" fill="#ea580c">局部小低点</text>
+    </g>
+<circle cx="351.83333333333337" cy="336.6460256233637" r="8" fill="#fff" stroke="#dc2626" stroke-width="4"/>
+<g transform="translate(369.83333333333337,384.6460256233637)">
+      <rect x="0" y="-28" width="126" height="38" rx="14" fill="#fff" stroke="#dc2626" stroke-width="2.5"/>
+      <text class="label" x="14" y="-4" fill="#dc2626">跌破确认</text>
+    </g>
+<line class="axis" x1="66" y1="542" x2="66" y2="549"/>
+<text class="tiny" x="66" y="574" text-anchor="middle">01-05</text>
+<line class="axis" x1="311" y1="542" x2="311" y2="549"/>
+<text class="tiny" x="311" y="574" text-anchor="middle">01-13</text>
+<line class="axis" x1="556" y1="542" x2="556" y2="549"/>
+<text class="tiny" x="556" y="574" text-anchor="middle">01-21</text>
+<line class="axis" x1="801" y1="542" x2="801" y2="549"/>
+<text class="tiny" x="801" y="574" text-anchor="middle">01-29</text>
+<line class="axis" x1="1046" y1="542" x2="1046" y2="549"/>
+<text class="tiny" x="1046" y="574" text-anchor="middle">02-06</text>
+<text class="tiny" x="66" y="600">数据：招商银行 600036 前复权日K；关键点来自自动标注引擎 chan_spec_v0.5_leave_side。</text>
+</svg>

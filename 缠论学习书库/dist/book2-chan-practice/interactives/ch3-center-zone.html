@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第3章 · 中枢与走势类型演示器</title>
+<link rel="stylesheet" href="demo-base.css">
+<style>
+  .chart{min-height:280px;}
+</style>
+</head>
+<body>
+<div class="demo">
+  <div class="demo-head">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="demo-title">中枢与走势类型演示器</div>
+    <div class="demo-sub">第3章 · 看几段走势怎么重叠成中枢，再用中枢位置判断盘整还是趋势</div>
+  </div>
+
+  <div class="chart">
+    <svg id="svg" class="chart-svg" viewBox="0 0 720 300" role="img" aria-label="中枢与走势类型演示"></svg>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-group">
+      <span class="lbl">中枢1显示：</span>
+      <input id="segSlider" type="range" min="1" max="3" step="1" value="3" style="width:110px">
+      <span id="segLabel" class="mono" style="font-size:11px;color:var(--muted)">3 段</span>
+    </div>
+    <div class="ctl-group">
+      <span class="lbl">中枢2位置：</span>
+      <input id="posSlider" type="range" min="0" max="100" step="1" value="72" style="width:140px">
+      <span id="posLabel" class="mono" style="font-size:11px;color:var(--muted)">抬高</span>
+    </div>
+    <div class="ctl-group">
+      <button class="btn" data-pos="38">盘整</button>
+      <button class="btn" data-pos="72">上升</button>
+      <button class="btn" data-pos="8">下降</button>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <span class="chip flat" id="verdictChip">盘整</span>
+    <span class="vtext" id="verdictText">一个中枢，价格围着它上下反复 → 盘整。把第二个中枢往上抬，看趋势怎么出现。</span>
+  </div>
+
+  <div class="hint"><b>怎么玩：</b>先把“中枢1显示”拉到 3 段，看三段走势的重叠区域怎么变成中枢（上沿＝三段中最低的高点，下沿＝三段中最高的低点）。再拖动“中枢2位置”，看第二个中枢<b>抬高→上升趋势、降低→下降趋势、与中枢1重叠→盘整</b>。</div>
+</div>
+
+<script>
+(function(){
+  var W = 720, H = 300, padT = 34, padB = 34, padL = 42, padR = 16;
+  var svg = document.getElementById("svg");
+
+  // 中枢1 的三个端点（4点 → 3段）：A→B→C→D
+  var Z1 = [
+    {x:80,  p:0.980},
+    {x:200, p:1.100},
+    {x:320, p:1.020},
+    {x:440, p:1.120}
+  ];
+  // 中枢2 的三个端点（可整体上下移动 δ）：E→F→G→H
+  var Z2 = [
+    {x:500, p:1.140},
+    {x:575, p:1.245},
+    {x:650, p:1.175},
+    {x:720, p:1.260}
+  ];
+  var segShown = 3;   // 中枢1 显示段数 1..3
+  var pos = 72;       // 中枢2 位置 0..100（δ 从 -0.30 到 +0.18）
+
+  function delta(){
+    return -0.30 + (pos/100) * 0.48; // pos=38 → δ≈-0.118 (重叠), 72 → δ≈0.046 (抬高), 8 → δ≈-0.262 (降低)
+  }
+  function zoneOf(points){
+    // points: 端点数组，段 i = points[i]→points[i+1]
+    var lo = -Infinity, hi = Infinity;
+    for (var i=0;i<points.length-1;i++){
+      var a = points[i].p, b = points[i+1].p;
+      lo = Math.max(lo, Math.min(a,b));
+      hi = Math.min(hi, Math.max(a,b));
+    }
+    return hi > lo ? {top:hi, bottom:lo} : null;
+  }
+  function yScale(){
+    var ps = Z1.map(function(p){return p.p;}).concat(Z2.map(function(p){return p.p+delta();}));
+    var mn = Math.min.apply(null, ps), mx = Math.max.apply(null, ps);
+    var gap = (mx-mn)||1;
+    return { min: mn-gap*0.12, max: mx+gap*0.16 };
+  }
+  function yOf(p){
+    var r = yScale();
+    return padT + (r.max-p)/(r.max-r.min)*(H-padT-padB);
+  }
+  function ns(name, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function text(x,y,s,attrs){
+    var t = ns("text", Object.assign({x:x,y:y,"text-anchor":"middle","font-size":"11",fill:"#5f5b55"}, attrs||{}));
+    t.textContent = s;
+    return t;
+  }
+
+  function drawSegments(points, d, color, width){
+    var pts = points.map(function(p){return p.x+","+(yOf(p.p+d)).toFixed(1);}).join(" ");
+    svg.appendChild(ns("polyline",{points:pts,fill:"none",stroke:color,"stroke-width":width,"stroke-linejoin":"round","stroke-linecap":"round"}));
+    points.forEach(function(p){
+      svg.appendChild(ns("circle",{cx:p.x,cy:yOf(p.p+d).toFixed(1),r:3.5,fill:"#fff",stroke:color,"stroke-width":"1.8"}));
+    });
+  }
+
+  function draw(){
+    svg.innerHTML = "";
+    var r = yScale();
+    for (var k=0;k<=5;k++){
+      var v = r.min + (r.max-r.min)*k/5, yy = yOf(v);
+      svg.appendChild(ns("line",{x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:"#e9e6dd","stroke-width":"1"}));
+      svg.appendChild(text(padL-7,yy+3,v.toFixed(2),{"text-anchor":"end","font-size":"9.5",fill:"#a19c8c"}));
+    }
+
+    var d = delta();
+
+    // 中枢1：按显示段数画
+    var z1Pts = Z1.slice(0, segShown+1);
+    drawSegments(z1Pts, 0, "#393735", 2.6);
+    var z1 = zoneOf(z1Pts);
+    if (segShown >= 3 && z1){
+      var zx1 = Z1[0].x, zx2 = Z1[segShown].x;
+      svg.appendChild(ns("rect",{x:zx1,y:yOf(z1.top),width:zx2-zx1,height:Math.max(4,yOf(z1.bottom)-yOf(z1.top)),fill:"#b8790a","fill-opacity":"0.14",stroke:"#b8790a","stroke-opacity":"0.5",rx:5}));
+      svg.appendChild(ns("line",{x1:zx1,y1:yOf(z1.top),x2:zx2,y2:yOf(z1.top),stroke:"#b8790a","stroke-width":"1.4","stroke-dasharray":"5 4"}));
+      svg.appendChild(ns("line",{x1:zx1,y1:yOf(z1.bottom),x2:zx2,y2:yOf(z1.bottom),stroke:"#b8790a","stroke-width":"1.4","stroke-dasharray":"5 4"}));
+      svg.appendChild(text(zx1+6, yOf(z1.top)-8, "上沿 "+z1.top.toFixed(3), {"text-anchor":"start","font-size":"10",fill:"#8a5a06","font-weight":"700"}));
+      svg.appendChild(text(zx1+6, yOf(z1.bottom)+16, "下沿 "+z1.bottom.toFixed(3), {"text-anchor":"start","font-size":"10",fill:"#8a5a06","font-weight":"700"}));
+      svg.appendChild(text((zx1+zx2)/2, (yOf(z1.top)+yOf(z1.bottom))/2, "中枢 1", {fill:"#8a5a06","font-weight":"700","font-size":"12"}));
+    } else if (segShown < 3){
+      svg.appendChild(text((Z1[0].x+Z1[segShown].x)/2, padT+14, "还差一段：至少 3 段相邻走势重叠，才形成中枢", {fill:"#a19c8c","font-size":"11"}));
+    }
+
+    // 连接两段
+    if (segShown >= 3){
+      svg.appendChild(ns("line",{x1:Z1[3].x,y1:yOf(Z1[3].p),x2:Z2[0].x,y2:yOf(Z2[0].p+d),stroke:"#c9c3b8","stroke-width":"1.6","stroke-dasharray":"4 4"}));
+    }
+
+    // 中枢2
+    drawSegments(Z2, d, "#2f8f6b", 2.6);
+    var z2 = zoneOf(Z2.map(function(p){return {x:p.x, p:p.p+d};}));
+    if (z2){
+      var z2x1 = Z2[0].x, z2x2 = Z2[Z2.length-1].x;
+      svg.appendChild(ns("rect",{x:z2x1,y:yOf(z2.top),width:z2x2-z2x1,height:Math.max(4,yOf(z2.bottom)-yOf(z2.top)),fill:"#2f8f6b","fill-opacity":"0.12",stroke:"#2f8f6b","stroke-opacity":"0.5",rx:5}));
+      svg.appendChild(text((z2x1+z2x2)/2, (yOf(z2.top)+yOf(z2.bottom))/2, "中枢 2", {fill:"#23664c","font-weight":"700","font-size":"12"}));
+    }
+
+    // 结论
+    var verdictChip, verdictText;
+    if (segShown < 3){
+      verdictChip = ["watch","等三段"];
+      verdictText = "中枢至少由三段连续走势重叠形成，现在段数还不够，先不出结论。";
+    } else {
+      var z1b = z1.bottom, z1t = z1.top, z2b = z2.bottom, z2t = z2.top;
+      if (z2b > z1t){
+        verdictChip = ["up","上升趋势"];
+        verdictText = "第二个中枢整体比第一个更高（"+z2b.toFixed(3)+" > "+z1t.toFixed(3)+"），价格重心上移 → 上升趋势。";
+      } else if (z2t < z1b){
+        verdictChip = ["down","下降趋势"];
+        verdictText = "第二个中枢整体比第一个更低（"+z2t.toFixed(3)+" < "+z1b.toFixed(3)+"），价格重心下移 → 下降趋势。";
+      } else {
+        verdictChip = ["flat","盘整"];
+        verdictText = "两个中枢范围重叠，价格没有离开争夺区 → 更像盘整，不是清楚趋势。";
+      }
+    }
+    var vc = document.getElementById("verdictChip");
+    vc.className = "chip " + verdictChip[0];
+    vc.textContent = verdictChip[1];
+    document.getElementById("verdictText").textContent = verdictText;
+    document.getElementById("segLabel").textContent = segShown + " 段";
+    document.getElementById("posLabel").textContent =
+      pos < 45 ? "降低" : (pos > 60 ? "抬高" : "重叠");
+  }
+
+  document.getElementById("segSlider").addEventListener("input", function(e){
+    segShown = +e.target.value;
+    draw();
+  });
+  document.getElementById("posSlider").addEventListener("input", function(e){
+    pos = +e.target.value;
+    draw();
+  });
+  document.querySelectorAll(".controls .btn").forEach(function(b){
+    b.addEventListener("click", function(){
+      pos = +b.getAttribute("data-pos");
+      document.getElementById("posSlider").value = pos;
+      draw();
+    });
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>

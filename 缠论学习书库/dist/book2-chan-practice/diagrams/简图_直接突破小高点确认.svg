@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="420" viewBox="0 0 920 420">
+  <rect width="920" height="420" fill="#fff"/>
+  <g transform="translate(54 32)">
+    <rect x="0" y="0" width="812" height="330" rx="14" fill="#fbfdff" stroke="#dbe3ef"/>
+    <g stroke="#eef2f7"><line x1="42" y1="275" x2="770" y2="275"/><line x1="42" y1="220" x2="770" y2="220"/><line x1="42" y1="165" x2="770" y2="165"/><line x1="42" y1="110" x2="770" y2="110"/><line x1="42" y1="55" x2="770" y2="55"/></g>
+    <rect x="330" y="230" width="120" height="44" rx="7" fill="#dbeafe" stroke="#60a5fa" stroke-width="2" opacity=".75"/>
+    <text x="348" y="258" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="17" font-weight="700" fill="#2563eb">观察区</text>
+    <g stroke-width="3">
+      <line x1="82" y1="86" x2="82" y2="138" stroke="#dc2626"/><rect x="72" y="100" width="20" height="28" fill="#dc2626"/>
+      <line x1="126" y1="132" x2="126" y2="184" stroke="#dc2626"/><rect x="116" y="146" width="20" height="28" fill="#dc2626"/>
+      <line x1="170" y1="180" x2="170" y2="234" stroke="#dc2626"/><rect x="160" y="194" width="20" height="30" fill="#dc2626"/>
+      <line x1="214" y1="226" x2="214" y2="276" stroke="#16a34a"/><rect x="204" y="242" width="20" height="22" fill="#16a34a"/>
+      <line x1="258" y1="192" x2="258" y2="242" stroke="#16a34a"/><rect x="248" y="208" width="20" height="23" fill="#16a34a"/>
+      <line x1="302" y1="152" x2="302" y2="204" stroke="#16a34a"/><rect x="292" y="168" width="20" height="25" fill="#16a34a"/>
+      <line x1="346" y1="186" x2="346" y2="240" stroke="#dc2626"/><rect x="336" y="200" width="20" height="31" fill="#dc2626"/>
+      <line x1="390" y1="230" x2="390" y2="282" stroke="#dc2626"/><rect x="380" y="244" width="20" height="29" fill="#dc2626"/>
+      <line x1="434" y1="218" x2="434" y2="272" stroke="#16a34a"/><rect x="424" y="232" width="20" height="29" fill="#16a34a"/>
+      <line x1="478" y1="162" x2="478" y2="214" stroke="#16a34a"/><rect x="468" y="178" width="20" height="25" fill="#16a34a"/>
+      <line x1="522" y1="102" x2="522" y2="154" stroke="#16a34a"/><rect x="512" y="118" width="20" height="26" fill="#16a34a"/>
+      <line x1="566" y1="74" x2="566" y2="126" stroke="#16a34a"/><rect x="556" y="90" width="20" height="25" fill="#16a34a"/>
+    </g>
+    <polyline points="82,86 214,276 302,152 390,282 566,74" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+    <line x1="286" y1="152" x2="590" y2="152" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="7 6"/>
+    <text x="298" y="143" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="15" font-weight="700" fill="#15803d">小高点确认线</text>
+    <circle cx="522" cy="102" r="9" fill="#16a34a" stroke="#fff" stroke-width="3"/>
+    <text x="540" y="108" font-family="PingFang SC, Noto Sans CJK SC, sans-serif" font-size="17" font-weight="700" fill="#15803d">确认点</text>
+  </g>
+</svg>

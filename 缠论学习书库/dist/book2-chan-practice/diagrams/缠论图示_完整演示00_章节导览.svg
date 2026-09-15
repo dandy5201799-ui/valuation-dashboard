@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">完整演示：章节导览</title>
+  <desc id="desc">从原始 K 线开始，经过结构处理、买卖判断，最后复盘检查，形成完整学习链条。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}.path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.mini{fill:none;stroke:#181817;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}.dash{stroke:#d97757;stroke-width:2;stroke-dasharray:6 6}.dot{fill:#181817;stroke:#fff;stroke-width:3}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:22px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:450;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(110 158)">
+    <g transform="translate(0 0)">
+      <rect class="node" x="0" y="0" width="176" height="118" rx="18"/>
+      <line class="up-wick" x1="50" y1="42" x2="50" y2="88"/><rect class="up" x="42" y="58" width="16" height="18" rx="2"/>
+      <line class="down-wick" x1="82" y1="34" x2="82" y2="84"/><rect class="down" x="74" y="48" width="16" height="20" rx="2"/>
+      <line class="up-wick" x1="114" y1="28" x2="114" y2="80"/><rect class="up" x="106" y="48" width="16" height="20" rx="2"/>
+      <text class="label" x="42" y="164">原始K线</text>
+      <text class="note" x="58" y="192">原始数据</text>
+    </g>
+    <path class="path" d="M202 60 H274"/>
+    <g transform="translate(300 0)">
+      <rect class="node" x="0" y="0" width="176" height="118" rx="18"/>
+      <polyline class="mini" points="34,82 66,50 96,76 132,44"/>
+      <rect x="74" y="58" width="54" height="28" rx="8" fill="none" stroke="#d97757" stroke-width="1.8" stroke-dasharray="6 6"/>
+      <text class="label" x="42" y="164">结构处理</text>
+      <text class="note" x="-14" y="192">6步：包含→分型→笔→线段→中枢→走势类型</text>
+    </g>
+    <path class="path" d="M502 60 H574"/>
+    <g transform="translate(600 0)">
+      <rect class="node" x="0" y="0" width="176" height="118" rx="18"/>
+      <polyline class="mini" points="34,82 66,66 98,74 138,38"/>
+      <circle class="dot" cx="138" cy="38" r="8"/>
+      <text class="label" x="42" y="164">买卖判断</text>
+      <text class="note" x="-48" y="224">7步：背驰→买卖点→趋势→关键位置→确认→动作计划→多周期</text>
+    </g>
+    <path class="path" d="M802 60 H874"/>
+    <g transform="translate(900 0)">
+      <rect class="node" x="0" y="0" width="176" height="118" rx="18"/>
+      <path class="mini" d="M56 54 C66 32 100 30 114 50"/>
+      <path class="mini" d="M120 64 C110 88 72 90 58 70"/>
+      <path class="path" d="M114 50 H132"/>
+      <path class="path" d="M58 70 H40"/>
+      <text class="label" x="62" y="164">复盘</text>
+      <text class="note" x="34" y="192">检查规则和执行</text>
+    </g>
+  </g>
+  <rect x="726" y="500" width="412" height="76" rx="20" fill="#181817"/>
+  <text class="white" x="756" y="546">从K线到操作，13步串成一条链</text>
+</svg>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">下降趋势中的高点降低和低点降低</title>
+  <desc id="desc">K 线波动被整理成高低点连线，后一个高点低于前一个高点，后一个低点低于前一个低点，因此更像下降趋势。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#747069" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.trend{fill:none;stroke:#181817;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}.point{fill:#181817;stroke:#fff;stroke-width:4}.high{fill:#747069;stroke:#fff;stroke-width:4}.guide{stroke:#c9c3b8;stroke-width:1.1;stroke-dasharray:6 8}.compare{fill:none;stroke:#747069;stroke-width:1.8;stroke-linecap:round;marker-end:url(#arrow)}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:23px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.terminal-label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:23px;font-weight:700;fill:#fff}.terminal-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#e9e6dd}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:20px;font-weight:700;fill:#181817}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(94 48)">
+    <line class="axis" x1="30" y1="444" x2="1030" y2="444"/>
+    <line class="axis" x1="30" y1="48" x2="30" y2="444"/>
+    <g>
+      <line class="up-wick" x1="64" y1="60" x2="64" y2="142"/><rect class="up" x="53" y="92" width="22" height="30" rx="3"/>
+      <line class="down-wick" x1="106" y1="86" x2="106" y2="170"/><rect class="down" x="95" y="110" width="22" height="36" rx="3"/>
+      <line class="down-wick" x1="148" y1="130" x2="148" y2="218"/><rect class="down" x="137" y="156" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="190" y1="176" x2="190" y2="266"/><rect class="down" x="179" y="202" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="232" y1="214" x2="232" y2="304"/><rect class="down" x="221" y="240" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="274" y1="184" x2="274" y2="260"/><rect class="up" x="263" y="216" width="22" height="26" rx="3"/>
+      <line class="up-wick" x1="316" y1="146" x2="316" y2="228"/><rect class="up" x="305" y="180" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="358" y1="120" x2="358" y2="196"/><rect class="up" x="347" y="150" width="22" height="28" rx="3"/>
+      <line class="down-wick" x1="400" y1="150" x2="400" y2="236"/><rect class="down" x="389" y="176" width="22" height="36" rx="3"/>
+      <line class="down-wick" x1="442" y1="194" x2="442" y2="286"/><rect class="down" x="431" y="220" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="484" y1="240" x2="484" y2="330"/><rect class="down" x="473" y="268" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="526" y1="286" x2="526" y2="378"/><rect class="down" x="515" y="314" width="22" height="40" rx="3"/>
+      <line class="up-wick" x1="568" y1="254" x2="568" y2="336"/><rect class="up" x="557" y="288" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="610" y1="222" x2="610" y2="304"/><rect class="up" x="599" y="254" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="652" y1="198" x2="652" y2="278"/><rect class="up" x="641" y="228" width="22" height="30" rx="3"/>
+      <line class="down-wick" x1="694" y1="232" x2="694" y2="318"/><rect class="down" x="683" y="256" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="736" y1="276" x2="736" y2="366"/><rect class="down" x="725" y="306" width="22" height="36" rx="3"/>
+      <line class="down-wick" x1="778" y1="322" x2="778" y2="414"/><rect class="down" x="767" y="350" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="820" y1="364" x2="820" y2="452"/><rect class="down" x="809" y="392" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="862" y1="334" x2="862" y2="416"/><rect class="up" x="851" y="366" width="22" height="28" rx="3"/>
+      <line class="down-wick" x1="904" y1="356" x2="904" y2="438"/><rect class="down" x="893" y="382" width="22" height="36" rx="3"/>
+      <line class="down-wick" x1="946" y1="394" x2="946" y2="474"/><rect class="down" x="935" y="422" width="22" height="30" rx="3"/>
+    </g>
+    <polyline class="trend" points="64,60 232,304 358,120 526,378 652,198 946,474"/>
+    <line class="guide" x1="64" y1="60" x2="64" y2="444"/><line class="guide" x1="358" y1="120" x2="358" y2="444"/><line class="guide" x1="652" y1="198" x2="652" y2="444"/>
+    <line class="guide" x1="232" y1="304" x2="232" y2="444"/><line class="guide" x1="526" y1="378" x2="526" y2="444"/><line class="guide" x1="946" y1="474" x2="946" y2="444"/>
+    <circle class="high" cx="64" cy="60" r="8"/><circle class="point" cx="232" cy="304" r="8"/><circle class="high" cx="358" cy="120" r="8"/><circle class="point" cx="526" cy="378" r="8"/><circle class="high" cx="652" cy="198" r="8"/><circle class="point" cx="946" cy="474" r="8"/>
+    <text class="tag" x="34" y="44">H1</text><text class="tag" x="202" y="292">L1</text><text class="tag" x="328" y="104">H2</text><text class="tag" x="496" y="366">L2</text><text class="tag" x="622" y="182">H3</text><text class="tag" x="914" y="462">L3</text>
+    <path class="compare" d="M96 70 C174 84 260 100 322 112"/><path class="compare" d="M390 132 C468 150 554 174 616 190"/><path class="compare" d="M264 314 C346 334 426 356 490 372"/><path class="compare" d="M558 390 C666 422 800 456 910 470"/>
+    <rect x="140" y="34" width="258" height="74" rx="18" fill="#fff" stroke="#d8d4ca"/><text class="label" x="166" y="66">高点降低</text><text class="note" x="166" y="94">H2 低于 H1，H3 低于 H2</text>
+    <rect x="210" y="456" width="258" height="74" rx="18" fill="#fff" stroke="#d8d4ca"/><text class="label" x="236" y="488">低点降低</text><text class="note" x="236" y="516">L2 低于 L1，L3 低于 L2</text>
+    <rect x="684" y="44" width="282" height="74" rx="18" fill="#181817"/><text class="terminal-label" x="710" y="76">更像下降趋势</text><text class="terminal-note" x="710" y="104">一段波动的重心在下移</text>
+  </g>
+</svg>

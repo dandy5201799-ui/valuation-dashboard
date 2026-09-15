@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第6章 · 动作计划演示器</title>
+<link rel="stylesheet" href="demo-base.css">
+<style>
+  .chart{min-height:270px;}
+  .drag-h{cursor:ns-resize;}
+  .drag-h.dragging{cursor:grabbing;}
+  .readout{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .ro{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 9px;min-width:88px;}
+  .ro .k{font-size:10px;color:var(--muted);display:block;}
+  .ro .v{font-family:'IBM Plex Mono',Menlo,monospace;font-size:12.5px;font-weight:700;color:var(--ink);}
+  .ro .v.up{color:var(--up);} .ro .v.down{color:var(--down);}
+  input[type=number]{width:78px;border:1px solid var(--line);border-radius:7px;padding:4px 7px;font-size:12px;font-family:inherit;background:var(--panel);}
+</style>
+</head>
+<body>
+<div class="demo">
+  <div class="demo-head">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="demo-title">动作计划演示器</div>
+    <div class="demo-sub">第6章 · 先定失败线，再定仓位：进场前把“怎么算失败、最多亏多少”写清楚</div>
+  </div>
+
+  <div class="chart">
+    <svg id="svg" class="chart-svg" viewBox="0 0 720 300" role="img" aria-label="动作计划演示"></svg>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-group">
+      <span class="lbl">可承受损失：</span>
+      <input id="lossInput" type="number" value="5000" min="500" max="100000" step="500">
+      <span class="lbl">元</span>
+    </div>
+    <div class="ctl-group">
+      <span class="lbl">毛刺余量：</span>
+      <input id="gapInput" type="number" value="0.3" min="0" max="3" step="0.1">
+      <span class="lbl">元</span>
+    </div>
+    <div class="ctl-group">
+      <button class="btn" id="updateBtn">价格抬高后·上移失败线</button>
+      <button class="btn" id="resetBtn">重置</button>
+    </div>
+    <div class="ctl-group" style="margin-left:auto">
+      <span class="lbl">拖动：</span>
+      <span class="mono" style="font-size:11px;color:var(--muted)">绿线=入场价，琥珀线=失败线</span>
+    </div>
+  </div>
+
+  <div class="controls" style="border-top:none;padding-top:0">
+    <div class="readout">
+      <span class="ro"><span class="k">入场价</span><span class="v up" id="rEntry">—</span></span>
+      <span class="ro"><span class="k">判断失败线</span><span class="v" id="rFail">—</span></span>
+      <span class="ro"><span class="k">实际止损执行价</span><span class="v down" id="rStop">—</span></span>
+      <span class="ro"><span class="k">每股风险</span><span class="v" id="rRisk">—</span></span>
+      <span class="ro"><span class="k">可买股数</span><span class="v" id="rQty">—</span></span>
+      <span class="ro"><span class="k">最大亏损</span><span class="v" id="rLoss">—</span></span>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <span class="chip watch" id="planChip">写计划</span>
+    <span class="vtext" id="planText">进场前先回答四件事：为什么进、怎么算失败、最多亏多少、买多少。拖动两条线试试。</span>
+  </div>
+
+  <div class="hint"><b>怎么玩：</b>拖动<b>绿线（入场价）</b>和<b>琥珀线（判断失败线＝防守位）</b>；实际止损执行价会自动留出“毛刺余量”，跌破它才算执行。仓位公式：<b>可买股数 ＝ 可承受损失 ÷（入场价 − 止损执行价）</b>。价格抬高后点上移按钮，看失败线跟着新防守位上移、每股风险变小。</div>
+</div>
+
+<script>
+(function(){
+  var W = 720, H = 300, padT = 40, padB = 44, padL = 48, padR = 20;
+  var svg = document.getElementById("svg");
+  var BARS = [
+    {d:"01", o:100.0, h:101.4, l:99.3,  c:100.6},
+    {d:"02", o:101.0, h:107.8, l:100.7, c:106.8},
+    {d:"03", o:106.6, h:108.6, l:103.7, c:104.4},
+    {d:"04", o:104.7, h:114.2, l:104.2, c:113.5},
+    {d:"05", o:113.1, h:114.4, l:108.6, c:109.4},
+    {d:"06", o:109.8, h:118.8, l:109.5, c:117.9},
+    {d:"07", o:117.0, h:117.2, l:110.2, c:111.0},
+    {d:"08", o:111.2, h:112.0, l:110.0, c:111.6},
+    {d:"09", o:111.4, h:111.8, l:110.1, c:110.8},
+    {d:"10", o:110.9, h:112.4, l:110.0, c:112.1},
+    {d:"11", o:112.0, h:114.6, l:111.6, c:114.1},
+    {d:"12", o:114.0, h:117.2, l:113.5, c:116.8},
+    {d:"13", o:116.6, h:119.8, l:116.2, c:119.2}
+  ];
+  var entry = 114.0, failLine = 110.2, updated = false;
+
+  function yScale(){
+    var mn = Math.min.apply(null, BARS.map(function(d){return d.l;}));
+    var mx = Math.max.apply(null, BARS.map(function(d){return d.h;}));
+    var gap = (mx-mn)||1;
+    return { min: mn-gap*0.14, max: mx+gap*0.22 };
+  }
+  function yOf(v){
+    var r = yScale();
+    return padT + (r.max-v)/(r.max-r.min)*(H-padT-padB);
+  }
+  function vOf(yy){
+    var r = yScale();
+    return r.max - (yy-padT)/(H-padT-padB)*(r.max-r.min);
+  }
+  function xOf(i){
+    return padL + i*(W-padL-padR)/(BARS.length-1);
+  }
+  function ns(name, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function text(x,y,s,attrs){
+    var t = ns("text", Object.assign({x:x,y:y,"text-anchor":"middle","font-size":"10.5",fill:"#5f5b55"}, attrs||{}));
+    t.textContent = s;
+    return t;
+  }
+
+  function calc(){
+    var gap = Math.max(0, parseFloat(document.getElementById("gapInput").value)||0);
+    var loss = Math.max(0, parseFloat(document.getElementById("lossInput").value)||0);
+    var stop = Math.min(entry - gap, failLine - 0.02); // 实际止损执行价：留出毛刺余量
+    var risk = Math.max(0.01, entry - stop);
+    var qty = Math.floor(loss / risk / 100) * 100;
+    var maxLoss = qty * risk;
+    return {gap:gap, loss:loss, stop:stop, risk:risk, qty:qty, maxLoss:maxLoss};
+  }
+
+  function draw(){
+    svg.innerHTML = "";
+    var r = yScale();
+    for (var k=0;k<=5;k++){
+      var v = r.min + (r.max-r.min)*k/5, yy = yOf(v);
+      svg.appendChild(ns("line",{x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:"#e9e6dd","stroke-width":"1"}));
+      svg.appendChild(text(padL-7,yy+3,v.toFixed(1),{"text-anchor":"end","font-size":"9.5",fill:"#a19c8c"}));
+    }
+    var bw = Math.max(4,(W-padL-padR)/BARS.length*0.32);
+    BARS.forEach(function(d,i){
+      var x = xOf(i), up = d.c >= d.o;
+      var col = up ? "#d97757" : "#2f8f6b";
+      svg.appendChild(ns("line",{x1:x,y1:yOf(d.h),x2:x,y2:yOf(d.l),stroke:col,"stroke-width":"1.4"}));
+      var top = yOf(Math.max(d.o,d.c)), bot = yOf(Math.min(d.o,d.c));
+      svg.appendChild(ns("rect",{x:x-bw/2,y:top,width:bw,height:Math.max(1.5,bot-top),fill:col,"fill-opacity":"0.88",rx:1}));
+    });
+
+    var c = calc();
+
+    // 判断失败线（琥珀）
+    svg.appendChild(ns("line",{x1:padL,y1:yOf(failLine),x2:W-padR,y2:yOf(failLine),stroke:"#b8790a","stroke-width":"2","stroke-dasharray":"7 4"}));
+    svg.appendChild(text(padL+76, yOf(failLine)-8, "判断失败线 "+(failLine).toFixed(1), {"text-anchor":"start","font-size":"11",fill:"#8a5a06","font-weight":"700"}));
+
+    // 毛刺余量带 + 实际止损执行价（红实线）
+    var stopY = yOf(c.stop);
+    svg.appendChild(ns("rect",{x:padL,y:stopY,width:W-padL-padR,height:Math.max(2,yOf(failLine)-stopY),fill:"#d1453a","fill-opacity":"0.10",stroke:"none"}));
+    svg.appendChild(ns("line",{x1:padL,y1:stopY,x2:W-padR,y2:stopY,stroke:"#d1453a","stroke-width":"2"}));
+    svg.appendChild(text(padL+96, stopY+18, "实际止损执行价 "+(c.stop).toFixed(1)+"（跌破才算）", {"text-anchor":"start","font-size":"10.5",fill:"#b03a30","font-weight":"700"}));
+
+    // 入场价（绿）
+    svg.appendChild(ns("line",{x1:padL,y1:yOf(entry),x2:W-padR,y2:yOf(entry),stroke:"#1f9d63","stroke-width":"2"}));
+    svg.appendChild(text(padL+66, yOf(entry)+18, "入场价 "+(entry).toFixed(1), {"text-anchor":"start","font-size":"11",fill:"#15734a","font-weight":"700"}));
+
+    // 拖动把手
+    [["entry", yOf(entry)], ["fail", yOf(failLine)]].forEach(function(h){
+      var g = ns("g", {"class":"drag-h", "data-v":h[0]});
+      var col = h[0]==="entry" ? "#1f9d63" : "#b8790a";
+      g.appendChild(ns("circle",{cx:W-padR-10, cy:h[1], r:7, fill:"#fff", stroke:col, "stroke-width":"2.4"}));
+      g.appendChild(ns("path",{d:"M"+(W-padR-16)+" "+(h[1]-5)+" L"+(W-padR-16)+" "+(h[1]+5)+" M"+(W-padR-10)+" "+(h[1]-5)+" L"+(W-padR-10)+" "+(h[1]+5)+" M"+(W-padR-4)+" "+(h[1]-5)+" L"+(W-padR-4)+" "+(h[1]+5), stroke:"#8a5a06","stroke-width":"1.8"}));
+      svg.appendChild(g);
+    });
+
+    // 读数
+    setRo("rEntry", entry.toFixed(2), "up");
+    setRo("rFail", failLine.toFixed(2));
+    setRo("rStop", c.stop.toFixed(2), "down");
+    setRo("rRisk", c.risk.toFixed(2));
+    setRo("rQty", c.qty.toLocaleString());
+    setRo("rLoss", c.maxLoss.toLocaleString());
+
+    // 结论
+    var pc, pt;
+    if (c.qty <= 0){
+      pc = ["warn","不可执行"];
+      pt = "每股风险（"+c.risk.toFixed(2)+"元）大于可承受损失，或者入场价已经在失败线上方，这个计划不成立。";
+    } else {
+      pc = ["ok","计划成立"];
+      pt = "计划：入场 "+(entry).toFixed(2)+" 元，失败线 "+(failLine).toFixed(2)+"，止损执行价 "+(c.stop).toFixed(2)+"（留 "+c.gap.toFixed(1)+" 元毛刺余量），每股风险 "+(c.risk).toFixed(2)+" 元，最多亏 "+c.loss.toLocaleString()+" 元 → 买 "+(c.qty).toLocaleString()+" 股（"+Math.round(c.qty*entry).toLocaleString()+" 元）。"+(updated ? " 失败线已上移到新防守位，风险更小、仓位更稳。" : "");
+    }
+    var vc = document.getElementById("planChip");
+    vc.className = "chip " + pc[0];
+    vc.textContent = pc[1];
+    document.getElementById("planText").textContent = pt;
+  }
+  function setRo(id, v, cls){
+    var el = document.getElementById(id);
+    el.textContent = v;
+    el.className = "v" + (cls ? " " + cls : "");
+  }
+
+  var drag = null;
+  svg.addEventListener("pointerdown", function(e){
+    var g = e.target.closest(".drag-h");
+    if (!g) return;
+    drag = { v:g.getAttribute("data-v"), lastY:e.clientY };
+    g.classList.add("dragging");
+    svg.setPointerCapture(e.pointerId);
+  });
+  svg.addEventListener("pointermove", function(e){
+    if (!drag) return;
+    var rect = svg.getBoundingClientRect();
+    var scale = H / rect.height;
+    var yy = (e.clientY - rect.top) * scale;
+    yy = Math.max(padT+4, Math.min(H-padB-4, yy));
+    var v = vOf(yy);
+    if (drag.v==="entry") entry = Math.max(104, Math.min(120, v));
+    if (drag.v==="fail")  failLine = Math.max(103, Math.min(117, v));
+    draw();
+  });
+  function endDrag(){ if (drag){ drag=null; draw(); } }
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+
+  ["gapInput","lossInput"].forEach(function(id){
+    document.getElementById(id).addEventListener("input", draw);
+  });
+  document.getElementById("updateBtn").addEventListener("click", function(){
+    // 价格抬高后：新防守位（更高的低点）出现，失败线上移
+    failLine = 113.5;
+    updated = true;
+    draw();
+  });
+  document.getElementById("resetBtn").addEventListener("click", function(){
+    entry = 114.0; failLine = 110.2; updated = false;
+    draw();
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>

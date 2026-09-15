@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="940" viewBox="0 0 1400 940">
+  <defs>
+    <style>
+      .bg{fill:#f5f5f5}
+      .title{font:400 34px "Times New Roman","Songti SC",serif;fill:#2d3142}
+      .sub{font:500 15px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .panel{fill:#fff;stroke:rgba(45,49,66,.16);stroke-width:1.2}
+      .txt{font:800 18px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#172033}
+      .small{font:500 14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;fill:#4f5d75}
+      .tiny{font:600 12px "SF Mono","Menlo",monospace;fill:#7a8399}
+      .label{font:800 13px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+      .grid{stroke:#e8eef7;stroke-width:1}
+      .price{fill:none;stroke:#64748b;stroke-width:3;stroke-dasharray:8 7}
+      .assist{fill:none;stroke:#94a3b8;stroke-width:2.4;stroke-dasharray:8 7}
+      .pressure{stroke:#2563eb;stroke-width:3}
+      .pressureBand{fill:rgba(37,99,235,.08);stroke:#2563eb;stroke-width:1.4;stroke-dasharray:6 6}
+      .fail{stroke:#dc2626;stroke-width:2.6}
+      .up{fill:#dc2626;stroke:#dc2626}
+      .down{fill:#16a34a;stroke:#16a34a}
+      .dotH{fill:#fee2e2;stroke:#dc2626;stroke-width:3}
+      .dotL{fill:#dcfce7;stroke:#16a34a;stroke-width:3}
+      .dotP{fill:#eff6ff;stroke:#2563eb;stroke-width:3}
+      .dotO{fill:#fff7ed;stroke:#f59e0b;stroke-width:3}
+      .dotR{fill:#fef2f2;stroke:#dc2626;stroke-width:3}
+      .tagB{fill:#eff6ff;stroke:#2563eb}
+      .tagO{fill:#fff7ed;stroke:#f59e0b}
+      .tagR{fill:#fef2f2;stroke:#dc2626}
+      .tagGray{fill:#f8fafc;stroke:#cbd5e1}
+    </style>
+  </defs>
+
+  <rect class="bg" width="1400" height="940"/>
+  <text class="title" x="64" y="70">观察区关键线 02：下降转强里的压力位怎么画？</text>
+  <text class="sub" x="64" y="102">压力位来自“反弹失败的小高点”。它必须先被后续回落验证；后面收盘突破这条水平线，才叫普通转强确认。</text>
+
+  <rect class="panel" x="64" y="136" width="1272" height="524" rx="10"/>
+  <text class="txt" x="96" y="176">一、先确认原来是下降节奏，再找最近一次反弹失败高点</text>
+  <text class="small" x="96" y="204">下降里不能因为“跌多了”就买。观察关键线不是低点，而是上方能不能突破的水平压力线。</text>
+
+  <!-- grid -->
+  <g>
+    <line class="grid" x1="112" y1="548" x2="1288" y2="548"/>
+    <line class="grid" x1="112" y1="488" x2="1288" y2="488"/>
+    <line class="grid" x1="112" y1="428" x2="1288" y2="428"/>
+    <line class="grid" x1="112" y1="368" x2="1288" y2="368"/>
+    <line class="grid" x1="112" y1="308" x2="1288" y2="308"/>
+    <line class="grid" x1="112" y1="248" x2="1288" y2="248"/>
+  </g>
+
+  <!-- pressure band -->
+  <rect class="pressureBand" x="112" y="292" width="1176" height="44" rx="8"/>
+  <line class="pressure" x1="596" y1="312" x2="1288" y2="312"/>
+  <text class="tiny" x="1064" y="304">水平压力位 = 最近反弹失败小高点</text>
+  <text class="tiny" x="1064" y="332">观察区：压力位下方，等待收盘突破</text>
+
+  <!-- failed low line -->
+  <line class="fail" x1="596" y1="540" x2="1288" y2="540" opacity=".78"/>
+  <text class="tiny" x="1048" y="560">失败线：再创新低，转强观察失效</text>
+
+  <!-- diagonal assist -->
+  <path class="assist" d="M132 232 L300 280 L468 324 L596 312"/>
+  <text class="tiny" x="244" y="232">斜线只看下降节奏，不是确认线</text>
+
+  <!-- candles -->
+  <g>
+    <line class="down" x1="132" y1="216" x2="132" y2="308"/><rect class="down" x="120" y="244" width="24" height="42"/>
+    <line class="up" x1="188" y1="236" x2="188" y2="336"/><rect class="up" x="176" y="268" width="24" height="38"/>
+    <line class="down" x1="244" y1="272" x2="244" y2="384"/><rect class="down" x="232" y="304" width="24" height="56"/>
+    <line class="down" x1="300" y1="280" x2="300" y2="420"/><rect class="down" x="288" y="316" width="24" height="76"/>
+    <line class="up" x1="356" y1="328" x2="356" y2="432"/><rect class="up" x="344" y="360" width="24" height="42"/>
+    <line class="down" x1="412" y1="372" x2="412" y2="492"/><rect class="down" x="400" y="404" width="24" height="64"/>
+    <line class="up" x1="468" y1="324" x2="468" y2="456"/><rect class="up" x="456" y="364" width="24" height="56"/>
+    <line class="down" x1="524" y1="396" x2="524" y2="532"/><rect class="down" x="512" y="432" width="24" height="72"/>
+    <line class="up" x1="580" y1="420" x2="580" y2="548"/><rect class="up" x="568" y="464" width="24" height="44"/>
+    <line class="up" x1="636" y1="360" x2="636" y2="500"/><rect class="up" x="624" y="404" width="24" height="62"/>
+    <line class="down" x1="692" y1="312" x2="692" y2="476"/><rect class="down" x="680" y="356" width="24" height="88"/>
+    <line class="down" x1="748" y1="340" x2="748" y2="504"/><rect class="down" x="736" y="384" width="24" height="82"/>
+    <line class="up" x1="804" y1="384" x2="804" y2="516"/><rect class="up" x="792" y="424" width="24" height="58"/>
+    <line class="up" x1="860" y1="344" x2="860" y2="488"/><rect class="up" x="848" y="388" width="24" height="62"/>
+    <line class="up" x1="916" y1="292" x2="916" y2="440"/><rect class="up" x="904" y="336" width="24" height="74"/>
+    <line class="down" x1="972" y1="320" x2="972" y2="452"/><rect class="down" x="960" y="360" width="24" height="58"/>
+    <line class="up" x1="1028" y1="284" x2="1028" y2="420"/><rect class="up" x="1016" y="324" width="24" height="62"/>
+    <line class="up" x1="1084" y1="236" x2="1084" y2="372"/><rect class="up" x="1072" y="276" width="24" height="64"/>
+    <line class="down" x1="1140" y1="260" x2="1140" y2="392"/><rect class="down" x="1128" y="300" width="24" height="54"/>
+    <line class="up" x1="1196" y1="220" x2="1196" y2="344"/><rect class="up" x="1184" y="256" width="24" height="60"/>
+  </g>
+
+  <!-- swing -->
+  <path class="price" d="M132 216 L244 360 L300 280 L412 468 L468 324 L524 504 L580 464 L692 312 L748 466 L804 424 L916 292 L972 410 L1028 324 L1084 276 L1140 354 L1196 220"/>
+
+  <!-- pivots and labels -->
+  <circle class="dotH" cx="132" cy="216" r="9"/>
+  <text class="tiny" x="112" y="204">H1</text>
+  <circle class="dotL" cx="244" cy="360" r="9"/>
+  <text class="tiny" x="228" y="392">L1</text>
+  <circle class="dotH" cx="300" cy="280" r="9"/>
+  <text class="tiny" x="284" y="268">H2</text>
+  <circle class="dotL" cx="412" cy="468" r="9"/>
+  <text class="tiny" x="396" y="500">L2</text>
+  <circle class="dotO" cx="524" cy="504" r="10"/>
+  <text class="tiny" x="492" y="536">低点止跌观察</text>
+  <circle class="dotP" cx="692" cy="312" r="11"/>
+  <text class="tiny" x="636" y="292">反弹失败小高点</text>
+  <circle class="dotL" cx="748" cy="466" r="9"/>
+  <text class="tiny" x="720" y="500">回落验证压力</text>
+  <circle class="dotO" cx="916" cy="292" r="10"/>
+  <text class="tiny" x="856" y="272">盘中刺破，不算确认</text>
+  <circle class="dotO" cx="1028" cy="324" r="9"/>
+  <text class="tiny" x="984" y="348">收盘仍未站上</text>
+  <circle class="dotP" cx="1084" cy="236" r="10"/>
+  <text class="tiny" x="1032" y="216">普通确认：第一根收盘站上</text>
+  <circle class="dotP" cx="1196" cy="220" r="10"/>
+  <text class="tiny" x="1152" y="200">后续延续，不是第一确认</text>
+
+  <!-- callouts -->
+  <rect class="tagR" x="148" y="424" width="296" height="80" rx="8"/>
+  <text class="label" x="168" y="452" fill="#b91c1c">下降结构：不能因为跌多就买</text>
+  <text class="small" x="168" y="478">H1 → H2 降低，L1 → L2 降低，仍是弱势。</text>
+
+  <rect class="tagB" x="576" y="216" width="336" height="76" rx="8"/>
+  <text class="label" x="596" y="244" fill="#1d4ed8">压力位从哪里来？</text>
+  <text class="small" x="596" y="270">反弹到 692 高点后，748 又回落，所以 692 被验证为压力。</text>
+
+  <rect class="tagO" x="936" y="420" width="332" height="84" rx="8"/>
+  <text class="label" x="956" y="448" fill="#b45309">观察区到普通确认</text>
+  <text class="small" x="956" y="474">916、1028 只是试探；1084 第一根收盘站上压力线，才是普通确认。</text>
+
+  <!-- bottom panels -->
+  <g transform="translate(64 700)">
+    <rect class="panel" x="0" y="0" width="396" height="164" rx="10"/>
+    <text class="txt" x="24" y="36">第一步：确认原来是下降</text>
+    <text class="small" x="24" y="68">高点降低、低点降低。</text>
+    <text class="tiny" x="24" y="100">如果只是单日大跌，不够；要看波段结构。</text>
+    <text class="tiny" x="24" y="124">下降里，低点止跌只是观察，不是买点。</text>
+  </g>
+
+  <g transform="translate(502 700)">
+    <rect class="panel" x="0" y="0" width="396" height="164" rx="10"/>
+    <text class="txt" x="24" y="36">第二步：找反弹失败小高点</text>
+    <text class="small" x="24" y="68">必须满足：先反弹，后回落。</text>
+    <text class="tiny" x="24" y="100">没有后续回落，不能提前说它是压力。</text>
+    <text class="tiny" x="24" y="124">有更靠右的反弹失败点，压力位要后移。</text>
+  </g>
+
+  <g transform="translate(940 700)">
+    <rect class="panel" x="0" y="0" width="396" height="164" rx="10"/>
+    <text class="txt" x="24" y="36">第三步：突破水平压力线</text>
+    <text class="small" x="24" y="68">确认点看第一根“收盘站上”。</text>
+    <text class="tiny" x="24" y="100">盘中刺破、上影线过线，都不算普通确认。</text>
+    <text class="tiny" x="24" y="124">稳健确认：突破后回踩不破，再次向上。</text>
+  </g>
+
+  <text class="tiny" x="64" y="908">学习用途，不构成投资建议。本图只讲结构识别：真正操作还要结合级别、波动、仓位和个人风险承受能力。</text>
+</svg>

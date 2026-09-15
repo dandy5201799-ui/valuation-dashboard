@@ -16,8 +16,7 @@ BOOK_DIRS = [
 ]
 DIST_DIR = REPO_ROOT / "dist"
 SITE_LABEL = "缠论学习书库"
-MARKER_TOOL_DIR = REPO_ROOT.parent / "02_引擎与工作台"
-MARKER_TOOL_DIST = "chan-marker-tool"
+MARKER_TOOL_URL = "https://dandistudio.site/chan/"
 
 
 def relative_href(from_dir: str, to_path: str) -> str:
@@ -26,7 +25,7 @@ def relative_href(from_dir: str, to_path: str) -> str:
 
 def build_switcher_markup(current_slug: str, current_page: str, books: list[dict]) -> str:
     current_dir = current_slug
-    home_target = "../index.html"
+    home_target = "index.html"  # 相对于dist根目录
 
     link_parts = [
         f'<a class="hb-site-switcher__link" href="{escape(relative_href(current_dir, home_target))}">首页</a>'
@@ -110,7 +109,7 @@ def build_inline_pager(html: str) -> str:
 def build_related_reading(current_slug: str) -> str:
     if current_slug != "book2-chan-practice":
         return ""
-    return """
+    return f"""
 <aside class="hb-related-reading" aria-label="延伸阅读">
   <div>
     <p class="hb-related-reading__eyebrow">延伸阅读</p>
@@ -118,47 +117,18 @@ def build_related_reading(current_slug: str) -> str:
     <p>读懂走势之后，可以用工具把分型、笔、线段、中枢和确认位置标出来。工具负责呈现结构，判断仍然要回到你自己的复盘。</p>
   </div>
   <div class="hb-related-reading__actions">
-    <a class="hb-related-reading__button hb-related-reading__button--primary" href="../chan-marker-tool/index.html">打开标记工具</a>
+    <a class="hb-related-reading__button hb-related-reading__button--primary" href="{escape(MARKER_TOOL_URL)}" target="_blank" rel="noopener">打开标记工具</a>
     <a class="hb-related-reading__button hb-related-reading__button--secondary" href="../book3-auto-marker/index.html">阅读工具说明</a>
   </div>
 </aside>
 """
 
 
-def copy_marker_tool() -> None:
-    if not MARKER_TOOL_DIR.exists():
-        print(f"警告: 找不到标记工具目录 {MARKER_TOOL_DIR}")
-        return
-
-    target_dir = DIST_DIR / MARKER_TOOL_DIST
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    files = [
-        ("缠论标记工具.dc.html", "index.html"),
-        ("support.js", "support.js"),
-        ("chan-algo.js", "chan-algo.js"),
-        ("chan-data.js", "chan-data.js"),
-    ]
-    for source_name, target_name in files:
-        source = MARKER_TOOL_DIR / source_name
-        if not source.exists():
-            print(f"警告: 标记工具缺少文件 {source}")
-            continue
-        shutil.copy2(source, target_dir / target_name)
-
-    data_source = MARKER_TOOL_DIR / "data"
-    if data_source.exists():
-        data_target = target_dir / "data"
-        if data_target.exists():
-            shutil.rmtree(data_target)
-        shutil.copytree(data_source, data_target, ignore=shutil.ignore_patterns(".gitkeep"))
-
-    print(f"复制缠论标记工具到 dist/{MARKER_TOOL_DIST}")
-
-
 def inject_switcher(book_publish_dir: Path, current_slug: str, books: list[dict]) -> None:
     for html_path in book_publish_dir.rglob("*.html"):
-        if "gitbook" in html_path.parts:
+        # 跳过 gitbook 资源页与 interactives（嵌入式概念演示器）目录，
+        # 演示器在 iframe 中独立渲染，不应注入站点切换条。
+        if "gitbook" in html_path.parts or "interactives" in html_path.parts:
             continue
         html = html_path.read_text(encoding="utf-8")
         if "hb-site-switcher" in html:
@@ -186,8 +156,8 @@ def inject_switcher(book_publish_dir: Path, current_slug: str, books: list[dict]
         html = html.replace('本書使用 HonKit 釋出', '本书使用 HonKit 生成')
 
         # 把自动生成的"Introduction"改成"导读"，并修复href
-        html = html.replace('Introduction', '导读', 1)
-        html = html.replace('href="./"', 'href="index.html"', 1)
+        html = html.replace('Introduction', '导读')
+        html = html.replace('href="./"', 'href="index.html"')
 
         # 禁用SPA导航，让链接用普通页面跳转
         spa_disable_script = """
@@ -427,10 +397,20 @@ def main():
             print(f"警告: {book_info['title']} 没有构建结果")
             continue
         target_dir = DIST_DIR / book_info["slug"]
-        shutil.copytree(build_dir, target_dir)
+        shutil.copytree(
+            build_dir,
+            target_dir,
+            ignore=shutil.ignore_patterns(
+                "_archive",
+                "site",
+                "scripts",
+                "node_modules",
+                "*.md",
+                "package.json",
+                "package-lock.json",
+            ),
+        )
         print(f"复制 {book_info['title']} 到 dist/{book_info['slug']}")
-
-    copy_marker_tool()
 
     # 后处理：注入导航栏和自定义样式
     for book_info in books:

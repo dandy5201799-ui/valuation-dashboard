@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第5章 · 观察与确认演示器</title>
+<link rel="stylesheet" href="demo-base.css">
+<style>
+  .chart{min-height:280px;}
+</style>
+</head>
+<body>
+<div class="demo">
+  <div class="demo-head">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="demo-title">观察与确认演示器</div>
+    <div class="demo-sub">第5章 · 到关键位置只是观察；突破小高点（或小低点）才算确认</div>
+  </div>
+
+  <div class="chart">
+    <svg id="svg" class="chart-svg" viewBox="0 0 720 300" role="img" aria-label="观察与确认演示"></svg>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-group">
+      <div class="seg" id="scenTabs">
+        <button data-s="retest" class="active">二次回试·稳健</button>
+        <button data-s="direct">直接突破·普通</button>
+        <button data-s="fake">假突破·不算</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <span class="lbl">走到第几根：</span>
+      <input id="slider" type="range" min="0" max="11" step="1" value="0" style="width:170px">
+      <button class="btn" id="playBtn">▶ 播放</button>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <span class="chip watch" id="stageChip">开始</span>
+    <span class="vtext" id="stageText">点“播放”，看价格从下降到确认的完整过程。注意：到位置 ≠ 确认，必须等右侧证据。</span>
+  </div>
+
+  <div class="hint"><b>怎么玩：</b>拖动滑块逐根回放，或用“播放”自动走。琥珀虚线是<b>最近下降小高点</b>（压力线）；价格收盘站上它才是买入确认。对比三种路径：<b>二次回试</b>更稳，<b>直接突破</b>力度强但缺回踩验证，<b>假突破</b>只是盘中刺破、收盘没站上，不算确认。</div>
+</div>
+
+<script>
+(function(){
+  var W = 720, H = 300, padT = 40, padB = 40, padL = 48, padR = 18;
+  var svg = document.getElementById("svg");
+
+  function k(d,o,h,l,c){ return {d:d,o:o,h:h,l:l,c:c}; }
+  var SCEN = {
+    retest: {
+      name:"二次回试·稳健",
+      bars:[
+        k("07-01",122.0,123.4,120.6,121.1), k("07-03",121.0,121.8,117.6,118.1),
+        k("07-06",118.4,120.2,116.5,119.4), k("07-08",119.0,119.7,114.8,115.2),
+        k("07-10",115.3,117.4,113.7,116.8), k("07-13",116.4,116.9,112.2,113.1),
+        k("07-15",113.3,115.8,112.9,115.0), k("07-17",114.8,117.6,113.9,116.7),
+        k("07-20",116.4,117.0,114.1,114.9), k("07-22",114.7,118.8,114.2,118.2),
+        k("07-24",118.0,118.6,115.7,116.2), k("07-27",116.5,119.4,115.9,118.9)
+      ],
+      highIndex:7, highV:117.6,
+      stages:[
+        {from:0, chip:["down","下降中"], text:"价格在下降，反弹一个比一个低。先等一个被验证的下降小高点。"},
+        {from:7, chip:["watch","形成小高点"], text:"07-17 反弹到 117.6 后回落，成为最近下降小高点，画成水平压力线。到位置了，但只是观察。"},
+        {from:8, chip:["watch","观察"], text:"07-20 反弹到 117.0 又回落，没有站上 117.6。观察：压力线下方反复，还缺确认。"},
+        {from:9, chip:["ok","普通确认"], text:"07-22 收盘 118.2 站上小高点 117.6 → 普通确认。突破有了，但还没有回踩验证。"},
+        {from:10, chip:["watch","二次回试"], text:"07-24 回踩到 116.2，没有跌回前低，也没有明显跌回弱势区。回踩守住，确认变稳。"},
+        {from:11, chip:["ok","稳健确认"], text:"07-27 收盘 118.9 再次向上 → 二次回试后的稳健确认。这种路径更稳。"}
+      ]
+    },
+    direct: {
+      name:"直接突破·普通",
+      bars:[
+        k("07-01",118.2,120.4,116.9,117.3), k("07-03",117.2,118.1,113.7,114.2),
+        k("07-05",114.5,116.8,112.6,116.1), k("07-08",115.7,116.2,110.8,111.4),
+        k("07-10",111.2,113.5,109.4,112.8), k("07-13",112.4,113.1,107.9,108.6),
+        k("07-15",108.8,111.3,107.8,110.6), k("07-17",110.2,112.8,108.9,112.1),
+        k("07-20",111.8,112.5,109.7,110.4), k("07-22",110.1,111.2,108.4,109.2),
+        k("07-24",109.3,113.4,108.7,112.9), k("07-27",112.8,115.2,111.7,114.8)
+      ],
+      highIndex:7, highV:112.8,
+      stages:[
+        {from:0, chip:["down","下降中"], text:"价格在下降，反弹一个比一个低。先等一个被验证的下降小高点。"},
+        {from:7, chip:["watch","形成小高点"], text:"07-17 反弹到 112.8 后回落，成为最近下降小高点。到位置了，但只是观察。"},
+        {from:8, chip:["watch","观察"], text:"07-20、07-22 反弹都在 112.8 下方受阻。观察：还缺一根收盘站上的K线。"},
+        {from:10, chip:["ok","确认"], text:"07-24 收盘 112.9 站上小高点 112.8 → 直接突破确认。方向明确、力度强，但没有回踩验证，确认力度弱一些，仓位要轻、止损要近。"}
+      ]
+    },
+    fake: {
+      name:"假突破·不算",
+      bars:[
+        k("07-01",119.0,120.6,117.7,118.1), k("07-03",118.0,118.9,115.1,115.8),
+        k("07-06",116.0,117.5,114.2,116.9), k("07-08",116.6,117.0,112.7,113.4),
+        k("07-10",113.5,115.6,112.5,115.0), k("07-13",114.7,115.1,111.3,112.0),
+        k("07-15",112.3,114.2,111.6,113.6), k("07-17",113.4,116.4,112.9,115.8),
+        k("07-20",115.5,116.0,113.3,113.9), k("07-22",114.0,116.9,112.8,113.5),
+        k("07-24",113.4,114.6,110.8,111.2), k("07-27",111.5,113.2,109.9,112.0)
+      ],
+      highIndex:7, highV:116.4,
+      stages:[
+        {from:0, chip:["down","下降中"], text:"价格在下降。先等一个被验证的下降小高点。"},
+        {from:7, chip:["watch","形成小高点"], text:"07-17 反弹到 116.4 后回落，成为最近下降小高点。到位置了，只是观察。"},
+        {from:8, chip:["watch","观察"], text:"07-20 反弹到 116.0 受阻回落，没有站上压力线。"},
+        {from:9, chip:["warn","假突破"], text:"07-22 盘中最高 116.9 刺破压力线，但收盘 113.5 没有站上 → 上影触碰，不是突破。"},
+        {from:10, chip:["warn","不算确认"], text:"07-24 继续走低。突破失败后跌回，不能按转强确认处理，也不构成入手机会。"}
+      ]
+    }
+  };
+
+  var scen = "retest", idx = 0, playing = null;
+
+  function yScale(){
+    var ds = SCEN[scen].bars;
+    var mn = Math.min.apply(null, ds.map(function(d){return d.l;}));
+    var mx = Math.max.apply(null, ds.map(function(d){return d.h;}));
+    var gap = (mx-mn)||1;
+    return { min: mn-gap*0.12, max: mx+gap*0.16 };
+  }
+  function yOf(v){
+    var r = yScale();
+    return padT + (r.max-v)/(r.max-r.min)*(H-padT-padB);
+  }
+  function xOf(i){
+    var n = SCEN[scen].bars.length;
+    return padL + i*(W-padL-padR)/(n-1);
+  }
+  function ns(name, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function text(x,y,s,attrs){
+    var t = ns("text", Object.assign({x:x,y:y,"text-anchor":"middle","font-size":"10.5",fill:"#5f5b55"}, attrs||{}));
+    t.textContent = s;
+    return t;
+  }
+
+  function draw(){
+    svg.innerHTML = "";
+    var s = SCEN[scen], ds = s.bars, r = yScale();
+
+    for (var k=0;k<=5;k++){
+      var v = r.min + (r.max-r.min)*k/5, yy = yOf(v);
+      svg.appendChild(ns("line",{x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:"#e9e6dd","stroke-width":"1"}));
+      svg.appendChild(text(padL-7,yy+3,v.toFixed(1),{"text-anchor":"end","font-size":"9.5",fill:"#a19c8c"}));
+    }
+
+    // 小高点压力线（已走到时显示）
+    if (idx >= s.highIndex){
+      var hv = s.highV;
+      svg.appendChild(ns("line",{x1:padL,y1:yOf(hv),x2:W-padR,y2:yOf(hv),stroke:"#b8790a","stroke-width":"2","stroke-dasharray":"6 4"}));
+      svg.appendChild(text(W-padR-8, yOf(hv)-8, "下降小高点 "+(hv).toFixed(1), {"text-anchor":"end","font-size":"11",fill:"#8a5a06","font-weight":"700"}));
+    }
+
+    var bw = Math.max(4,(W-padL-padR)/ds.length*0.34);
+    ds.forEach(function(d,i){
+      var x = xOf(i), revealed = i <= idx;
+      var up = d.c >= d.o;
+      var col = up ? "#d97757" : "#2f8f6b";
+      var op = revealed ? "0.92" : "0.22";
+      svg.appendChild(ns("line",{x1:x,y1:yOf(d.h),x2:x,y2:yOf(d.l),stroke:col,"stroke-width":"1.4","stroke-opacity":op}));
+      var top = yOf(Math.max(d.o,d.c)), bot = yOf(Math.min(d.o,d.c));
+      svg.appendChild(ns("rect",{x:x-bw/2,y:top,width:bw,height:Math.max(1.5,bot-top),fill:col,"fill-opacity":op,rx:1}));
+      if (i===idx && revealed){
+        svg.appendChild(ns("rect",{x:x-bw-3,y:padT-6,width:bw*2+6,height:H-padT-padB+12,fill:"none",stroke:"#181817","stroke-width":"1.6",rx:6}));
+      }
+      if (i%2===1 || i===ds.length-1) svg.appendChild(text(x, H-18, d.d, {fill: revealed?"#a19c8c":"#d8d4ca"}));
+    });
+
+    // 阶段文字
+    var stage = s.stages[s.stages.length-1];
+    for (var j=s.stages.length-1;j>=0;j--){
+      if (idx >= s.stages[j].from){ stage = s.stages[j]; break; }
+    }
+    var vc = document.getElementById("stageChip");
+    vc.className = "chip " + stage.chip[0];
+    vc.textContent = stage.chip[1];
+    document.getElementById("stageText").textContent = stage.text;
+    document.getElementById("slider").value = idx;
+  }
+
+  function stopPlay(){
+    if (playing){ clearInterval(playing); playing = null; }
+    document.getElementById("playBtn").textContent = "▶ 播放";
+  }
+
+  document.querySelectorAll("#scenTabs button").forEach(function(b){
+    b.addEventListener("click", function(){
+      scen = b.getAttribute("data-s");
+      document.querySelectorAll("#scenTabs button").forEach(function(x){x.classList.toggle("active", x===b);});
+      stopPlay();
+      idx = 0;
+      draw();
+    });
+  });
+  document.getElementById("slider").addEventListener("input", function(e){
+    stopPlay();
+    idx = +e.target.value;
+    draw();
+  });
+  document.getElementById("playBtn").addEventListener("click", function(){
+    if (playing){ stopPlay(); return; }
+    var max = SCEN[scen].bars.length-1;
+    idx = 0;
+    playing = setInterval(function(){
+      if (idx >= max){ stopPlay(); return; }
+      idx++;
+      draw();
+    }, 750);
+    document.getElementById("playBtn").textContent = "⏸ 暂停";
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>

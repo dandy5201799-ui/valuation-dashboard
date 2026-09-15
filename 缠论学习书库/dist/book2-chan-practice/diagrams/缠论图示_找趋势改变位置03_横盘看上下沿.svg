@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">横盘走势看上下沿</title>
+  <desc id="desc">一段横盘走势中，上方多次受阻的位置标为上沿，下方多次支撑的位置标为下沿。</desc>
+  <defs>
+    <style>
+      .axis{stroke:#d8d4ca;stroke-width:1.2}.up{fill:#fff;stroke:#d97757;stroke-width:2}.up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}.down{fill:#e8e5db;stroke:#747069;stroke-width:2}.down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}.trend{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}.key{stroke:#d97757;stroke-width:2.3;stroke-dasharray:9 8}.range{fill:#fff;stroke:#d8d4ca;stroke-width:1.2;stroke-dasharray:8 9}.point{fill:#181817;stroke:#fff;stroke-width:4}.high{fill:#d97757;stroke:#fff;stroke-width:4}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}.terminal-label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:23px;font-weight:700;fill:#fff}.terminal-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#e9e6dd}.tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:20px;font-weight:700;fill:#181817}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <g transform="translate(92 56)">
+    <line class="axis" x1="38" y1="444" x2="1048" y2="444"/><line class="axis" x1="38" y1="62" x2="38" y2="444"/>
+    <rect class="range" x="78" y="126" width="842" height="250" rx="20"/>
+    <line class="key" x1="78" y1="126" x2="920" y2="126"/><line class="key" x1="78" y1="376" x2="920" y2="376"/>
+    <g>
+      <line class="up-wick" x1="88" y1="320" x2="88" y2="400"/><rect class="up" x="77" y="350" width="22" height="28" rx="3"/>
+      <line class="up-wick" x1="136" y1="260" x2="136" y2="344"/><rect class="up" x="125" y="292" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="184" y1="186" x2="184" y2="274"/><rect class="up" x="173" y="220" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="232" y1="132" x2="232" y2="230"/><rect class="up" x="221" y="170" width="22" height="38" rx="3"/>
+      <line class="down-wick" x1="280" y1="150" x2="280" y2="246"/><rect class="down" x="269" y="176" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="328" y1="224" x2="328" y2="326"/><rect class="down" x="317" y="254" width="22" height="42" rx="3"/>
+      <line class="down-wick" x1="376" y1="300" x2="376" y2="388"/><rect class="down" x="365" y="326" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="424" y1="278" x2="424" y2="370"/><rect class="up" x="413" y="314" width="22" height="30" rx="3"/>
+      <line class="up-wick" x1="472" y1="204" x2="472" y2="294"/><rect class="up" x="461" y="240" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="520" y1="134" x2="520" y2="230"/><rect class="up" x="509" y="172" width="22" height="36" rx="3"/>
+      <line class="down-wick" x1="568" y1="152" x2="568" y2="250"/><rect class="down" x="557" y="180" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="616" y1="226" x2="616" y2="326"/><rect class="down" x="605" y="256" width="22" height="40" rx="3"/>
+      <line class="down-wick" x1="664" y1="304" x2="664" y2="388"/><rect class="down" x="653" y="330" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="712" y1="270" x2="712" y2="358"/><rect class="up" x="701" y="304" width="22" height="32" rx="3"/>
+      <line class="up-wick" x1="760" y1="198" x2="760" y2="292"/><rect class="up" x="749" y="234" width="22" height="34" rx="3"/>
+      <line class="up-wick" x1="808" y1="136" x2="808" y2="232"/><rect class="up" x="797" y="174" width="22" height="36" rx="3"/>
+    </g>
+    <polyline class="trend" points="88,400 232,132 376,388 520,134 664,388 808,136"/>
+    <circle class="point" cx="88" cy="400" r="8"/><circle class="high" cx="232" cy="132" r="8"/><circle class="point" cx="376" cy="388" r="8"/><circle class="high" cx="520" cy="134" r="8"/><circle class="point" cx="664" cy="388" r="8"/><circle class="high" cx="808" cy="136" r="8"/>
+    <text class="tag" x="850" y="116">上沿</text><text class="tag" x="850" y="404">下沿</text>
+    <rect x="760" y="430" width="302" height="82" rx="18" fill="#181817"/>
+    <text class="terminal-label" x="786" y="464">横盘看边界</text>
+    <text class="terminal-note" x="786" y="492">上方过不去，下方跌不穿</text>
+    <rect x="126" y="38" width="294" height="76" rx="18" fill="#fff" stroke="#d8d4ca"/>
+    <text class="label" x="152" y="71">高低点反复重叠</text>
+    <text class="note" x="152" y="100">先看这个范围是否还在</text>
+  </g>
+</svg>
