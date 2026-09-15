@@ -24,7 +24,7 @@
   <div class="controls">
     <div class="ctl-group">
       <span class="lbl">中枢1显示：</span>
-      <input id="segSlider" type="range" min="1" max="3" step="1" value="3" style="width:110px">
+      <input id="segSlider" type="range" min="1" max="3" step="1" value="3" style="width:140px">
       <span id="segLabel" class="mono" style="font-size:11px;color:var(--muted)">3 段</span>
     </div>
     <div class="ctl-group">
@@ -33,9 +33,11 @@
       <span id="posLabel" class="mono" style="font-size:11px;color:var(--muted)">抬高</span>
     </div>
     <div class="ctl-group">
-      <button class="btn" data-pos="38">盘整</button>
-      <button class="btn" data-pos="72">上升</button>
-      <button class="btn" data-pos="8">下降</button>
+      <div class="seg" id="posTabs">
+        <button data-pos="38">盘整</button>
+        <button data-pos="72" class="active">上升</button>
+        <button data-pos="8">下降</button>
+      </div>
     </div>
   </div>
 
@@ -187,10 +189,11 @@
     pos = +e.target.value;
     draw();
   });
-  document.querySelectorAll(".controls .btn").forEach(function(b){
+  document.querySelectorAll("#posTabs button").forEach(function(b){
     b.addEventListener("click", function(){
       pos = +b.getAttribute("data-pos");
       document.getElementById("posSlider").value = pos;
+      document.querySelectorAll("#posTabs button").forEach(function(x){x.classList.toggle("active", x===b);});
       draw();
     });
   });

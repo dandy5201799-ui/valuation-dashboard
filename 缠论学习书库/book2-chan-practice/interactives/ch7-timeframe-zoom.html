@@ -29,7 +29,7 @@
       <span id="dayLabel" class="mono" style="font-size:11px;color:var(--muted)">07-11</span>
     </div>
     <div class="ctl-group" style="margin-left:auto">
-      <button class="btn" id="playBtn">▶ 顺一遍</button>
+      <button class="btn primary" id="playBtn">▶ 顺一遍</button>
       <button class="btn" id="resetBtn">回到确认日</button>
     </div>
   </div>
@@ -202,11 +202,13 @@
     draw();
   });
   document.getElementById("playBtn").addEventListener("click", function(){
-    if (playing){ clearInterval(playing); playing=null; return; }
+    var btn = document.getElementById("playBtn");
+    if (playing){ clearInterval(playing); playing=null; btn.textContent = "▶ 顺一遍"; return; }
     sel = 7;
     var max = 11;
+    btn.textContent = "⏸ 暂停";
     playing = setInterval(function(){
-      if (sel >= max){ clearInterval(playing); playing=null; return; }
+      if (sel >= max){ clearInterval(playing); playing=null; btn.textContent = "▶ 顺一遍"; return; }
       sel++;
       document.getElementById("daySlider").value = sel;
       draw();

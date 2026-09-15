@@ -232,6 +232,8 @@
 
     document.getElementById("stepChip").textContent = STEPS[step].chip;
     document.getElementById("stepText").textContent = STEPS[step].text;
+    document.getElementById("nextBtn").disabled = step === STEPS.length-1;
+    document.getElementById("nextBtn").textContent = step === STEPS.length-1 ? "完成" : "下一步";
     renderTabs();
   }
 
@@ -251,8 +253,7 @@
     draw();
   });
   document.getElementById("nextBtn").addEventListener("click", function(){
-    step = Math.min(STEPS.length-1, step+1);
-    draw();
+    if (step < STEPS.length-1){ step++; draw(); }
   });
   document.getElementById("resetBtn").addEventListener("click", function(){
     step = 0; cursor = 8;
