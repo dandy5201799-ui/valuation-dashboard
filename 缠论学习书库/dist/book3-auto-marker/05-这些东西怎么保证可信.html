@@ -275,42 +275,42 @@
 </thead>
 <tbody>
 <tr>
-<td>R0 包含处理</td>
+<td>第一步：包含处理</td>
 <td>把相邻的K线合并</td>
 <td>先把乱糟糟的K线整理干净</td>
 </tr>
 <tr>
-<td>R1 分型</td>
+<td>第二步：分型</td>
 <td>找顶分型、底分型</td>
 <td>哪里是高点？哪里是低点？</td>
 </tr>
 <tr>
-<td>R2 笔</td>
+<td>第三步：笔</td>
 <td>把高低点连起来</td>
 <td>一段一段的波段出来了</td>
 </tr>
 <tr>
-<td>R3 线段</td>
+<td>第四步：线段</td>
 <td>把笔组合成更大的结构</td>
 <td>更大级别的走势出来了</td>
 </tr>
 <tr>
-<td>R4 中枢</td>
+<td>第五步：中枢</td>
 <td>找三个重叠的区间</td>
 <td>震荡核心在哪？</td>
 </tr>
 <tr>
-<td>R5 走势类型</td>
+<td>第六步：走势类型</td>
 <td>判断上涨/下跌/盘整</td>
 <td>现在到底是涨是跌？</td>
 </tr>
 <tr>
-<td>R6 背驰</td>
+<td>第七步：背驰</td>
 <td>比较两段的力度</td>
 <td>涨得还有劲，还是没劲了？</td>
 </tr>
 <tr>
-<td>R7-R9 买卖点</td>
+<td>第八步：买卖点</td>
 <td>确认一买、二买、三买</td>
 <td>到底能不能买？</td>
 </tr>
@@ -318,11 +318,11 @@
 </table>
 <p>下面我们一步一步看。</p>
 <p><img src="diagrams/05-规则链条.png" alt="从K线到买卖点的完整链条"></img></p>
-<h2 id="r0：先把k线整理干净">R0：先把K线整理干净</h2>
+<h2 id="先把k线整理干净">先把K线整理干净</h2>
 <p>原始K线是一根一根的，有时候两根K线一上一下叠在一起，高低点互相包含，根本看不出什么。</p>
 <p>所以第一步要做"包含处理"：相邻的K线如果有包含关系，就按方向合并成一根——上升方向取最高的高点、最低的低点；下降方向反过来。</p>
 <p>整理完之后，K线就变成了一串干净的、没有包含关系的走势单元。</p>
-<h2 id="r1：找高低点——分型">R1：找高低点——分型</h2>
+<h2 id="找高低点——分型">找高低点——分型</h2>
 <p>整理完K线，接下来找哪里是高点、哪里是低点。</p>
 <p>怎么找？看连续三根处理后的K线：</p>
 <ul>
@@ -330,7 +330,7 @@
 <li>中间那根的低点，比左右两根的低点都低 → 这就是<strong>底分型</strong>（低点）</li>
 </ul>
 <p>就这么简单。不是什么神秘的东西，就是看中间这根是不是比两边都突出。</p>
-<h2 id="r2：把高低点连起来——笔">R2：把高低点连起来——笔</h2>
+<h2 id="把高低点连起来——笔">把高低点连起来——笔</h2>
 <p>找到了高点和低点，接下来把它们连起来。</p>
 <p>怎么连？<strong>顶底交替连</strong>——顶分型连到底分型，底分型再连到下一个顶分型，一上一下交替着来。</p>
 <p>还有两个条件：</p>
@@ -339,10 +339,10 @@
 <li>中间至少要有一根独立的K线隔开</li>
 </ul>
 <p>这样连出来的，就是一段一段的<strong>笔</strong>。一笔就是一个波段——从低点涨到高点，或者从高点跌到低点。</p>
-<h2 id="r3：把笔组合成更大的结构——线段">R3：把笔组合成更大的结构——线段</h2>
+<h2 id="把笔组合成更大的结构——线段">把笔组合成更大的结构——线段</h2>
 <p>有了笔，还需要更大的结构。三笔以上，起始三笔有重叠，首尾笔方向一致，就构成一个<strong>线段</strong>。</p>
 <p>线段是比笔更大一级的走势单元。笔是小波段，线段就是大波段。</p>
-<h2 id="r4：找震荡核心——中枢">R4：找震荡核心——中枢</h2>
+<h2 id="找震荡核心——中枢">找震荡核心——中枢</h2>
 <p>有了笔和线段，接下来找震荡的核心区域。</p>
 <p>怎么找？三个连续的、同级别走势对象（笔或者线段），它们有一段重叠的区间——这个重叠区间就是<strong>中枢</strong>。</p>
 <p>简单说：来回震荡的中间那一块，就是中枢。</p>
@@ -352,7 +352,7 @@
 <li><strong>ZD</strong>：下边界（重叠区间的最高点）</li>
 </ul>
 <p>价格在中枢里面晃，就是震荡；突破中枢上沿，就是走强；跌破中枢下沿，就是走弱。</p>
-<h2 id="r5：判断现在是涨是跌——走势类型">R5：判断现在是涨是跌——走势类型</h2>
+<h2 id="判断现在是涨是跌——走势类型">判断现在是涨是跌——走势类型</h2>
 <p>有了中枢，就能判断现在是什么走势类型了：</p>
 <ul>
 <li><strong>盘整</strong>：只有一个中枢，上下晃</li>
@@ -360,12 +360,12 @@
 <li><strong>下跌趋势</strong>：两个或以上中枢，依次往下走，后面的中枢比前面的低</li>
 </ul>
 <p>就这么简单。不是看K线涨了多少跌了多少，而是看中枢的位置关系。</p>
-<h2 id="r6：怎么知道涨不动了——背驰">R6：怎么知道涨不动了——背驰</h2>
+<h2 id="怎么知道涨不动了——背驰">怎么知道涨不动了——背驰</h2>
 <p>知道了是上涨趋势，接下来要问：涨得还有劲吗？还是涨不动了？</p>
 <p>怎么判断？比较两段同向走势的力度。</p>
 <p>比如上涨趋势里，前面那一段上涨和后面那一段上涨，哪段力度大？如果后面这段涨得更弱——涨的幅度更小、MACD面积更小——那就是<strong>背驰</strong>。</p>
 <p>背驰意味着：虽然还在涨，但上涨的劲头已经不够了，可能快要拐头了。</p>
-<h2 id="r7-r9：买卖点怎么来的">R7-R9：买卖点怎么来的</h2>
+<h2 id="买卖点怎么来的">买卖点怎么来的</h2>
 <p>有了前面所有的结构，最后才到买卖点。</p>
 <table>
 <thead>
@@ -439,7 +439,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"第 5 章 这些东西怎么保证可信？","level":"1.7","depth":1,"next":{"title":"第 6 章 怎么知道它准不准？","level":"1.8","depth":1,"path":"06-怎么知道它准不准.md","ref":"06-怎么知道它准不准.md","articles":[]},"previous":{"title":"第 4 章 这些信息怎么摆？","level":"1.6","depth":1,"path":"04-这些信息怎么摆.md","ref":"04-这些信息怎么摆.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"cover_alt":"封面：缠论标记工具","root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"release_date":"2026-09-13","theme":"default","author":"Codex × wps","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"outputs":{"print_html":"exported/book3-auto-marker-print.html","pdf":"exported/book3-auto-marker.pdf"},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"cover_image":"assets/cover.svg","readme_path":"index.md","title_page_lines":["让每一个辅助标记都能解释、回放、追溯","学习与研究工具，非自动交易承诺"],"variables":{},"title":"缠论标记工具","language":"zh-Hans","gitbook":"*","description":"真实 K 线辅助标记的规则、算法、产品界面和验证计划。"},"file":{"path":"05-这些东西怎么保证可信.md","mtime":"2026-09-15T05:28:21.066Z","type":"markdown"},"gitbook":{"version":"6.2.2","time":"2026-09-15T06:13:07.485Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"第 5 章 这些东西怎么保证可信？","level":"1.7","depth":1,"next":{"title":"第 6 章 怎么知道它准不准？","level":"1.8","depth":1,"path":"06-怎么知道它准不准.md","ref":"06-怎么知道它准不准.md","articles":[]},"previous":{"title":"第 4 章 这些信息怎么摆？","level":"1.6","depth":1,"path":"04-这些信息怎么摆.md","ref":"04-这些信息怎么摆.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"cover_alt":"封面：缠论标记工具","root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"release_date":"2026-09-13","theme":"default","author":"Codex × wps","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"outputs":{"print_html":"exported/book3-auto-marker-print.html","pdf":"exported/book3-auto-marker.pdf"},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"cover_image":"assets/cover.svg","readme_path":"index.md","title_page_lines":["让每一个辅助标记都能解释、回放、追溯","学习与研究工具，非自动交易承诺"],"variables":{},"title":"缠论标记工具","language":"zh-Hans","gitbook":"*","description":"真实 K 线辅助标记的规则、算法、产品界面和验证计划。"},"file":{"path":"05-这些东西怎么保证可信.md","mtime":"2026-09-15T06:29:41.758Z","type":"markdown"},"gitbook":{"version":"6.2.2","time":"2026-09-15T07:32:47.994Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
