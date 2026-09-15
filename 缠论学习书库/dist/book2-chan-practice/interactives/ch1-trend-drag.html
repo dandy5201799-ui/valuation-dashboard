@@ -6,9 +6,7 @@
 <title>第1章 · 趋势方向演示器</title>
 <link rel="stylesheet" href="demo-base.css">
 <style>
-  .chart{min-height:280px;}
-  .drag-pt{cursor:grab;}
-  .drag-pt.dragging{cursor:grabbing;}
+  .chart{min-height:300px;}
 </style>
 </head>
 <body>
@@ -16,244 +14,295 @@
   <div class="demo-head">
     <div class="dots"><span></span><span></span><span></span></div>
     <div class="demo-title">趋势方向演示器</div>
-    <div class="demo-sub">第1章 · 拖动高点或低点，看趋势分类怎么变</div>
+    <div class="demo-sub">第1章 · 一根根往后看K线，比较高点和低点，看趋势分类怎么来</div>
   </div>
 
   <div class="chart">
-    <svg id="svg" class="chart-svg" viewBox="0 0 640 300" role="img" aria-label="高低点趋势演示"></svg>
+    <svg id="svg" class="chart-svg" viewBox="0 0 720 300" role="img" aria-label="趋势方向演示"></svg>
   </div>
 
   <div class="controls">
     <div class="ctl-group">
-      <span class="lbl">高点比较：</span>
-      <span id="highChip" class="chip watch">—</span>
-      <span id="highDetail" class="mono" style="font-size:11px;color:var(--muted)"></span>
+      <div class="seg" id="scenTabs">
+        <button data-s="up" class="active">上升</button>
+        <button data-s="down">下降</button>
+        <button data-s="flat">横盘</button>
+        <button data-s="watch">证据不够</button>
+      </div>
     </div>
     <div class="ctl-group">
-      <span class="lbl">低点比较：</span>
-      <span id="lowChip" class="chip watch">—</span>
-      <span id="lowDetail" class="mono" style="font-size:11px;color:var(--muted)"></span>
+      <span class="lbl">走到第几根：</span>
+      <input id="slider" type="range" min="0" max="14" step="1" value="0" style="width:170px">
+      <span id="sliderLabel" class="mono" style="font-size:11px;color:var(--muted)">1 / 15</span>
     </div>
-    <div style="margin-left:auto">
-      <button class="btn" id="resetBtn">恢复初始</button>
+    <div class="ctl-group" style="margin-left:auto">
+      <button class="btn primary" id="playBtn">▶ 播放</button>
+      <button class="btn" id="resetBtn">回到第1根</button>
     </div>
   </div>
 
   <div class="verdict">
-    <span class="chip watch" id="verdictChip">拖动试试</span>
-    <span class="vtext" id="verdictText">比较最近两组高点和两组低点的变化，判断整体方向。</span>
+    <span class="mono" id="stepMeta" style="font-size:11px;color:var(--muted);white-space:nowrap;">第 1 / 15 根</span>
+    <span style="color:var(--faint);">→</span>
+    <span class="chip watch" id="stageChip">看K线</span>
+    <span class="vtext" id="stageText">拖动滑块或点“播放”，一根根往后看K线，等局部高点、低点陆续出现。</span>
   </div>
 
-  <div class="hint"><b>怎么玩：</b>用鼠标<b>上下拖动</b>任意圆点——绿色圆点是高点，蓝色圆点是低点。高点一起抬高、低点一起抬高 → 上升；一起降低 → 下降；都在一个窄范围里反复 → 横盘；方向矛盾 → 证据不够。</div>
+  <div class="hint"><b>怎么玩：</b>先用顶部按钮选一种场景，再拖动滑块（或点“播放”）一根根往后看K线。橙色三角是局部<b>高点</b>，绿色三角是局部<b>低点</b>；每出现第二个同类点，图上会画出比较箭头。规则：高点、低点<b>都抬高</b> → 上升；<b>都降低</b> → 下降；<b>都在窄范围反复</b> → 横盘；<b>方向不一致</b> → 证据不够，先别贴标签。</div>
 </div>
 
 <script>
 (function(){
-  // 六个交替点：低1 高1 低2 高2 低3 高3
-  var PTS = [
-    {id:"l1", type:"L", price:0.90, x:70,  label:"低1"},
-    {id:"h1", type:"H", price:1.00, x:150, label:"高1"},
-    {id:"l2", type:"L", price:0.96, x:240, label:"低2"},
-    {id:"h2", type:"H", price:1.08, x:320, label:"高2"},
-    {id:"l3", type:"L", price:1.04, x:410, label:"低3"},
-    {id:"h3", type:"H", price:1.16, x:500, label:"高3"}
-  ];
-  var DEFAULTS = PTS.map(function(p){return p.price;});
-  var W = 640, H = 300, padT = 44, padB = 40, padL = 46, padR = 20;
+  var W = 720, H = 300, padT = 50, padB = 46, padL = 50, padR = 18;
   var svg = document.getElementById("svg");
 
-  function yRange(){
-    var prices = PTS.map(function(p){return p.price;});
-    var mn = Math.min.apply(null, prices), mx = Math.max.apply(null, prices);
-    var gap = (mx - mn) || 1;
-    return { min: mn - gap*0.22, max: mx + gap*0.28 };
+  var PIVOT_IDX   = [2, 5, 7, 10, 12, 14];
+  var PIVOT_TYPE  = ["L","H","L","H","L","H"];
+  var PIVOT_LABEL = ["低1","高1","低2","高2","低3","高3"];
+
+  var SCEN = {
+    up: {
+      name: "上升",
+      bars: [
+        [96.5,97.4,95.8,97.0], [97.0,97.3,95.6,95.8], [95.8,96.0,94.0,94.6],
+        [94.6,97.5,94.4,97.1], [97.1,100.9,96.8,100.6], [100.6,104.0,100.2,103.6],
+        [103.6,103.8,101.2,101.5], [101.5,101.7,99.0,99.4], [99.4,103.6,99.2,103.3],
+        [103.3,107.9,103.0,107.6], [107.6,112.0,107.3,111.6], [111.6,111.8,108.8,109.1],
+        [109.1,109.4,106.0,106.5], [106.5,113.2,106.3,112.9], [112.9,120.0,112.6,119.5]
+      ],
+      stages: [
+        {from:0,  chip:["watch","看K线"],       text:"从最左边开始，还没有出现局部高点或低点。"},
+        {from:2,  chip:["watch","低1出现"],     text:"低1：比前后两根的最低价都低，是第一个局部低点。"},
+        {from:5,  chip:["watch","高1出现"],     text:"高1：比前后两根的最高价都高。现在只有一组高低点，还不够判断趋势，等第二组出现。"},
+        {from:7,  chip:["up","低点：抬高"],     text:"低2 比 低1 更高（94.0→99.0）→ 低点在抬高。"},
+        {from:10, chip:["up","高点：抬高"],     text:"高2 比 高1 更高（104.0→112.0）→ 高点也在抬高，两条证据方向一致。"},
+        {from:12, chip:["up","低点：连续抬高"], text:"低3 比 低2 更高（99.0→106.0）→ 低点连续两次抬高。"},
+        {from:14, chip:["up","上升趋势"],       text:"高3 比 高2 更高（112.0→120.0）→ 高点、低点都连续抬高，重心整体上移 → 上升趋势。"}
+      ]
+    },
+    down: {
+      name: "下降",
+      bars: [
+        [112.6,113.4,111.6,112.0], [112.0,112.4,108.6,109.0], [109.0,109.4,106.0,106.4],
+        [106.4,110.2,106.2,109.8], [109.8,114.1,109.5,113.7], [113.7,118.0,113.3,117.5],
+        [117.5,117.7,110.0,110.4], [110.4,110.6,101.0,101.4], [101.4,104.3,101.2,104.0],
+        [104.0,107.4,103.7,107.0], [107.0,110.0,106.7,109.6], [109.6,109.8,102.9,103.3],
+        [103.3,103.6,95.0,95.4],   [95.4,99.3,95.2,99.0],     [99.0,103.0,98.7,102.6]
+      ],
+      stages: [
+        {from:0,  chip:["watch","看K线"],       text:"从最左边开始，还没有出现局部高点或低点。"},
+        {from:2,  chip:["watch","低1出现"],     text:"低1：第一个局部低点，先记下来。"},
+        {from:5,  chip:["watch","高1出现"],     text:"高1：第一个局部高点。还需要第二组同类点才能比较。"},
+        {from:7,  chip:["down","低点：降低"],   text:"低2 比 低1 更低（106.0→101.0）→ 低点在降低。"},
+        {from:10, chip:["down","高点：降低"],   text:"高2 比 高1 更低（118.0→110.0）→ 高点也在降低，两条证据方向一致。"},
+        {from:12, chip:["down","低点：连续降低"], text:"低3 比 低2 更低（101.0→95.0）→ 低点连续两次降低。"},
+        {from:14, chip:["down","下降趋势"],     text:"高3 比 高2 更低（110.0→103.0）→ 高点、低点都连续降低，重心整体下移 → 下降趋势。"}
+      ]
+    },
+    flat: {
+      name: "横盘",
+      bars: [
+        [99.5,100.0,98.2,98.6], [98.6,98.9,97.4,97.7], [97.7,98.0,97.0,97.4],
+        [97.4,101.0,97.2,100.6], [100.6,104.3,100.3,103.9], [103.9,105.0,103.6,104.5],
+        [104.5,104.7,100.2,100.6], [100.6,100.9,96.6,96.9], [96.9,100.6,96.7,100.2],
+        [100.2,104.5,99.9,104.1], [104.1,105.3,103.8,105.2], [105.0,105.1,99.5,99.8],
+        [99.9,100.2,97.1,97.5], [97.8,101.5,97.6,101.1], [101.1,104.9,100.8,104.5]
+      ],
+      stages: [
+        {from:0,  chip:["watch","看K线"],     text:"从最左边开始，还没有出现局部高点或低点。"},
+        {from:2,  chip:["watch","低1出现"],   text:"低1：第一个局部低点。"},
+        {from:5,  chip:["watch","高1出现"],   text:"高1：第一个局部高点。"},
+        {from:7,  chip:["flat","低点：接近"], text:"低2 和 低1 很接近（97.0→96.5）→ 低点没有明显方向。"},
+        {from:10, chip:["flat","高点：接近"], text:"高2 和 高1 很接近（105.0→105.6）→ 高点也没有明显方向。"},
+        {from:12, chip:["flat","低点：反复"], text:"低3 依然接近前两个低点（→97.4）→ 低点在一个窄范围里来回。"},
+        {from:14, chip:["flat","横盘"],       text:"高3 依然接近前两个高点（→104.8）→ 高低点都在窄范围里反复，没有重心移动 → 横盘。"}
+      ]
+    },
+    watch: {
+      name: "证据不够",
+      bars: [
+        [99.0,99.6,97.6,98.0], [98.0,98.3,97.2,97.6], [97.6,97.9,97.0,97.3],
+        [97.3,101.0,97.1,100.6], [100.6,103.4,100.3,103.0], [103.0,104.0,102.6,103.5],
+        [103.5,103.7,97.0,97.4], [97.4,97.7,92.0,92.4], [92.4,98.0,92.2,97.6],
+        [97.6,105.0,97.3,104.6], [104.6,112.0,104.3,111.6], [111.6,111.8,88.5,88.9],
+        [88.9,89.2,86.0,86.4], [86.4,101.0,86.2,100.6], [100.6,121.0,100.3,120.5]
+      ],
+      stages: [
+        {from:0,  chip:["watch","看K线"],       text:"从最左边开始，还没有出现局部高点或低点。"},
+        {from:2,  chip:["watch","低1出现"],     text:"低1：第一个局部低点。"},
+        {from:5,  chip:["watch","高1出现"],     text:"高1：第一个局部高点。"},
+        {from:7,  chip:["down","低点：降低"],   text:"低2 比 低1 更低（97.0→92.0）→ 低点在降低，像下降。"},
+        {from:10, chip:["up","高点：抬高"],     text:"高2 比 高1 更高（104.0→112.0）→ 但高点在抬高，像上升。两条证据方向相反！"},
+        {from:12, chip:["down","低点：继续降低"], text:"低3 比 低2 更低（92.0→86.0）→ 低点继续降低。"},
+        {from:14, chip:["watch","证据不够"],    text:"高3 比 高2 更高（112.0→121.0）→ 高点持续抬高、低点持续降低，区间在扩大而不是移动 → 方向矛盾，先不贴标签，继续观察。"}
+      ]
+    }
+  };
+
+  var scen = "up", idx = 0, playing = null;
+
+  function ns(name, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
   }
-  function yOf(price){
-    var r = yRange();
-    return padT + (r.max - price) / (r.max - r.min) * (H - padT - padB);
-  }
-  function priceOf(yy){
-    var r = yRange();
-    return r.max - (yy - padT) / (H - padT - padB) * (r.max - r.min);
-  }
-  function cls(a, b){
-    var dy = yOf(b.price) - yOf(a.price); // b 比 a 高 => dy 为负
-    var tol = 5;
-    if (dy < -tol) return "up";      // 抬高
-    if (dy >  tol) return "down";    // 降低
-    return "flat";                   // 接近
+  function text(x,y,s,attrs){
+    var t = ns("text", Object.assign({x:x,y:y,"text-anchor":"middle","font-size":"10.5",fill:"#5f5b55"}, attrs||{}));
+    t.textContent = s;
+    return t;
   }
 
-  function verdictText(){
-    var hs = [cls(PTS[1],PTS[3]), cls(PTS[3],PTS[5])];
-    var ls = [cls(PTS[0],PTS[2]), cls(PTS[2],PTS[4])];
-    var hUp = hs[0]==="up" && hs[1]==="up";
-    var hDn = hs[0]==="down" && hs[1]==="down";
-    var lUp = ls[0]==="up" && ls[1]==="up";
-    var lDn = ls[0]==="down" && ls[1]==="down";
-    var allFlat = hs.concat(ls).every(function(c){return c==="flat";});
-
-    var hLabel = hUp ? "抬高" : (hDn ? "降低" : "反复/接近");
-    var lLabel = lUp ? "抬高" : (lDn ? "降低" : "反复/接近");
-
-    var chip, text;
-    if (hUp && lUp){ chip = ["up", "上升趋势"]; text = "后面的高点更高，低点也更高 → 重心上移，更像上升。"; }
-    else if (hDn && lDn){ chip = ["down", "下降趋势"]; text = "后面的高点更低，低点也更低 → 重心下移，更像下降。"; }
-    else if (allFlat){ chip = ["flat", "横盘"]; text = "高低点都在一个窄范围里反复重叠 → 更像横盘。"; }
-    else { chip = ["watch", "证据不够"]; text = "高点和低点给出的方向不一致 → 先不贴标签，继续观察。"; }
-
-    setChip("highChip", hLabel, clsChip(hs));
-    setChip("lowChip", lLabel, clsChip(ls));
-    document.getElementById("highDetail").textContent =
-      "高1→高2 " + dirChar(hs[0]) + "  高2→高3 " + dirChar(hs[1]);
-    document.getElementById("lowDetail").textContent =
-      "低1→低2 " + dirChar(ls[0]) + "  低2→低3 " + dirChar(ls[1]);
-
-    var vc = document.getElementById("verdictChip");
-    vc.className = "chip " + chip[0];
-    vc.textContent = chip[1];
-    document.getElementById("verdictText").textContent = text;
+  function bars(){ return SCEN[scen].bars; }
+  function yScale(){
+    var ds = bars();
+    var mn = Math.min.apply(null, ds.map(function(b){return b[2];}));
+    var mx = Math.max.apply(null, ds.map(function(b){return b[1];}));
+    var gap = (mx-mn)||1;
+    return { min: mn-gap*0.10, max: mx+gap*0.14 };
   }
-  function clsChip(arr){
-    if (arr.every(function(c){return c==="up";})) return "up";
-    if (arr.every(function(c){return c==="down";})) return "down";
-    if (arr.every(function(c){return c==="flat";})) return "flat";
-    return "watch";
+  function yOf(v){
+    var r = yScale();
+    return padT + (r.max-v)/(r.max-r.min)*(H-padT-padB);
   }
-  function dirChar(c){
-    return c==="up" ? "↑" : (c==="down" ? "↓" : "→");
-  }
-  function setChip(id, text, cls){
-    var el = document.getElementById(id);
-    el.className = "chip " + cls;
-    el.textContent = text;
+  function xOf(i){
+    var n = bars().length;
+    return padL + i*(W-padL-padR)/(n-1);
   }
 
-  function arrowMark(x, y, cls, label){
-    var g = document.createElementNS("http://www.w3.org/2000/svg","g");
-    g.setAttribute("class","cmp");
-    var text = document.createElementNS("http://www.w3.org/2000/svg","text");
-    text.textContent = label;
-    text.setAttribute("x", x); text.setAttribute("y", y);
-    text.setAttribute("text-anchor","middle");
-    text.setAttribute("font-size","12");
-    text.setAttribute("font-weight","700");
-    text.setAttribute("fill", cls==="up" ? "#1f9d63" : (cls==="down" ? "#d1453a" : "#a19c8c"));
-    var line = document.createElementNS("http://www.w3.org/2000/svg","line");
-    var dir = cls==="up" ? -1 : (cls==="down" ? 1 : 0);
-    line.setAttribute("x1", x); line.setAttribute("y1", y + (cls==="flat" ? -8 : 0));
-    line.setAttribute("x2", x); line.setAttribute("y2", y + (cls==="flat" ? 8 : 0) + dir*10);
-    line.setAttribute("stroke", cls==="up" ? "#1f9d63" : (cls==="down" ? "#d1453a" : "#a19c8c"));
-    line.setAttribute("stroke-width","2");
-    line.setAttribute("marker-end", cls==="up" ? "url(#arrUp)" : (cls==="down" ? "url(#arrDn)" : ""));
-    g.appendChild(line); g.appendChild(text);
-    return g;
+  function pivotsUpTo(i){
+    var out = [];
+    for (var k=0;k<PIVOT_IDX.length;k++){
+      if (PIVOT_IDX[k] <= i) out.push(k);
+    }
+    return out;
+  }
+  function pivotVal(k){
+    var b = bars()[PIVOT_IDX[k]];
+    return PIVOT_TYPE[k]==="H" ? b[1] : b[2];
+  }
+  function cmpCls(a, b, tol){
+    var d = b - a;
+    if (d > tol) return "up";
+    if (d < -tol) return "down";
+    return "flat";
+  }
+  function dirChar(c){ return c==="up" ? "↑" : (c==="down" ? "↓" : "→"); }
+
+  var PILL_COLOR = {
+    up:   {bg:"#e3f2e9", fg:"#15734a"},
+    down: {bg:"#fbe7e5", fg:"#b03a30"},
+    flat: {bg:"#f0eee6", fg:"#8b8677"}
+  };
+  function pillLabel(cx, cy, label, colorKey){
+    var c = PILL_COLOR[colorKey];
+    var t = ns("text", {x:cx, y:cy+3.5, "text-anchor":"middle", "font-size":"11", "font-weight":"700", fill:c.fg});
+    t.textContent = label;
+    svg.appendChild(t);
+    var bb = t.getBBox();
+    var padX = 7, padY = 3;
+    var rect = ns("rect", {x:bb.x-padX, y:bb.y-padY, width:bb.width+padX*2, height:bb.height+padY*2,
+      rx:(bb.height+padY*2)/2, fill:c.bg});
+    svg.insertBefore(rect, t);
   }
 
   function draw(){
-    var NS = "http://www.w3.org/2000/svg";
     svg.innerHTML = "";
-    var defs = document.createElementNS(NS,"defs");
-    defs.innerHTML =
-      '<marker id="arrUp" viewBox="0 0 10 10" refX="5" refY="2" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 8 L5 0 L10 8" fill="none" stroke="#1f9d63" stroke-width="1.8"/></marker>' +
-      '<marker id="arrDn" viewBox="0 0 10 10" refX="5" refY="8" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 2 L5 10 L10 2" fill="none" stroke="#d1453a" stroke-width="1.8"/></marker>';
-    svg.appendChild(defs);
+    var ds = bars(), r = yScale();
 
-    // 网格
-    var r = yRange();
     for (var k=0;k<=5;k++){
       var v = r.min + (r.max-r.min)*k/5, yy = yOf(v);
-      var line = document.createElementNS(NS,"line");
-      line.setAttribute("x1",padL); line.setAttribute("y1",yy);
-      line.setAttribute("x2",W-padR); line.setAttribute("y2",yy);
-      line.setAttribute("stroke","#e9e6dd"); line.setAttribute("stroke-width","1");
-      svg.appendChild(line);
-      var t = document.createElementNS(NS,"text");
-      t.textContent = v.toFixed(2);
-      t.setAttribute("x",padL-8); t.setAttribute("y",yy+3);
-      t.setAttribute("text-anchor","end"); t.setAttribute("font-size","10");
-      t.setAttribute("fill","#a19c8c");
-      svg.appendChild(t);
+      svg.appendChild(ns("line",{x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:"#e9e6dd","stroke-width":"1"}));
+      svg.appendChild(text(padL-8,yy+3,v.toFixed(1),{"text-anchor":"end","font-size":"9.5",fill:"#a19c8c"}));
     }
 
-    // 连线
-    var poly = document.createElementNS(NS,"polyline");
-    var pts = PTS.map(function(p){return (p.x)+","+(yOf(p.price).toFixed(1));}).join(" ");
-    poly.setAttribute("points",pts);
-    poly.setAttribute("fill","none"); poly.setAttribute("stroke","#393735");
-    poly.setAttribute("stroke-width","2.6"); poly.setAttribute("stroke-linejoin","round");
-    poly.setAttribute("stroke-linecap","round");
-    svg.appendChild(poly);
+    var bw = Math.max(4,(W-padL-padR)/ds.length*0.34);
+    ds.forEach(function(b,i){
+      var x = xOf(i), revealed = i <= idx;
+      var up = b[3] >= b[0];
+      var col = up ? "#d97757" : "#2f8f6b";
+      var op = revealed ? "0.9" : "0.2";
+      svg.appendChild(ns("line",{x1:x,y1:yOf(b[1]),x2:x,y2:yOf(b[2]),stroke:col,"stroke-width":"1.4","stroke-opacity":op}));
+      var top = yOf(Math.max(b[0],b[3])), bot = yOf(Math.min(b[0],b[3]));
+      svg.appendChild(ns("rect",{x:x-bw/2,y:top,width:bw,height:Math.max(1.4,bot-top),fill:col,"fill-opacity":op,rx:1}));
+      if (i===idx) svg.appendChild(ns("rect",{x:x-bw-3,y:padT-6,width:bw*2+6,height:H-padT-padB+12,fill:"none",stroke:"#181817","stroke-width":"1.6",rx:6}));
+    });
 
-    // 比较箭头（同类型相邻点）
-    var pairs = [[1,3,"H"],[3,5,"H"],[0,2,"L"],[2,4,"L"]];
-    pairs.forEach(function(pr){
-      var a = PTS[pr[0]], b = PTS[pr[1]], c = cls(a,b);
-      var mx = (a.x+b.x)/2;
-      if (pr[2]==="H"){
-        var topY = Math.min(yOf(a.price), yOf(b.price));
-        svg.appendChild(arrowMark(mx, topY-16, c, c==="up"?"抬高":(c==="down"?"降低":"接近")));
+    var revealedPivots = pivotsUpTo(idx);
+    revealedPivots.forEach(function(k){
+      var i = PIVOT_IDX[k], x = xOf(i), type = PIVOT_TYPE[k], v = pivotVal(k), yy = yOf(v);
+      if (type==="H"){
+        svg.appendChild(ns("path",{d:"M"+x+" "+(yy-9)+" L"+(x+6)+" "+(yy-1)+" L"+(x-6)+" "+(yy-1)+" Z",fill:"#d97757",stroke:"#fff","stroke-width":"1.2"}));
+        svg.appendChild(text(x, yy-14, PIVOT_LABEL[k], {fill:"#b3542f","font-weight":"700","font-size":"11"}));
       } else {
-        var botY = Math.max(yOf(a.price), yOf(b.price));
-        svg.appendChild(arrowMark(mx, botY+24, c, c==="up"?"抬高":(c==="down"?"降低":"接近")));
+        svg.appendChild(ns("path",{d:"M"+x+" "+(yy+9)+" L"+(x+6)+" "+(yy+1)+" L"+(x-6)+" "+(yy+1)+" Z",fill:"#2f8f6b",stroke:"#fff","stroke-width":"1.2"}));
+        svg.appendChild(text(x, yy+22, PIVOT_LABEL[k], {fill:"#23664c","font-weight":"700","font-size":"11"}));
       }
     });
 
-    // 点
-    PTS.forEach(function(p){
-      var yy = yOf(p.price);
-      var g = document.createElementNS(NS,"g");
-      g.setAttribute("class","drag-pt");
-      g.setAttribute("data-id",p.id);
-      var c1 = document.createElementNS(NS,"circle");
-      c1.setAttribute("cx",p.x); c1.setAttribute("cy",yy);
-      c1.setAttribute("r",9);
-      c1.setAttribute("fill", p.type==="H" ? "#d97757" : "#2f8f6b");
-      c1.setAttribute("fill-opacity","0.16");
-      c1.setAttribute("stroke", p.type==="H" ? "#d97757" : "#2f8f6b");
-      c1.setAttribute("stroke-width","2");
-      var c2 = document.createElementNS(NS,"circle");
-      c2.setAttribute("cx",p.x); c2.setAttribute("cy",yy);
-      c2.setAttribute("r",5);
-      c2.setAttribute("fill", p.type==="H" ? "#d97757" : "#2f8f6b");
-      c2.setAttribute("stroke","#fff"); c2.setAttribute("stroke-width","1.4");
-      var t = document.createElementNS(NS,"text");
-      t.textContent = p.label;
-      t.setAttribute("x",p.x); t.setAttribute("y", yy + (p.type==="H" ? -14 : 24));
-      t.setAttribute("text-anchor","middle"); t.setAttribute("font-size","11");
-      t.setAttribute("font-weight","700"); t.setAttribute("fill","#5f5b55");
-      g.appendChild(c1); g.appendChild(c2); g.appendChild(t);
-      svg.appendChild(g);
+    var tol = (r.max-r.min)*0.08;
+    var pairs = [[0,2],[2,4],[1,3],[3,5]]; // L1-L2, L2-L3, H1-H2, H2-H3 (pivot indices)
+    pairs.forEach(function(pr){
+      var ka=pr[0], kb=pr[1];
+      if (revealedPivots.indexOf(ka)===-1 || revealedPivots.indexOf(kb)===-1) return;
+      var va = pivotVal(ka), vb = pivotVal(kb);
+      var c = cmpCls(va, vb, tol);
+      var xa = xOf(PIVOT_IDX[ka]), xb = xOf(PIVOT_IDX[kb]);
+      var mx = (xa+xb)/2;
+      var label = (c==="up" ? "↑ 抬高" : (c==="down" ? "↓ 降低" : "→ 接近"));
+      var isHigh = PIVOT_TYPE[ka]==="H";
+      var baseY = isHigh ? Math.min(yOf(va),yOf(vb)) - 20 : Math.max(yOf(va),yOf(vb)) + 24;
+      pillLabel(mx, baseY, label, c);
     });
-    verdictText();
+
+    var s = SCEN[scen], stage = s.stages[0];
+    for (var j=s.stages.length-1;j>=0;j--){
+      if (idx >= s.stages[j].from){ stage = s.stages[j]; break; }
+    }
+    var vc = document.getElementById("stageChip");
+    vc.className = "chip " + stage.chip[0];
+    vc.textContent = stage.chip[1];
+    document.getElementById("stageText").textContent = stage.text;
+    document.getElementById("slider").value = idx;
+    var pos = (idx+1) + " / " + ds.length;
+    document.getElementById("sliderLabel").textContent = pos;
+    var atPivot = PIVOT_IDX.indexOf(idx);
+    document.getElementById("stepMeta").textContent = "第 " + pos + " 根" + (atPivot!==-1 ? "（" + PIVOT_LABEL[atPivot] + "）" : "");
   }
 
-  // 拖动
-  var drag = null;
-  svg.addEventListener("pointerdown", function(e){
-    var g = e.target.closest(".drag-pt");
-    if (!g) return;
-    var id = g.getAttribute("data-id");
-    var p = PTS.find(function(x){return x.id===id;});
-    drag = { id:id, lastY:e.clientY, p:p };
-    g.classList.add("dragging");
-    svg.setPointerCapture(e.pointerId);
+  function stopPlay(){
+    if (playing){ clearInterval(playing); playing = null; }
+    document.getElementById("playBtn").textContent = "▶ 播放";
+  }
+
+  document.querySelectorAll("#scenTabs button").forEach(function(b){
+    b.addEventListener("click", function(){
+      scen = b.getAttribute("data-s");
+      document.querySelectorAll("#scenTabs button").forEach(function(x){x.classList.toggle("active", x===b);});
+      stopPlay();
+      idx = 0;
+      document.getElementById("slider").max = bars().length-1;
+      draw();
+    });
   });
-  svg.addEventListener("pointermove", function(e){
-    if (!drag) return;
-    var rect = svg.getBoundingClientRect();
-    var scale = H / rect.height;
-    var yy = (e.clientY - rect.top) * scale;
-    yy = Math.max(padT+4, Math.min(H-padB-4, yy));
-    drag.p.price = priceOf(yy);
+  document.getElementById("slider").addEventListener("input", function(e){
+    stopPlay();
+    idx = +e.target.value;
     draw();
   });
-  function endDrag(){ if (drag){ drag = null; } draw(); }
-  svg.addEventListener("pointerup", endDrag);
-  svg.addEventListener("pointercancel", endDrag);
-
+  document.getElementById("playBtn").addEventListener("click", function(){
+    if (playing){ stopPlay(); return; }
+    var max = bars().length-1;
+    idx = 0;
+    document.getElementById("playBtn").textContent = "⏸ 暂停";
+    playing = setInterval(function(){
+      if (idx >= max){ stopPlay(); return; }
+      idx++;
+      draw();
+    }, 750);
+  });
   document.getElementById("resetBtn").addEventListener("click", function(){
-    PTS.forEach(function(p,i){ p.price = DEFAULTS[i]; });
+    stopPlay();
+    idx = 0;
     draw();
   });
 

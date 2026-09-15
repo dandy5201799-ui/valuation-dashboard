@@ -234,6 +234,9 @@
     document.getElementById("stepText").textContent = STEPS[step].text;
     document.getElementById("nextBtn").disabled = step === STEPS.length-1;
     document.getElementById("nextBtn").textContent = step === STEPS.length-1 ? "完成" : "下一步";
+    var cursorEl = document.getElementById("cursor");
+    cursorEl.disabled = step !== 0;
+    cursorEl.title = step === 0 ? "" : "逐根检查K线是第①步专用的；点“重置”回到第①步才能继续拖动。";
     renderTabs();
   }
 

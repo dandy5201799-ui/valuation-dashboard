@@ -209,8 +209,8 @@
     var yy = (e.clientY - rect.top) * scale;
     yy = Math.max(padT+4, Math.min(H-padB-4, yy));
     var v = vOf(yy);
-    if (drag.v==="entry") entry = Math.max(104, Math.min(120, v));
-    if (drag.v==="fail")  failLine = Math.max(103, Math.min(117, v));
+    if (drag.v==="entry") entry = Math.max(failLine+1, Math.max(104, Math.min(120, v)));
+    if (drag.v==="fail")  failLine = Math.min(entry-1, Math.max(103, Math.min(117, v)));
     draw();
   });
   function endDrag(){ if (drag){ drag=null; draw(); } }

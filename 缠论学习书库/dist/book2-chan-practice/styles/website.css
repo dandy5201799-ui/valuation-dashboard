@@ -526,5 +526,13 @@
   font-style: italic;
 }
 @media (max-width: 720px) {
-  .interactive-embed iframe { height: 420px !important; }
+  /* 窄屏按演示器内容高度分别适配，保证“怎么玩”提示完整可见 */
+  .interactive-embed iframe.h-ch1 { height: 660px !important; }
+  .interactive-embed iframe.h-ch2 { height: 610px !important; }
+  .interactive-embed iframe.h-ch3 { height: 616px !important; }
+  .interactive-embed iframe.h-ch4 { height: 600px !important; }
+  .interactive-embed iframe.h-ch5 { height: 574px !important; }
+  .interactive-embed iframe.h-ch6 { height: 720px !important; }
+  .interactive-embed iframe.h-ch7 { height: 843px !important; }
+  .interactive-embed iframe.h-ch8 { height: 554px !important; }
 }

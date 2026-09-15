@@ -187,6 +187,9 @@
   });
   document.getElementById("posSlider").addEventListener("input", function(e){
     pos = +e.target.value;
+    document.querySelectorAll("#posTabs button").forEach(function(x){
+      x.classList.toggle("active", +x.getAttribute("data-pos") === pos);
+    });
     draw();
   });
   document.querySelectorAll("#posTabs button").forEach(function(b){

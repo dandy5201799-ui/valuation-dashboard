@@ -26,7 +26,7 @@
     <div class="ctl-group">
       <span class="lbl">放大日线第几天：</span>
       <input id="daySlider" type="range" min="7" max="11" step="1" value="11" style="width:180px">
-      <span id="dayLabel" class="mono" style="font-size:11px;color:var(--muted)">07-11</span>
+      <span id="dayLabel" class="mono" style="font-size:11px;color:var(--muted)">07-15</span>
     </div>
     <div class="ctl-group" style="margin-left:auto">
       <button class="btn primary" id="playBtn">▶ 顺一遍</button>
@@ -35,11 +35,13 @@
   </div>
 
   <div class="verdict">
+    <span class="mono" id="stepMeta" style="font-size:11px;color:var(--muted);white-space:nowrap;">07-15</span>
+    <span style="color:var(--faint);">→</span>
     <span class="chip watch" id="verdictChip">大图观察</span>
     <span class="vtext" id="verdictText">大图（日线）：上升趋势里回调到防守位，进入观察。拖动滑块，看同一段回调在30分钟里怎么演变。</span>
   </div>
 
-  <div class="hint"><b>怎么玩：</b>把滑块从 07-07 拖到 07-11：日线只是“一根阴线→一根阳线”，30分钟里却是一段完整的<b>下跌→反弹→再跌→站回→突破确认</b>。这就是大图定方向、小图找入场——入场点在小图确认的那一刻，失败线用你进场那一层的防守位。</div>
+  <div class="hint"><b>怎么玩：</b>把滑块从 07-09 拖到 07-15：日线只是“一根阴线→一根阳线”，30分钟里却是一段完整的<b>下跌→反弹→再跌→站回→突破确认</b>。这就是大图定方向、小图找入场——入场点在小图确认的那一刻，失败线用你进场那一层的防守位。</div>
 </div>
 
 <script>
@@ -182,10 +184,11 @@
     svg.appendChild(text((bX0+bX1)/2, botY1+34, sub.note, {fill:"#393735","font-weight":"700","font-size":"12"}));
 
     // 结论
+    var realDate = DAILY[selDaily].d;
     var chip, vtxt;
     if (sel === 11){
       chip = ["ok","小图确认"];
-      vtxt = "大图给了方向（上升＋回调防守位），小图在 07-17 这一天给出确认（30分钟站上小高点）→ 这就是具体入场点。失败线用你进场这一层的防守位。";
+      vtxt = "大图给了方向（上升＋回调防守位），小图在 " + realDate + " 这一天给出确认（30分钟站上小高点）→ 这就是具体入场点。失败线用你进场这一层的防守位。";
     } else {
       chip = ["watch","大图观察"];
       vtxt = "大图（日线）依然是上升趋势里的回调，没破防守位 → 观察。小图还在演变：" + sub.note + "，等它给出确认信号再动手。";
@@ -194,7 +197,8 @@
     vc.className = "chip " + chip[0];
     vc.textContent = chip[1];
     document.getElementById("verdictText").textContent = vtxt;
-    document.getElementById("dayLabel").textContent = "07-" + String(sel).padStart(2,"0");
+    document.getElementById("dayLabel").textContent = realDate;
+    document.getElementById("stepMeta").textContent = realDate;
   }
 
   document.getElementById("daySlider").addEventListener("input", function(e){
