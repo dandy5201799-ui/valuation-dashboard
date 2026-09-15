@@ -8,6 +8,12 @@ work/
 **/site/
 缠论学习书库/dist/
 
+# Private tool workspace and specs
+01_规格/
+02_引擎与工作台/
+_archive/m30数据_不复权bug_2026-09-14/
+_archive/日线数据源迁移_腾讯改baostock_2026-09-15/
+
 # Local dependencies
 **/node_modules/
 
