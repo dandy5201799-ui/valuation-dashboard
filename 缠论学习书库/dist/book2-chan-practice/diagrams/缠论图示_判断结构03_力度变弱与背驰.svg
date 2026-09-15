@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">力度变弱与背驰</title>
+  <desc id="desc">左侧展示两段上涨力度相当，右侧展示价格虽然新高但幅度变小、速度变慢、回撤更深。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+  .axis{stroke:#d8d4ca;stroke-width:1.2}
+  .sep{stroke:#e9e6dd;stroke-width:1.2}
+  .up{fill:#fff;stroke:#d97757;stroke-width:2}
+  .up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}
+  .down{fill:#e8e5db;stroke:#747069;stroke-width:2}
+  .down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}
+  .trend{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+  .trend-thin{fill:none;stroke:#181817;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+  .path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}
+  .guide{stroke:#d8d4ca;stroke-width:1.1;stroke-dasharray:6 8}
+  .zone{fill:#f1eee7;stroke:#d8d4ca;stroke-width:1.4}
+  .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}
+  .point{fill:#181817;stroke:#fff;stroke-width:4}
+  .muted-point{fill:#fff;stroke:#a8a39a;stroke-width:2}
+  .label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}
+  .note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}
+  .tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:700;fill:#181817}
+  .micro{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}
+  .white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+  .white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}
+</style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+
+  <g transform="translate(70 74)">
+    <text class="label" x="166" y="0">正常上升</text>
+    <text class="label" x="730" y="0">力度变弱（背驰）</text>
+    <line class="sep" x1="530" y1="18" x2="530" y2="428"/>
+    <g transform="translate(0 38)">
+      <line class="axis" x1="32" y1="400" x2="462" y2="400"/>
+<line class="axis" x1="32" y1="40" x2="32" y2="400"/>
+      <line class="up-wick" x1="80" y1="324" x2="80" y2="380"/><rect class="up" x="70" y="338" width="20" height="28" rx="3"/>
+<line class="up-wick" x1="130" y1="278" x2="130" y2="354"/><rect class="up" x="120" y="292" width="20" height="46" rx="3"/>
+<line class="down-wick" x1="180" y1="278" x2="180" y2="326"/><rect class="down" x="170" y="292" width="20" height="18" rx="3"/>
+<line class="up-wick" x1="230" y1="236" x2="230" y2="326"/><rect class="up" x="220" y="248" width="20" height="62" rx="3"/>
+<line class="up-wick" x1="280" y1="204" x2="280" y2="268"/><rect class="up" x="270" y="220" width="20" height="30" rx="3"/>
+<line class="down-wick" x1="330" y1="210" x2="330" y2="254"/><rect class="down" x="320" y="220" width="20" height="18" rx="3"/>
+<line class="up-wick" x1="380" y1="174" x2="380" y2="252"/><rect class="up" x="370" y="190" width="20" height="48" rx="3"/>
+<line class="up-wick" x1="430" y1="144" x2="430" y2="210"/><rect class="up" x="420" y="162" width="20" height="32" rx="3"/>
+      <polyline class="trend" points="80,380 230,204 330,254 430,144"/>
+      <circle class="point" cx="80" cy="380" r="8"/>
+<circle class="point" cx="230" cy="204" r="8"/>
+<circle class="point" cx="330" cy="254" r="8"/>
+<circle class="point" cx="430" cy="144" r="8"/>
+      <path d="M92 372 C150 314 178 264 224 208" fill="none" stroke="#d97757" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M340 248 C374 218 398 180 426 148" fill="none" stroke="#d97757" stroke-width="2.1" stroke-linecap="round"/>
+      <text class="micro" x="174" y="178">力度相当</text>
+    </g>
+    <g transform="translate(590 38)">
+      <line class="axis" x1="32" y1="400" x2="462" y2="400"/>
+<line class="axis" x1="32" y1="40" x2="32" y2="400"/>
+      <line class="up-wick" x1="80" y1="345" x2="80" y2="380"/><rect class="up" x="70" y="355" width="20" height="20" rx="3"/>
+<line class="up-wick" x1="130" y1="290" x2="130" y2="360"/><rect class="up" x="120" y="305" width="20" height="40" rx="3"/>
+<line class="down-wick" x1="180" y1="270" x2="180" y2="320"/><rect class="down" x="170" y="282" width="20" height="26" rx="3"/>
+<line class="up-wick" x1="230" y1="210" x2="230" y2="290"/><rect class="up" x="220" y="225" width="20" height="50" rx="3"/>
+<line class="down-wick" x1="280" y1="224" x2="280" y2="270"/><rect class="down" x="270" y="236" width="20" height="24" rx="3"/>
+<line class="down-wick" x1="330" y1="244" x2="330" y2="300"/><rect class="down" x="320" y="256" width="20" height="30" rx="3"/>
+<line class="up-wick" x1="380" y1="222" x2="380" y2="270"/><rect class="up" x="370" y="234" width="20" height="24" rx="3"/>
+<line class="up-wick" x1="430" y1="205" x2="430" y2="250"/><rect class="up" x="420" y="216" width="20" height="24" rx="3"/>
+      <polyline class="trend" points="80,380 230,210 330,300 430,205"/>
+      <circle class="point" cx="80" cy="380" r="8"/>
+<circle class="point" cx="230" cy="210" r="8"/>
+<circle class="point" cx="330" cy="300" r="8"/>
+<circle class="point" cx="430" cy="205" r="8"/>
+      <path d="M95 372 C137 320 180 268 222 216" fill="none" stroke="#d97757" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M340 292 C367 266 394 240 422 213" fill="none" stroke="#d97757" stroke-width="2.1" stroke-linecap="round" stroke-dasharray="7 7"/>
+      <text class="micro" x="332" y="176">新高但力度变小</text>
+      <text class="micro" x="250" y="336">回撤更深</text>
+    </g>
+  </g>
+  <rect x="668" y="508" width="468" height="72" rx="20" fill="#181817"/>
+<text class="white" x="694" y="552">价格新高，力度不新高=背驰，要警惕</text>
+  
+</svg>

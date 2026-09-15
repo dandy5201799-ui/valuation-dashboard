@@ -175,6 +175,19 @@
       var cx = xOf(cursor);
       svg.appendChild(ns("line",{x1:cx,y1:padT-8,x2:cx,y2:H-padB+8,stroke:"#181817","stroke-width":"1.6","stroke-dasharray":"3 3"}));
       var loc = isLocal(cursor);
+      var cd = BARS[cursor], cyH = yOf(cd.h), cyL = yOf(cd.l);
+      if (loc.h){
+        svg.appendChild(ns("path",{d:"M"+cx+" "+(cyH-14)+" L"+(cx+7)+" "+(cyH-4)+" L"+(cx-7)+" "+(cyH-4)+" Z",fill:"#d97757",stroke:"#fff","stroke-width":"1.2"}));
+        svg.appendChild(text(cx, cyH-19, "高点候选", {fill:"#b3542f","font-weight":"700","font-size":"10"}));
+      }
+      if (loc.l){
+        svg.appendChild(ns("path",{d:"M"+cx+" "+(cyL+14)+" L"+(cx+7)+" "+(cyL+4)+" L"+(cx-7)+" "+(cyL+4)+" Z",fill:"#2f8f6b",stroke:"#fff","stroke-width":"1.2"}));
+        svg.appendChild(text(cx, cyL+27, "低点候选", {fill:"#23664c","font-weight":"700","font-size":"10"}));
+      }
+      if (!loc.h && !loc.l){
+        svg.appendChild(ns("circle",{cx:cx,cy:(cyH+cyL)/2,r:5,fill:"none",stroke:"#a19c8c","stroke-width":"1.6","stroke-dasharray":"2 2"}));
+        svg.appendChild(text(cx, cyH-19, "不成立", {fill:"#a19c8c","font-weight":"700","font-size":"10"}));
+      }
       var txt = "第"+(cursor+1)+"根";
       if (loc.h && loc.l) txt += "：同时是局部高点与局部低点候选";
       else if (loc.h) txt += "：局部高点候选（最高价高于前后各两根）";

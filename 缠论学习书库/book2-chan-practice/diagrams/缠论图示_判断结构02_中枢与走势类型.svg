@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">中枢与走势类型</title>
+  <desc id="desc">用三行对比展示盘整、上升趋势和下降趋势的中枢位置差异。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+  .axis{stroke:#d8d4ca;stroke-width:1.2}
+  .sep{stroke:#e9e6dd;stroke-width:1.2}
+  .up{fill:#fff;stroke:#d97757;stroke-width:2}
+  .up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}
+  .down{fill:#e8e5db;stroke:#747069;stroke-width:2}
+  .down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}
+  .trend{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+  .trend-thin{fill:none;stroke:#181817;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+  .path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}
+  .guide{stroke:#d8d4ca;stroke-width:1.1;stroke-dasharray:6 8}
+  .zone{fill:#f1eee7;stroke:#d8d4ca;stroke-width:1.4}
+  .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}
+  .point{fill:#181817;stroke:#fff;stroke-width:4}
+  .muted-point{fill:#fff;stroke:#a8a39a;stroke-width:2}
+  .label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}
+  .note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}
+  .tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:700;fill:#181817}
+  .micro{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}
+  .white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+  .white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}
+</style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+
+  <g transform="translate(78 58)">
+    <g transform="translate(0 0)">
+      <text class="label" x="0" y="44">盘整</text>
+      <text class="note" x="0" y="74">一个中枢里反复</text>
+      <g transform="translate(184 0)">
+        <line class="axis" x1="0" y1="144" x2="780" y2="144"/>
+<line class="axis" x1="0" y1="8" x2="0" y2="144"/>
+        <rect class="zone" x="86" y="38" width="448" height="70" rx="14"/><polyline class="trend" points="18,92 120,36 226,112 330,46 436,108 548,40 660,96"/><circle class="point" cx="18" cy="92" r="8"/>
+<circle class="point" cx="120" cy="36" r="8"/>
+<circle class="point" cx="226" cy="112" r="8"/>
+<circle class="point" cx="330" cy="46" r="8"/>
+<circle class="point" cx="436" cy="108" r="8"/>
+<circle class="point" cx="548" cy="40" r="8"/>
+<circle class="point" cx="660" cy="96" r="8"/><text class="micro" x="270" y="32">中枢</text>
+      </g>
+    </g>
+    <g transform="translate(0 150)">
+      <text class="label" x="0" y="44">上升趋势</text>
+      <text class="note" x="0" y="74">新中枢更高</text>
+      <g transform="translate(184 0)">
+        <line class="axis" x1="0" y1="144" x2="780" y2="144"/>
+<line class="axis" x1="0" y1="8" x2="0" y2="144"/>
+        <rect class="zone" x="82" y="72" width="236" height="48" rx="14"/>
+<rect class="zone" x="426" y="30" width="236" height="48" rx="14"/><polyline class="trend" points="18,112 112,70 212,120 318,74 426,76 536,32 658,68 744,24"/><circle class="point" cx="18" cy="112" r="8"/>
+<circle class="point" cx="112" cy="70" r="8"/>
+<circle class="point" cx="212" cy="120" r="8"/>
+<circle class="point" cx="318" cy="74" r="8"/>
+<circle class="point" cx="426" cy="76" r="8"/>
+<circle class="point" cx="536" cy="32" r="8"/>
+<circle class="point" cx="658" cy="68" r="8"/>
+<circle class="point" cx="744" cy="24" r="8"/><text class="micro" x="522" y="24">新中枢更高</text>
+      </g>
+    </g>
+    <g transform="translate(0 300)">
+      <text class="label" x="0" y="44">下降趋势</text>
+      <text class="note" x="0" y="74">新中枢更低</text>
+      <g transform="translate(184 0)">
+        <line class="axis" x1="0" y1="144" x2="780" y2="144"/>
+<line class="axis" x1="0" y1="8" x2="0" y2="144"/>
+        <rect class="zone" x="82" y="32" width="236" height="48" rx="14"/>
+<rect class="zone" x="426" y="84" width="236" height="48" rx="14"/><polyline class="trend" points="18,30 112,78 212,34 318,82 426,82 536,124 658,88 744,132"/><circle class="point" cx="18" cy="30" r="8"/>
+<circle class="point" cx="112" cy="78" r="8"/>
+<circle class="point" cx="212" cy="34" r="8"/>
+<circle class="point" cx="318" cy="82" r="8"/>
+<circle class="point" cx="426" cy="82" r="8"/>
+<circle class="point" cx="536" cy="124" r="8"/>
+<circle class="point" cx="658" cy="88" r="8"/>
+<circle class="point" cx="744" cy="132" r="8"/><text class="micro" x="522" y="74">新中枢更低</text>
+      </g>
+    </g>
+  </g>
+  <rect x="638" y="508" width="498" height="72" rx="20" fill="#181817"/>
+<text class="white" x="664" y="538">一个中枢=盘整</text>
+<text class="white-note" x="664" y="566">多个依次抬高=上升，依次降低=下降</text>
+  
+</svg>

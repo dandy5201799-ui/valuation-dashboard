@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">走势推进 vs 震荡</title>
+  <desc id="desc">左侧高低点一起上移形成推进，右侧高低点重叠形成震荡。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+  .axis{stroke:#d8d4ca;stroke-width:1.2}
+  .sep{stroke:#e9e6dd;stroke-width:1.2}
+  .up{fill:#fff;stroke:#d97757;stroke-width:2}
+  .up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}
+  .down{fill:#e8e5db;stroke:#747069;stroke-width:2}
+  .down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}
+  .trend{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+  .trend-thin{fill:none;stroke:#181817;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+  .path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}
+  .guide{stroke:#d8d4ca;stroke-width:1.1;stroke-dasharray:6 8}
+  .zone{fill:#f1eee7;stroke:#d8d4ca;stroke-width:1.4}
+  .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}
+  .point{fill:#181817;stroke:#fff;stroke-width:4}
+  .muted-point{fill:#fff;stroke:#a8a39a;stroke-width:2}
+  .label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}
+  .note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}
+  .tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:700;fill:#181817}
+  .micro{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}
+  .white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+  .white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}
+</style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+
+  <g transform="translate(70 76)">
+    <text class="label" x="160" y="0">走势推进</text>
+    <text class="label" x="742" y="0">震荡反复</text>
+    <line class="sep" x1="530" y1="22" x2="530" y2="432"/>
+    <g transform="translate(0 34)">
+      <line class="axis" x1="32" y1="400" x2="462" y2="400"/>
+<line class="axis" x1="32" y1="40" x2="32" y2="400"/>
+      <line class="up-wick" x1="80" y1="300" x2="80" y2="350"/><rect class="up" x="70" y="318" width="20" height="20" rx="3"/>
+<line class="up-wick" x1="130" y1="276" x2="130" y2="330"/><rect class="up" x="120" y="286" width="20" height="28" rx="3"/>
+<line class="down-wick" x1="180" y1="270" x2="180" y2="318"/><rect class="down" x="170" y="286" width="20" height="16" rx="3"/>
+<line class="up-wick" x1="230" y1="238" x2="230" y2="314"/><rect class="up" x="220" y="248" width="20" height="54" rx="3"/>
+<line class="up-wick" x1="280" y1="214" x2="280" y2="278"/><rect class="up" x="270" y="226" width="20" height="32" rx="3"/>
+<line class="down-wick" x1="330" y1="206" x2="330" y2="256"/><rect class="down" x="320" y="224" width="20" height="18" rx="3"/>
+<line class="up-wick" x1="380" y1="178" x2="380" y2="252"/><rect class="up" x="370" y="190" width="20" height="52" rx="3"/>
+<line class="up-wick" x1="430" y1="150" x2="430" y2="216"/><rect class="up" x="420" y="166" width="20" height="32" rx="3"/>
+      <polyline class="trend" points="80,350 230,214 330,256 430,150"/>
+      <circle class="point" cx="80" cy="350" r="8"/>
+<circle class="point" cx="230" cy="214" r="8"/>
+<circle class="point" cx="330" cy="256" r="8"/>
+<circle class="point" cx="430" cy="150" r="8"/>
+      <text class="tag" x="54" y="374">L1</text>
+      <text class="tag" x="242" y="212">H1</text>
+      <text class="tag" x="342" y="260">L2</text>
+      <text class="tag" x="442" y="148">H2</text>
+      <text class="micro" x="196" y="96">高点抬高</text>
+      <text class="micro" x="98" y="378">低点抬高</text>
+    </g>
+    <g transform="translate(590 34)">
+      <line class="axis" x1="32" y1="400" x2="462" y2="400"/>
+<line class="axis" x1="32" y1="40" x2="32" y2="400"/>
+      <rect class="zone" x="74" y="182" width="338" height="92" rx="16"/>
+      <line class="up-wick" x1="80" y1="206" x2="80" y2="266"/><rect class="up" x="70" y="226" width="20" height="20" rx="3"/>
+<line class="down-wick" x1="130" y1="210" x2="130" y2="270"/><rect class="down" x="120" y="226" width="20" height="22" rx="3"/>
+<line class="up-wick" x1="180" y1="200" x2="180" y2="260"/><rect class="up" x="170" y="218" width="20" height="30" rx="3"/>
+<line class="down-wick" x1="230" y1="210" x2="230" y2="268"/><rect class="down" x="220" y="218" width="20" height="28" rx="3"/>
+<line class="up-wick" x1="280" y1="204" x2="280" y2="260"/><rect class="up" x="270" y="224" width="20" height="22" rx="3"/>
+<line class="down-wick" x1="330" y1="212" x2="330" y2="272"/><rect class="down" x="320" y="224" width="20" height="26" rx="3"/>
+<line class="up-wick" x1="380" y1="202" x2="380" y2="264"/><rect class="up" x="370" y="222" width="20" height="28" rx="3"/>
+<line class="down-wick" x1="430" y1="210" x2="430" y2="266"/><rect class="down" x="420" y="222" width="20" height="22" rx="3"/>
+      <polyline class="trend" points="80,266 180,200 280,272 380,202"/>
+      <circle class="point" cx="80" cy="266" r="8"/>
+<circle class="point" cx="180" cy="200" r="8"/>
+<circle class="point" cx="280" cy="272" r="8"/>
+<circle class="point" cx="380" cy="202" r="8"/>
+      <text class="micro" x="146" y="160">高点不创新高</text>
+      <text class="micro" x="156" y="304">低点不创新低</text>
+    </g>
+  </g>
+  <rect x="732" y="508" width="404" height="72" rx="20" fill="#181817"/>
+<text class="white" x="758" y="552">重心上移=推进，重心不动=震荡</text>
+  
+</svg>

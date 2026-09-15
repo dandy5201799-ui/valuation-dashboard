@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">判断结构：章节导览</title>
+  <desc id="desc">先看走势有没有推进，再看推进还是震荡，最后看力度有没有变弱，并引出关键位置。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+  .axis{stroke:#d8d4ca;stroke-width:1.2}
+  .sep{stroke:#e9e6dd;stroke-width:1.2}
+  .up{fill:#fff;stroke:#d97757;stroke-width:2}
+  .up-wick{stroke:#d97757;stroke-width:2;stroke-linecap:round}
+  .down{fill:#e8e5db;stroke:#747069;stroke-width:2}
+  .down-wick{stroke:#747069;stroke-width:2;stroke-linecap:round}
+  .trend{fill:none;stroke:#181817;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+  .trend-thin{fill:none;stroke:#181817;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+  .path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}
+  .guide{stroke:#d8d4ca;stroke-width:1.1;stroke-dasharray:6 8}
+  .zone{fill:#f1eee7;stroke:#d8d4ca;stroke-width:1.4}
+  .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}
+  .point{fill:#181817;stroke:#fff;stroke-width:4}
+  .muted-point{fill:#fff;stroke:#a8a39a;stroke-width:2}
+  .label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:24px;font-weight:700;fill:#181817}
+  .note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:450;fill:#747069}
+  .tag{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:18px;font-weight:700;fill:#181817}
+  .micro{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:16px;font-weight:500;fill:#747069}
+  .white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+  .white-note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:450;fill:#e9e6dd}
+</style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+
+  <g transform="translate(72 124)">
+    <g transform="translate(0 0)">
+      <rect class="node" x="0" y="0" width="204" height="136" rx="18"/>
+      <g transform="translate(42 20) scale(1.25)"><line class="up-wick" x1="0" y1="42" x2="0" y2="74"/><rect class="up" x="-5" y="50" width="10" height="16" rx="3"/>
+<line class="up-wick" x1="24" y1="22" x2="24" y2="60"/><rect class="up" x="19" y="30" width="10" height="18" rx="3"/>
+<line class="down-wick" x1="48" y1="26" x2="48" y2="54"/><rect class="down" x="43" y="32" width="10" height="12" rx="3"/>
+<line class="up-wick" x1="72" y1="20" x2="72" y2="54"/><rect class="up" x="67" y="26" width="10" height="18" rx="3"/><polyline class="trend-thin" points="0,66 24,30 48,44 72,26"/></g>
+      <text class="label" x="44" y="198">走势推进</text>
+      <text class="note" x="32" y="228">高低点一起移动</text>
+    </g>
+    <path class="path" d="M232 68 H330"/>
+    <g transform="translate(360 0)">
+      <rect class="node" x="0" y="0" width="204" height="136" rx="18"/>
+      <rect class="zone" x="38" y="48" width="128" height="44" rx="10"/>
+      <polyline class="trend-thin" points="34,82 70,50 102,86 140,54 168,80"/>
+      <text class="label" x="60" y="198">震荡反复</text>
+      <text class="note" x="42" y="228">重心暂时不动</text>
+    </g>
+    <path class="path" d="M592 68 H690"/>
+    <g transform="translate(720 0)">
+      <rect class="node" x="0" y="0" width="204" height="136" rx="18"/>
+      <polyline class="trend-thin" points="28,94 78,44 126,80 170,28"/>
+      <path d="M78 44 L170 28" fill="none" stroke="#d97757" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="7 7"/>
+      <text class="label" x="52" y="198">力度变弱</text>
+      <text class="note" x="40" y="228">新高后开始警惕</text>
+    </g>
+    <path class="path" d="M462 278 C462 326 594 326 594 278"/>
+    <text class="label" x="474" y="370">找关键位置</text>
+  </g>
+  <rect x="760" y="508" width="374" height="72" rx="20" fill="#181817"/>
+<text class="white" x="786" y="552">推进→震荡→变弱→找位置</text>
+  
+</svg>

@@ -9,5 +9,4 @@
 - [第 6 章 决定动作，承担失败](06-决定动作承担失败.md)
 - [第 7 章 配合不同周期](07-配合不同周期.md)
 - [第 8 章 独立判断与复盘](08-独立判断与复盘.md)
-- [附录 A 练习器入口](appendix-a-exercises.md)
-- [附录 B 精选配图索引](appendix-b-diagrams.md)
+- [附录 A 精选配图索引](appendix-a-diagrams.md)
