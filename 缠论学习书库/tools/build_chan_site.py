@@ -15,9 +15,16 @@ BOOK_DIRS = [
     {"slug": "book3-auto-marker", "title": "缠论标记工具", "dir": "book3-auto-marker", "description": "把缠论结构标出来，辅助观察、解释和复盘"},
 ]
 DIST_DIR = REPO_ROOT / "dist"
-SITE_LABEL = "缠论学习书库"
+SITE_LABEL = "CHAN BOOKS"
 MARKER_TOOL_URL = "https://dandistudio.site/chan/"
 GITHUB_URL = "https://github.com/dandy5201799-ui/valuation-dashboard"
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#fffdf8" stroke="#2d2418" stroke-width="4"/>
+  <path d="M13 42 L24 31 L34 36 L49 20" fill="none" stroke="#181817" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="24" cy="31" r="4.5" fill="#d97757"/>
+  <circle cx="49" cy="20" r="5" fill="#d97757"/>
+</svg>
+"""
 
 
 def relative_href(from_dir: str, to_path: str) -> str:
@@ -112,6 +119,12 @@ def build_inline_pager(html: str) -> str:
     return '<nav class="hb-inline-pager" aria-label="Chapter navigation">' + "".join(links) + "</nav>"
 
 
+def write_site_assets() -> None:
+    assets_dir = DIST_DIR / "assets"
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    (assets_dir / "favicon.svg").write_text(FAVICON_SVG, encoding="utf-8")
+
+
 def build_related_reading(current_slug: str) -> str:
     if current_slug != "book2-chan-practice":
         return ""
@@ -146,6 +159,13 @@ def inject_switcher(book_publish_dir: Path, current_slug: str, books: list[dict]
         html = html.replace(
             'content="width=device-width, initial-scale=1, user-scalable=no"',
             'content="width=device-width, initial-scale=1, viewport-fit=cover"',
+        )
+        favicon_href = escape(relative_href(current_slug, "assets/favicon.svg"))
+        html = re.sub(
+            r'<link rel="shortcut icon" href="[^"]+" type="image/x-icon">',
+            f'<link rel="icon" href="{favicon_href}" type="image/svg+xml">',
+            html,
+            count=1,
         )
         html = html.replace("<body>", f"<body>\n{switcher_markup}", 1)
         html = html.replace(
@@ -220,8 +240,9 @@ def build_index_page(books: list[dict]) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>缠论学习书库</title>
-<meta name="description" content="缠论学习书库：看懂K线走势与缠论标记工具">
+<title>Chan Books</title>
+<meta name="description" content="Chan Books：看懂K线走势与缠论标记工具">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <style>
 :root {{
   --page-bg: #f4efe4;
@@ -351,7 +372,7 @@ a {{ color: var(--accent); text-decoration: none; }}
 <body>
 <main class="site-shell">
   <section class="hero">
-    <p class="hero__eyebrow">缠论学习书库</p>
+    <p class="hero__eyebrow">CHAN BOOKS</p>
     <h1>从 K 线到判断，把缠论讲成能看的书</h1>
     <p>这里不再按“基础册、实战册”拆开，而是合成一条真实学习路径：先用《看懂K线走势》理解价格走势，再用《缠论标记工具》把标记、解释和复盘串起来。</p>
   </section>
@@ -394,6 +415,7 @@ def main():
     if DIST_DIR.exists():
         shutil.rmtree(DIST_DIR)
     DIST_DIR.mkdir(parents=True)
+    write_site_assets()
 
     # 复制每本书的构建结果到dist
     for book_info in books:
