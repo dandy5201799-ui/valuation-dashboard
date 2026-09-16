@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">动作流程</title>
+  <desc id="desc">进场后，做对了更新失败线保护利润；做错了到失败线就退出，之后等待新确认再重新进场。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1.5 1.5 8.5 5 1.5 8.5" fill="none" stroke="#5f5b55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      .node{fill:#fff;stroke:#d8d4ca;stroke-width:1.2}.path{fill:none;stroke:#5f5b55;stroke-width:1.8;marker-end:url(#arrow)}.upLine{stroke:#d97757;stroke-width:2.2;stroke-dasharray:8 8;marker-end:url(#arrow)}.fail{stroke:#d97757;stroke-width:2.1;stroke-dasharray:8 8}.dot{fill:#181817;stroke:#fff;stroke-width:4}.label{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:23px;font-weight:700;fill:#181817}.note{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:17px;font-weight:500;fill:#747069}.white{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;font-size:21px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#fff"/>
+  <circle class="dot" cx="600" cy="190" r="12"/><text class="label" x="578" y="154">进场</text>
+  <path class="path" d="M590 210 C520 250 430 260 360 300"/><path class="path" d="M610 210 C680 250 770 260 840 300"/>
+  <g transform="translate(170 290)"><rect class="node" x="0" y="0" width="170" height="72" rx="18"/><text class="label" x="45" y="44">做对了</text></g>
+  <g transform="translate(390 290)"><rect class="node" x="0" y="0" width="190" height="72" rx="18"/><text class="label" x="36" y="44">更新失败线</text></g>
+  <g transform="translate(630 290)"><rect class="node" x="0" y="0" width="170" height="72" rx="18"/><text class="label" x="45" y="44">做错了</text></g>
+  <g transform="translate(850 290)"><rect class="node" x="0" y="0" width="170" height="72" rx="18"/><text class="label" x="36" y="44">执行止损</text></g>
+  <path class="path" d="M340 326 H382"/><path class="path" d="M800 326 H842"/>
+  <line class="fail" x1="428" y1="420" x2="548" y2="420"/><line class="upLine" x1="428" y1="420" x2="428" y2="376"/><text class="note" x="392" y="452">失败线上移，保护利润</text>
+  <line class="fail" x1="848" y1="420" x2="1018" y2="420"/><text class="note" x="870" y="452">到失败线，退出</text>
+  <path class="path" d="M936 366 C920 454 764 488 626 488"/>
+  <g transform="translate(430 452)"><rect class="node" x="0" y="0" width="210" height="72" rx="18"/><text class="label" x="28" y="44">新确认再进场</text></g>
+  <rect x="728" y="500" width="390" height="76" rx="20" fill="#181817"/><text class="white" x="756" y="546">做对了移线保护，做错了到线就走</text>
+</svg>

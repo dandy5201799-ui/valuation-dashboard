@@ -58,13 +58,13 @@
         <line class="up-wick" x1="114" y1="54" x2="114" y2="148"/><rect class="up" x="104" y="92" width="20" height="34" rx="3"/>
         <line class="down-wick" x1="148" y1="112" x2="148" y2="206"/><rect class="down" x="138" y="142" width="20" height="36" rx="3"/>
         <line class="down-wick" x1="182" y1="186" x2="182" y2="258"/><rect class="down" x="172" y="210" width="20" height="28" rx="3"/>
-        <line class="up-wick" x1="216" y1="190" x2="216" y2="230"/><rect class="up" x="206" y="198" width="20" height="20" rx="3"/>
+        <line class="up-wick" x1="216" y1="156" x2="216" y2="230"/><rect class="up" x="206" y="184" width="20" height="26" rx="3"/>
         <line class="down-wick" x1="250" y1="200" x2="250" y2="270"/><rect class="down" x="240" y="222" width="20" height="28" rx="3"/>
       </g>
-      <polyline class="trend" points="46,248 114,54 182,258 216,190 250,270"/>
-      <circle class="dot" cx="216" cy="190" r="8"/>
+      <polyline class="trend" points="46,248 114,54 182,258 216,156 250,270"/>
+      <circle class="dot" cx="216" cy="156" r="8"/>
       <text class="tag" x="118" y="168">防守位被跌破</text>
-      <text class="tag" x="178" y="182">反抽不回</text>
+      <text class="tag" x="178" y="140">反抽不回</text>
       <text class="label" x="18" y="336">级别3：原趋势</text>
       <text class="note" x="18" y="362">确认原趋势走完了，可能反转</text>
     </g>
